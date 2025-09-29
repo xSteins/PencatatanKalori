@@ -6,15 +6,15 @@ enum class GoalType {
     // for onboarding / userprofile settings pop up
     fun getDisplayName(): String {
         return when (this) {
-            LOSE_WEIGHT -> "Menurunkan Berat Badan"
-            GAIN_WEIGHT -> "Menambah Berat Badan"
+            LOSE_WEIGHT -> "Weight Loss (Cutting)"
+            GAIN_WEIGHT -> "Weight Gain (Bulking)"
         }
     }
     
     fun getDescription(): String {
         return when (this) {
-            LOSE_WEIGHT -> "Target untuk mengurangi berat badan dengan defisit kalori"
-            GAIN_WEIGHT -> "Target untuk menambah berat badan dengan surplus kalori"
+            LOSE_WEIGHT -> "Reducing weight by creating calorie deficit"
+            GAIN_WEIGHT -> "Bulking out weight by gaining calorie"
         }
     }
 } 

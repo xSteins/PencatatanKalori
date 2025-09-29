@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.* // Import all filled icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,9 +34,9 @@ fun EditUserDataDialog(
 ) {
     var textFieldValue by remember { mutableStateOf(currentValue) }
     var selectedGender by remember { mutableStateOf(if (editType == EditUserDataType.GENDER) currentValue else "Male") }
-    var selectedActivityLevel by remember { mutableStateOf<ActivityLevel?>(if(editType == EditUserDataType.ACTIVE_LEVEL) ActivityLevel.values().find { it.name.equals(currentValue, ignoreCase = true) } else null) }
+    var selectedActivityLevel by remember { mutableStateOf(if(editType == EditUserDataType.ACTIVE_LEVEL) ActivityLevel.values().find { it.name.equals(currentValue, ignoreCase = true) } else null) }
     var expandedActivityLevel by remember { mutableStateOf(false) }
-    var selectedGoalType by remember { mutableStateOf<GoalType?>(if(editType == EditUserDataType.GOAL) GoalType.values().find { it.name.equals(currentValue, ignoreCase = true) } else null) }
+    var selectedGoalType by remember { mutableStateOf(if(editType == EditUserDataType.GOAL) GoalType.values().find { it.name.equals(currentValue, ignoreCase = true) } else null) }
     var expandedGoalType by remember { mutableStateOf(false) }
 
 

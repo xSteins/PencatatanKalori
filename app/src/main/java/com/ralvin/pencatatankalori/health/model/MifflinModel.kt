@@ -9,7 +9,6 @@ class MifflinModel {
                 (10 * weight) + (6.25 * height) - (5 * age) - 161
             }
         }
-        // TODO: add flexibility for +- min-max calorie based on actual consumption, add UI modal to adjust this
         private var granularityValue = 500
         fun adjustTargetCalorie(newValue: Int){
             this.granularityValue = newValue
@@ -28,7 +27,6 @@ class MifflinModel {
             }
         }
         
-        // Convenience method that combines RMR calculation and daily calories target
         fun calculateDailyCalories(
             weight: Float,
             height: Float,

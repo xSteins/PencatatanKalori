@@ -3,9 +3,8 @@ package com.ralvin.pencatatankalori.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert // Placeholder icon
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ralvin.pencatatankalori.ui.components.LogsDetailedModal
 import com.ralvin.pencatatankalori.ui.components.LogItem
 import com.ralvin.pencatatankalori.ui.components.LogType
+import com.ralvin.pencatatankalori.ui.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.ui.theme.PencatatanKaloriTheme
 import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
 import com.ralvin.pencatatankalori.viewmodel.HistoryUiState
@@ -33,7 +33,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import com.ralvin.pencatatankalori.ui.components.HistoryDatePicker
 
-// Data class HistoryItemData tetap sama
 data class HistoryItemData(
     val date: String,
     val caloriesText: String,
@@ -42,10 +41,9 @@ data class HistoryItemData(
     val id: UUID = UUID.randomUUID()
 )
 
-// Conversion function from ActivityLog to LogItem
 fun ActivityLog.toLogItem(): LogItem {
     return LogItem(
-        id = this.id.hashCode(), // Convert string ID to int
+        id = this.id.hashCode(),
         type = when(this.type) {
             ActivityType.CONSUMPTION -> LogType.FOOD
             ActivityType.WORKOUT -> LogType.WORKOUT
@@ -76,12 +74,28 @@ fun History(
     val uiState by viewModel.uiState.collectAsState()
     val allActivities by viewModel.allActivities.collectAsState()
     val userProfile by viewModel.userProfile.collectAsState()
+    val dateRange by viewModel.dateRange.collectAsState()
     
     val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
     
-    // Generate last 7 days of data
-    val daysData = remember(allActivities) {
-        viewModel.getLastNDaysData(7)
+    val isDefaultRange = remember(dateRange) {
+        val (startDate, endDate) = dateRange
+        val calendar = Calendar.getInstance()
+        val defaultEndDate = calendar.time
+        calendar.add(Calendar.DAY_OF_YEAR, -6)
+        val defaultStartDate = calendar.time
+        
+        val daysDiff = (endDate.time - defaultEndDate.time).let { if (it < 0) -it else it } / (24 * 60 * 60 * 1000)
+        val startDaysDiff = (startDate.time - defaultStartDate.time).let { if (it < 0) -it else it } / (24 * 60 * 60 * 1000)
+        daysDiff <= 1 && startDaysDiff <= 1
+    }
+    
+    val daysData = remember(allActivities, dateRange) {
+        if (isDefaultRange) {
+            viewModel.getLastNDaysData(7)
+        } else {
+            viewModel.getDayDataForSelectedRange()
+        }
     }
     
     val logsPerDay = remember(daysData, allActivities) {
@@ -105,11 +119,8 @@ fun History(
     var showModal by remember { mutableStateOf(false) }
     var selectedDayIdx by remember { mutableStateOf(0) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf(System.currentTimeMillis()) }
-
-    val selectedDateString = remember(selectedDate) {
-        dateFormat.format(Date(selectedDate))
-    }
+    var showAddModal by remember { mutableStateOf(false) }
+    var addModalType by remember { mutableStateOf(LogType.FOOD) }
 
     Scaffold(
         topBar = {
@@ -154,11 +165,10 @@ fun History(
                 }
                 is HistoryUiState.Success -> {
                     if (showDatePicker) {
-                        HistoryDatePickerDialog(
+                        HistoryDatePicker(
                             onDismiss = { showDatePicker = false },
-                            onDateSelected = { millis ->
-                                selectedDate = millis
-                                viewModel.selectDate(Date(millis))
+                            onDateRangeSelected = { startDate, endDate ->
+                                viewModel.selectDateRange(startDate, endDate)
                                 showDatePicker = false
                             }
                         )
@@ -198,7 +208,25 @@ fun History(
                         LogsDetailedModal(
                             onDismissRequest = { showModal = false },
                             date = date,
-                            logs = logs
+                            logs = logs,
+                            onAddFood = {
+                                addModalType = LogType.FOOD
+                                showAddModal = true
+                            },
+                            onAddWorkout = {
+                                addModalType = LogType.WORKOUT
+                                showAddModal = true
+                            }
+                        )
+                    }
+                    
+                    if (showAddModal) {
+                        AddOrEditLogModal(
+                            type = addModalType,
+                            onSubmit = { name, calories, protein, carbs, portion, duration ->
+                                showAddModal = false
+                            },
+                            onCancel = { showAddModal = false }
                         )
                     }
                 }
@@ -207,19 +235,10 @@ fun History(
     }
 }
 
-@Composable
-fun HistoryDatePickerDialog(onDismiss: () -> Unit, onDateSelected: (Long) -> Unit) {
-    var showDialog by remember { mutableStateOf(true) }
-    if (showDialog) {
-        HistoryDatePicker()
-    }
-}
 
 @Composable
-fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) { // Add onClick parameter
-    Column(
-        modifier = Modifier.clickable { onClick() } // Make the entire item clickable
-    ) {
+fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
+    Column {
         Text(
             text = item.date,
             style = MaterialTheme.typography.labelLarge,
@@ -255,12 +274,13 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) { // Add onClick
                 Box(
                     modifier = Modifier
                         .size(60.dp)
-                        .align(Alignment.CenterVertically),
+                        .align(Alignment.CenterVertically)
+                        .clickable { onClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Filled.MoreVert,
-                        contentDescription = "Activity Visual",
+                        contentDescription = "More Options",
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )

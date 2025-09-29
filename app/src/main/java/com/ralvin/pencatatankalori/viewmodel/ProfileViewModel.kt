@@ -172,7 +172,6 @@ class ProfileViewModel @Inject constructor(
         return repository.isUserCreated()
     }
 
-    // Calculate BMI
     fun calculateBMI(): Float? {
         val user = userProfile.value
         return if (user != null && user.height > 0) {
@@ -181,7 +180,6 @@ class ProfileViewModel @Inject constructor(
         } else null
     }
 
-    // Get BMI category
     fun getBMICategory(): String? {
         val bmi = calculateBMI()
         return when {
@@ -193,7 +191,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
     
-    // Dummy data toggle
     fun toggleDummyData() {
         repository.toggleDummyData()
     }

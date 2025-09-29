@@ -44,22 +44,18 @@ fun ProfileSettings(
     var currentEditType by remember { mutableStateOf(EditUserDataType.WEIGHT) }
     var currentEditValue by remember { mutableStateOf("") }
 
-    // Collect user profile from ProfileViewModel
     val userProfile by profileViewModel.userProfile.collectAsStateWithLifecycle()
     val profileUiState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val onboardingUiState by onboardingViewModel.uiState.collectAsStateWithLifecycle()
     val isDummyDataEnabled by profileViewModel.isDummyDataEnabled.collectAsStateWithLifecycle()
 
-    // Check if user exists and show onboarding dialog automatically
     LaunchedEffect(Unit) {
-        // Check if user actually exists in database (not affected by dummy data)
         val userExists = profileViewModel.checkUserExists()
         if (!userExists) {
             showOnboardingDialog = true
         }
     }
 
-    // Handle onboarding success
     LaunchedEffect(onboardingUiState) {
         val currentOnboardingState = onboardingUiState
         if (currentOnboardingState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Success) {
@@ -160,7 +156,6 @@ fun ProfileSettings(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            // Show loading state or profile data
             val currentProfileUiState = profileUiState
             when {
                 currentProfileUiState is com.ralvin.pencatatankalori.viewmodel.ProfileUiState.Loading -> {
@@ -176,9 +171,7 @@ fun ProfileSettings(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Profile Settings Section
                         item {
-                            // Always show profile fields, but make them non-editable if no data
                             val currentUserProfile = userProfile
                             val hasUserData = currentUserProfile != null
                             
@@ -236,15 +229,14 @@ fun ProfileSettings(
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.Tune,
-                                    label = "Calorie Adjustment",
+                                    label = "Calorie Target Value",
                                     value = "${MifflinModel.getGranularityValue()} cal",
                                     onClick = { showCalorieAdjustmentDialog = true },
-                                    isEditable = true  // Always allow calorie adjustment
+                                    isEditable = true
                                 )
                             }
                         }
                         
-                        // Debugging Section
                         item {
                             Column {
                                 Text(
@@ -308,7 +300,6 @@ fun ProfileSettings(
             }
         }
         
-        // Dialogs
         if (showOnboardingDialog) {
             OnboardingDialog(
                 onDismiss = { showOnboardingDialog = false },

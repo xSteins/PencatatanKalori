@@ -23,13 +23,9 @@ class CalorieRepository @Inject constructor(
     private val activityLogDao: ActivityLogDao
 ) {
     
-    // Dummy data toggle state
     private val _isDummyDataEnabled = MutableStateFlow(false)
     val isDummyDataEnabled: Flow<Boolean> = _isDummyDataEnabled
     
-    // ========================
-    // User Management
-    // ========================
     
     fun getUserProfile(): Flow<UserData?> {
         return _isDummyDataEnabled.flatMapLatest { isDummy ->
@@ -55,9 +51,6 @@ class CalorieRepository @Inject constructor(
     
     suspend fun isUserCreated(): Boolean = userDataDao.getUserDataCount() > 0
     
-    // ========================
-    // Activity Logging
-    // ========================
     
     suspend fun logFood(
         foodName: String,
@@ -90,7 +83,7 @@ class CalorieRepository @Inject constructor(
             userId = user.id,
             type = ActivityType.WORKOUT,
             timestamp = Date(),
-            calories = caloriesBurned, // Using unified calories field
+            calories = caloriesBurned,
             workoutName = workoutName,
             duration = duration
         )
@@ -98,33 +91,17 @@ class CalorieRepository @Inject constructor(
     }
     
     suspend fun updateActivity(activity: ActivityLog) {
-        // Only update real database if not in dummy mode
         if (!_isDummyDataEnabled.value) {
             activityLogDao.updateActivity(activity)
         }
-        // In dummy mode, do nothing since dummy data is generated automatically
     }
     
     suspend fun deleteActivity(activityId: String) {
-        // Only delete from real database if not in dummy mode
         if (!_isDummyDataEnabled.value) {
             activityLogDao.deleteActivityById(activityId)
         }
-        // In dummy mode, do nothing since dummy data is generated automatically
     }
     
-    suspend fun getActivityById(activityId: String): ActivityLog? {
-        return if (_isDummyDataEnabled.value) {
-            // Find in dummy data
-            createDummyActivities().find { it.id == activityId }
-        } else {
-            activityLogDao.getActivityById(activityId)
-        }
-    }
-    
-    // ========================
-    // Overview Data (Today's Summary)
-    // ========================
     
     fun getTodayActivities(): Flow<List<ActivityLog>> {
         return _isDummyDataEnabled.flatMapLatest { isDummy ->
@@ -135,7 +112,6 @@ class CalorieRepository @Inject constructor(
                     calendar.time = activity.timestamp
                     val activityDate = calendar.time
                     
-                    // Check if activity is from today
                     val todayCalendar = Calendar.getInstance().apply { time = today }
                     val activityCalendar = Calendar.getInstance().apply { time = activityDate }
                     
@@ -153,7 +129,6 @@ class CalorieRepository @Inject constructor(
     
     suspend fun getTodayCaloriesConsumed(): Int {
         return if (_isDummyDataEnabled.value) {
-            // Calculate from dummy data
             getActivitiesForDate(Date())
                 .filter { it.type == ActivityType.CONSUMPTION }
                 .sumOf { it.calories ?: 0 }
@@ -165,7 +140,6 @@ class CalorieRepository @Inject constructor(
     
     suspend fun getTodayCaloriesBurned(): Int {
         return if (_isDummyDataEnabled.value) {
-            // Calculate from dummy data
             getActivitiesForDate(Date())
                 .filter { it.type == ActivityType.WORKOUT }
                 .sumOf { it.calories ?: 0 }
@@ -175,24 +149,12 @@ class CalorieRepository @Inject constructor(
         }
     }
     
-    suspend fun getTodayNetCalories(): Int {
-        return getTodayCaloriesConsumed() - getTodayCaloriesBurned()
-    }
-    
-    suspend fun getRemainingCalories(): Int {
-        val user = getUserProfileOnce() ?: return 0
-        val consumed = getTodayCaloriesConsumed()
-        val burned = getTodayCaloriesBurned()
-        return user.dailyCalorieTarget - consumed + burned
-    }
     
     // ========================
-    // History Data
     // ========================
     
     suspend fun getActivitiesForDate(date: Date): List<ActivityLog> {
         return if (_isDummyDataEnabled.value) {
-            // Filter dummy activities for the specified date
             createDummyActivities().filter { activity ->
                 val activityCalendar = Calendar.getInstance().apply { time = activity.timestamp }
                 val targetCalendar = Calendar.getInstance().apply { time = date }
@@ -208,7 +170,6 @@ class CalorieRepository @Inject constructor(
     
     suspend fun getActivitiesForPeriod(startDate: Date, endDate: Date): List<ActivityLog> {
         return if (_isDummyDataEnabled.value) {
-            // Filter dummy activities for the specified period
             createDummyActivities().filter { activity ->
                 activity.timestamp.time >= startDate.time && activity.timestamp.time <= endDate.time
             }
@@ -218,41 +179,6 @@ class CalorieRepository @Inject constructor(
         }
     }
     
-    suspend fun getCaloriesConsumedForDate(date: Date): Int {
-        return if (_isDummyDataEnabled.value) {
-            // Calculate from dummy data
-            getActivitiesForDate(date)
-                .filter { it.type == ActivityType.CONSUMPTION }
-                .sumOf { it.calories ?: 0 }
-        } else {
-            val user = getUserProfileOnce() ?: return 0
-            activityLogDao.getCaloriesConsumedForDate(user.id, date, ActivityType.CONSUMPTION)
-        }
-    }
-    
-    suspend fun getCaloriesBurnedForDate(date: Date): Int {
-        return if (_isDummyDataEnabled.value) {
-            // Calculate from dummy data
-            getActivitiesForDate(date)
-                .filter { it.type == ActivityType.WORKOUT }
-                .sumOf { it.calories ?: 0 }
-        } else {
-            val user = getUserProfileOnce() ?: return 0
-            activityLogDao.getCaloriesBurnedForDate(user.id, date, ActivityType.WORKOUT)
-        }
-    }
-    
-    fun getActivitiesByType(type: ActivityType): Flow<List<ActivityLog>> {
-        return _isDummyDataEnabled.flatMapLatest { isDummy ->
-            if (isDummy) {
-                flowOf(createDummyActivities().filter { it.type == type })
-            } else {
-                userDataDao.getUserData().flatMapLatest { user ->
-                    user?.let { activityLogDao.getActivitiesByType(it.id, type) } ?: flowOf(emptyList())
-                }
-            }
-        }
-    }
     
     fun getAllUserActivities(): Flow<List<ActivityLog>> {
         return _isDummyDataEnabled.flatMapLatest { isDummy ->
@@ -267,15 +193,10 @@ class CalorieRepository @Inject constructor(
     }
     
     // ========================
-    // Dummy Data Management
     // ========================
     
     fun toggleDummyData() {
         _isDummyDataEnabled.value = !_isDummyDataEnabled.value
-    }
-    
-    fun setDummyDataEnabled(enabled: Boolean) {
-        _isDummyDataEnabled.value = enabled
     }
     
     private fun createDummyUser(): UserData {
@@ -296,13 +217,11 @@ class CalorieRepository @Inject constructor(
         val activities = mutableListOf<ActivityLog>()
         val calendar = Calendar.getInstance()
         
-        // Create activities for the past 10 days
         for (dayOffset in 0..9) {
             calendar.time = Date()
             calendar.add(Calendar.DAY_OF_YEAR, -dayOffset)
             val date = calendar.time
             
-            // Add 2-4 food entries per day
             val foodEntries = listOf(
                 Triple("Oatmeal with Banana", 320, "1 bowl"),
                 Triple("Grilled Chicken Salad", 450, "1 serving"),
@@ -314,7 +233,6 @@ class CalorieRepository @Inject constructor(
                 Triple("Apple with Peanut Butter", 190, "1 apple + 2 tbsp")
             )
             
-            // Add 2-3 random food entries for this day
             foodEntries.shuffled().take((2..3).random()).forEach { (name, calories, portion) ->
                 calendar.time = date
                 calendar.add(Calendar.HOUR_OF_DAY, (8..20).random())
@@ -332,7 +250,6 @@ class CalorieRepository @Inject constructor(
                 ))
             }
             
-            // Add 0-2 workout entries per day
             val workoutEntries = listOf(
                 Triple("Morning Run", 350, 30),
                 Triple("Weight Training", 280, 45),
@@ -363,13 +280,5 @@ class CalorieRepository @Inject constructor(
         }
         
         return activities.sortedByDescending { it.timestamp }
-    }
-    
-    fun getDummyUserProfile(): UserData? {
-        return if (_isDummyDataEnabled.value) createDummyUser() else null
-    }
-    
-    fun getDummyActivities(): List<ActivityLog> {
-        return if (_isDummyDataEnabled.value) createDummyActivities() else emptyList()
     }
 } 

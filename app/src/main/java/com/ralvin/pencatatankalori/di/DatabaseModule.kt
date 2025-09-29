@@ -25,7 +25,7 @@ object DatabaseModule {
             context.applicationContext,
             AppDatabase::class.java,
             "pencatatan_kalori_database"
-        ).fallbackToDestructiveMigration() // TODO: FIX MIGRATION FOR PRODUCTION
+        ).fallbackToDestructiveMigration()
         .build()
     }
 

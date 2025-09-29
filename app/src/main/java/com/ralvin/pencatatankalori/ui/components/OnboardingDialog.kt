@@ -53,10 +53,8 @@ fun OnboardingScreenContent(
     var selectedGoalType by remember { mutableStateOf<GoalType?>(null) }
     var expandedActivityLevel by remember { mutableStateOf(false) }
     
-    // Collect UI state
     val uiState by onboardingViewModel.uiState.collectAsStateWithLifecycle()
     
-    // Validation state
     val isValid = age.isNotBlank() && age.toIntOrNull() != null && age.toInt() > 0 &&
                   weight.isNotBlank() && weight.toFloatOrNull() != null && weight.toFloat() > 0 &&
                   height.isNotBlank() && height.toFloatOrNull() != null && height.toFloat() > 0 &&
@@ -70,7 +68,6 @@ fun OnboardingScreenContent(
             val heightFloat = height.toFloat()
             val gender = if (isMale) "Male" else "Female"
             
-            // Calculate daily calorie target using Mifflin-St Jeor equation
             val dailyCalorieTarget = MifflinModel.calculateDailyCalories(
                 weight = weightFloat,
                 height = heightFloat,
@@ -81,7 +78,7 @@ fun OnboardingScreenContent(
             )
             
             onboardingViewModel.createUserData(
-                name = "User", // Default name since it's not collected anymore
+                name = "User",
                 age = ageInt,
                 gender = gender,
                 weight = weightFloat,
@@ -113,7 +110,6 @@ fun OnboardingScreenContent(
         )
 
 
-        // Weight field
         OutlinedTextField(
             value = weight,
             onValueChange = { if (it.isEmpty() || it.toFloatOrNull() != null) weight = it },
@@ -127,7 +123,6 @@ fun OnboardingScreenContent(
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Height field
         OutlinedTextField(
             value = height,
             onValueChange = { if (it.isEmpty() || it.toFloatOrNull() != null) height = it },
@@ -141,7 +136,6 @@ fun OnboardingScreenContent(
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        // Age field
         OutlinedTextField(
             value = age,
             onValueChange = { if (it.all { c -> c.isDigit() }) age = it },
@@ -155,7 +149,6 @@ fun OnboardingScreenContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Gender selection
         Text("Gender", style = MaterialTheme.typography.bodyMedium)
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -179,7 +172,6 @@ fun OnboardingScreenContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Activity Level dropdown
         ExposedDropdownMenuBox(
             expanded = expandedActivityLevel,
             onExpandedChange = { expandedActivityLevel = it },
@@ -218,7 +210,6 @@ fun OnboardingScreenContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Goal Type selection
         Text("Goal", style = MaterialTheme.typography.bodyMedium)
         GoalType.values().forEach { goal ->
             Row(
@@ -236,7 +227,6 @@ fun OnboardingScreenContent(
             }
         }
         
-        // Show error if there's one
         val currentUiState = uiState
         if (currentUiState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Error) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -249,7 +239,6 @@ fun OnboardingScreenContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Action buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End

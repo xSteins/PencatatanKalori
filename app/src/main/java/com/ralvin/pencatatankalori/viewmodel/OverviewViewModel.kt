@@ -36,7 +36,6 @@ class OverviewViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    // Combined overview data
     val overviewData = combine(
         userProfile,
         todayActivities
@@ -45,7 +44,7 @@ class OverviewViewModel @Inject constructor(
             val consumed = activities.filter { it.type == com.ralvin.pencatatankalori.data.database.entities.ActivityType.CONSUMPTION }
                 .sumOf { it.calories ?: 0 }
             val burned = activities.filter { it.type == com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT }
-                .sumOf { it.calories ?: 0 } // Using unified calories field
+                .sumOf { it.calories ?: 0 }
             
             OverviewData(
                 user = userData,
@@ -67,7 +66,6 @@ class OverviewViewModel @Inject constructor(
         }
     }
 
-    // Handle weight update from BMI card
     fun updateUserWeight(newWeight: Float) {
         viewModelScope.launch {
             try {

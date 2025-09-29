@@ -2,24 +2,49 @@ package com.ralvin.pencatatankalori.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,14 +52,16 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ralvin.pencatatankalori.data.database.entities.ActivityLog
+import com.ralvin.pencatatankalori.data.database.entities.ActivityType
+import com.ralvin.pencatatankalori.ui.components.AddActivityButtons
 import com.ralvin.pencatatankalori.ui.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.ui.components.LogType
 import com.ralvin.pencatatankalori.ui.theme.PencatatanKaloriTheme
 import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
-import com.ralvin.pencatatankalori.data.database.entities.ActivityLog
-import com.ralvin.pencatatankalori.data.database.entities.ActivityType
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun OverviewScreen(
@@ -44,20 +71,17 @@ fun OverviewScreen(
     var modalType by remember { mutableStateOf(LogType.FOOD) }
     var editData by remember { mutableStateOf<ActivityLog?>(null) }
 
-    // Collect data from ViewModel
     val overviewData by viewModel.overviewData.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
     val currentDate = SimpleDateFormat("EEEE, dd MMMM", Locale.getDefault()).format(Date())
     
-    // Get data from ViewModel or use defaults
     val todayConsumedCalorie = overviewData?.caloriesConsumed ?: 0
     val todayBurnedCalorie = overviewData?.caloriesBurned ?: 0
     val dailyCalorieTarget = overviewData?.user?.dailyCalorieTarget ?: 2000
     val remainingCalories = overviewData?.remainingCalories ?: dailyCalorieTarget
     val activities = overviewData?.todayActivities ?: emptyList()
     
-    // BMI calculations
     val user = overviewData?.user
     val bmiValue = user?.let {
         val heightInMeters = it.height / 100
@@ -75,12 +99,11 @@ fun OverviewScreen(
     val bmiRange = "18.5 - 24.9"
     val bmiStatusColor = when {
         bmiValue == 0f -> Color.Gray
-        bmiValue < 18.5 -> Color(0xFF2196F3) // Blue
-        bmiValue < 25 -> Color(0xFF4CAF50) // Green
-        bmiValue < 30 -> Color(0xFFFF9800) // Orange
-        else -> Color(0xFFF44336) // Red
+        bmiValue < 18.5 -> Color(0xFF2196F3)
+        bmiValue < 25 -> Color(0xFF4CAF50)
+        bmiValue < 30 -> Color(0xFFFF9800)
+        else -> Color(0xFFF44336)
     }
-    // Show loading or error states
     val currentUiState = uiState
     when (currentUiState) {
         is com.ralvin.pencatatankalori.viewmodel.OverviewUiState.Loading -> {
@@ -110,14 +133,12 @@ fun OverviewScreen(
             return
         }
         else -> {
-            // Continue with success state
         }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(all = 16.dp)
     ) {
         Card(
@@ -147,7 +168,6 @@ fun OverviewScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // BMI Card
         BmiCard(
             bmiValue = bmiValue,
             bmiStatus = bmiStatus,
@@ -160,54 +180,46 @@ fun OverviewScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Button(
-                onClick = {
-                    modalType = LogType.FOOD
-                    editData = null
-                    showLogModal = true
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Food")
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add New Food Data")
+        AddActivityButtons(
+            onAddFood = {
+                modalType = LogType.FOOD
+                editData = null
+                showLogModal = true
+            },
+            onAddWorkout = {
+                modalType = LogType.WORKOUT
+                editData = null
+                showLogModal = true
             }
-            Button(
-                onClick = {
-                    modalType = LogType.WORKOUT
-                    editData = null
-                    showLogModal = true
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Workout")
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add Workout Data")
-            }
-        }
+        )
         Spacer(modifier = Modifier.height(24.dp))
+        
         Text(
             text = "Activities:",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        
         if (activities.isEmpty()) {
-            Text(
-                text = "You haven't logged anything",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 16.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "You haven't logged anything",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
         } else {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                contentPadding = PaddingValues(vertical = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
                 items(activities) { activity ->
                      ActivityItemFromDB(
@@ -245,7 +257,6 @@ fun OverviewScreen(
                     
                     val currentEditData = editData
                     if (currentEditData != null) {
-                        // Update existing activity
                         val updatedActivity = currentEditData.copy(
                             calories = calories.toIntOrNull() ?: 0,
                             foodName = if (modalType == LogType.FOOD) name else currentEditData.foodName,
@@ -257,7 +268,6 @@ fun OverviewScreen(
                         )
                         viewModel.updateActivity(updatedActivity)
                     } else {
-                        // Create new activity
                         when (modalType) {
                             LogType.FOOD -> {
                                 viewModel.logFood(
@@ -278,11 +288,11 @@ fun OverviewScreen(
                         }
                     }
                     showLogModal = false
-                    editData = null // Reset edit data
+                    editData = null
                 },
                 onCancel = { 
                     showLogModal = false 
-                    editData = null // Reset edit data when cancelling
+                    editData = null
                 },
                 onDelete = if (editData != null) {
                     {
@@ -291,7 +301,7 @@ fun OverviewScreen(
                             viewModel.deleteActivity(activity.id)
                         }
                         showLogModal = false
-                        editData = null // Reset edit data after deletion
+                        editData = null
                     }
                 } else null
             )
@@ -380,9 +390,6 @@ fun BmiCard(
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(1.dp))
-//                Text(
-//                    text = "Healthy Range: $bmiRange",
-//                    style = MaterialTheme.typography.bodyMedium,
 //                    color = MaterialTheme.colorScheme.onSurfaceVariant
 //                )
                 Text(
@@ -394,7 +401,6 @@ fun BmiCard(
         }
     }
     
-    // Weight Update Dialog
     if (showWeightDialog) {
         var newWeight by remember { mutableStateOf("") }
         
@@ -444,12 +450,13 @@ data class ActivityItemData(
     val detailForModal: String? = null
 )
 
+
 @Composable
 fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
     val isFood = activity.type == ActivityType.CONSUMPTION
     val icon = if (isFood) Icons.Default.Restaurant else Icons.Default.FitnessCenter
     val calories = activity.calories ?: 0
-    val calorieText = if (isFood) "+$calories Calories" else "-$calories Calories"
+    val calorieText = "$calories Calories"
     val description = when {
         isFood -> activity.foodName ?: "Food Item"
         else -> activity.workoutName ?: "Workout"
@@ -457,8 +464,8 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
     
     Card(
         modifier = Modifier
-            .width(150.dp)
-            .height(180.dp)
+            .fillMaxHeight()
+            .widthIn(min = 300.dp)
             .clickable { onClick(activity) }
     ) {
         Column(

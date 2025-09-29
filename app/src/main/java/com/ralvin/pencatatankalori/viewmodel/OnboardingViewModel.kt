@@ -22,16 +22,6 @@ class OnboardingViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<OnboardingUiState>(OnboardingUiState.Initial)
     val uiState: StateFlow<OnboardingUiState> = _uiState
 
-    val existingUserData = repository.getUserProfile()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
-
-    suspend fun checkUserExists(): Boolean {
-        return repository.isUserCreated()
-    }
 
     fun createUserData(
         name: String,

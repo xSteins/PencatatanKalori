@@ -1,23 +1,47 @@
 package com.ralvin.pencatatankalori.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.platform.LocalConfiguration
 
 data class LogItem(
     val id: Int,
@@ -33,15 +57,50 @@ enum class LogType {
 
 fun parseDetails(type: LogType, details: String): Triple<String, String, String> {
     return if (type == LogType.FOOD) {
-        // Example: "700 Calories | 60.5g Protein | 50.5g Carbs"
         val parts = details.split("|").map { it.trim() }
         val protein = parts.getOrNull(1)?.substringBefore("g")?.filter { it.isDigit() || it == '.' } ?: ""
         val carbs = parts.getOrNull(2)?.substringBefore("g")?.filter { it.isDigit() || it == '.' } ?: ""
-        val portion = "" // Not available in dummy, can be improved if needed
+        val portion = ""
         Triple(protein, carbs, portion)
     } else {
-        // Example: "4.5 km"
         Triple("", "", details)
+    }
+}
+
+@Composable
+fun AddActivityButtons(
+    onAddFood: () -> Unit,
+    onAddWorkout: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Button(
+            onClick = onAddFood,
+            modifier = Modifier
+                .weight(1f)
+                .height(56.dp),
+            shape = MaterialTheme.shapes.medium,
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "Add Food")
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Add Consumption Data")
+        }
+        Button(
+            onClick = onAddWorkout,
+            modifier = Modifier
+                .weight(1f)
+                .height(56.dp),
+            shape = MaterialTheme.shapes.medium,
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "Add Workout")
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Add Workout Data")
+        }
     }
 }
 
@@ -49,7 +108,9 @@ fun parseDetails(type: LogType, details: String): Triple<String, String, String>
 fun LogsDetailedModal(
     onDismissRequest: () -> Unit,
     date: String,
-    logs: List<LogItem>
+    logs: List<LogItem>,
+    onAddFood: () -> Unit = {},
+    onAddWorkout: () -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -76,19 +137,40 @@ fun LogsDetailedModal(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                // TODO: Add summary/calculation if needed
 
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .wrapContentHeight()
-                ) {
-                    items(logs) { item ->
-                        LogListItem(item = item, onEdit = {
-                            editLog = item
-                            showEditModal = true
-                        })
-                        Divider(color = Color.LightGray, thickness = 1.dp)
+                if (logs.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No activities recorded on this date.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 24.dp)
+                        )
+                        AddActivityButtons(
+                            onAddFood = onAddFood,
+                            onAddWorkout = onAddWorkout,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .wrapContentHeight()
+                    ) {
+                        items(logs) { item ->
+                            LogListItem(item = item, onEdit = {
+                                editLog = item
+                                showEditModal = true
+                            })
+                            Divider(color = Color.LightGray, thickness = 1.dp)
+                        }
                     }
                 }
 
@@ -119,12 +201,10 @@ fun LogsDetailedModal(
                 initialDuration = if (editLog!!.type == LogType.WORKOUT) portionOrDuration else "",
                 isEditMode = true,
                 onSubmit = { name, calories, protein, carbs, portion, duration ->
-                    // TODO: Save edited data
                     showEditModal = false
                 },
                 onCancel = { showEditModal = false },
                 onDelete = {
-                    // TODO: Implement delete functionality in history
                     showEditModal = false
                 }
             )
@@ -171,5 +251,19 @@ fun LogsDetailedModalPreview() {
             LogItem(2, LogType.WORKOUT, 600, "Jogging", "4.50km"),
             LogItem(3, LogType.FOOD, 1600, "Ribeye Steak", "600 Calories | 60.5g Protein | 50.5g Carbs")
         ))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LogsDetailedModalEmptyPreview() {
+    MaterialTheme {
+        LogsDetailedModal(
+            onDismissRequest = {/*do nothing*/}, 
+            date = "Sunday, 28 September 2025", 
+            logs = emptyList(),
+            onAddFood = {/*do nothing*/},
+            onAddWorkout = {/*do nothing*/}
+        )
     }
 }

@@ -79,7 +79,6 @@ fun CalorieAdjustmentDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Preset buttons
                 Text(
                     text = "Quick Presets:",
                     style = MaterialTheme.typography.bodyMedium,
@@ -113,7 +112,6 @@ fun CalorieAdjustmentDialog(
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Information card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -144,7 +142,6 @@ fun CalorieAdjustmentDialog(
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End

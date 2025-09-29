@@ -19,12 +19,8 @@ fun NavGraph(
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        modifier = modifier // Diterapkan ke NavHost
+        modifier = modifier
     ) {
-        // TODO: FIX ONBOARDING MODAL SUPAYA POP UP JIKA USERDATA BELUM ADA
-        // composable(Screen.Onboarding.route) { // bypass dulu
-        //     OnboardingScreen(onOnboardingComplete = { /* bypass dulu */ })
-        // }
         composable(Screen.Overview.route) {
             OverviewScreen()
         }

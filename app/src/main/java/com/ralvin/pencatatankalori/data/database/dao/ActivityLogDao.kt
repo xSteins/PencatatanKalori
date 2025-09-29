@@ -41,14 +41,12 @@ interface ActivityLogDao {
     @Query("SELECT COALESCE(SUM(calories), 0) FROM activity_log WHERE user_id = :userId AND type = :type AND DATE(timestamp/1000, 'unixepoch') = DATE('now')")
     suspend fun getTodayCaloriesBurned(userId: String, type: ActivityType = ActivityType.WORKOUT): Int
     
-    // Calculate calories for specific date
     @Query("SELECT COALESCE(SUM(calories), 0) FROM activity_log WHERE user_id = :userId AND type = :type AND DATE(timestamp/1000, 'unixepoch') = DATE(:date/1000, 'unixepoch')")
     suspend fun getCaloriesConsumedForDate(userId: String, date: Date, type: ActivityType = ActivityType.CONSUMPTION): Int
 
     @Query("SELECT COALESCE(SUM(calories), 0) FROM activity_log WHERE user_id = :userId AND type = :type AND DATE(timestamp/1000, 'unixepoch') = DATE(:date/1000, 'unixepoch')")
     suspend fun getCaloriesBurnedForDate(userId: String, date: Date, type: ActivityType = ActivityType.WORKOUT): Int
     
-    // CRUD operations
     @Query("SELECT * FROM activity_log WHERE id = :id")
     suspend fun getActivityById(id: String): ActivityLog?
     
