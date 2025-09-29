@@ -13,7 +13,9 @@ import com.ralvin.pencatatankalori.ui.navigation.BottomNavBar
 import com.ralvin.pencatatankalori.ui.navigation.NavGraph
 import com.ralvin.pencatatankalori.ui.navigation.Screen
 import com.ralvin.pencatatankalori.ui.theme.PencatatanKaloriTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

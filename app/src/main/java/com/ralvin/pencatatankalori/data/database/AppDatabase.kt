@@ -6,17 +6,21 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.ralvin.pencatatankalori.data.database.converter.Converters
-import com.ralvin.pencatatankalori.data.database.dao.UserDataDao
-import com.ralvin.pencatatankalori.data.database.entities.UserData
+import com.ralvin.pencatatankalori.data.database.dao.*
+import com.ralvin.pencatatankalori.data.database.entities.*
 
 @Database(
-    entities = [UserData::class],
-    version = 1,
+    entities = [
+        UserData::class,
+        ActivityLog::class
+    ],
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDataDao(): UserDataDao
+    abstract fun activityLogDao(): ActivityLogDao
 
     companion object {
         @Volatile
@@ -28,7 +32,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "pencatatan_kalori_database"
-                ).build()
+                ).fallbackToDestructiveMigration() // TODO: FIX MIGRATION FOR PRODUCTION
+                .build()
                 INSTANCE = instance
                 instance
             }

@@ -1,4 +1,6 @@
 package com.ralvin.pencatatankalori.data.database.entities
 
-class DailyActivities {
-}
+enum class ActivityType {
+    WORKOUT,
+    CONSUMPTION
+} 

@@ -1,69 +1,79 @@
 package com.ralvin.pencatatankalori.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ralvin.pencatatankalori.data.database.AppDatabase
-//import com.ralvin.pencatatankalori.data.database.entity.UserData
-import com.ralvin.pencatatankalori.data.repository.UserDataRepository
+import com.ralvin.pencatatankalori.data.repository.CalorieRepository
+import com.ralvin.pencatatankalori.data.database.entities.UserData
 import com.ralvin.pencatatankalori.health.model.ActivityLevel
 import com.ralvin.pencatatankalori.health.model.GoalType
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class OnboardingViewModel(application: Application) : AndroidViewModel(application) {
-//    private val repository: UserDataRepository
-    
-    // Inisialisasi sementara untuk membuat ViewModel compile
-//    private val _existingUserData = MutableStateFlow<UserData?>(null)
-//    val existingUserData: StateFlow<UserData?> = _existingUserData
+@HiltViewModel
+class OnboardingViewModel @Inject constructor(
+    private val repository: CalorieRepository
+) : ViewModel() {
 
-    init {
-//        val database = AppDatabase.getDatabase(application)
-//        repository = UserDataRepository(database.userDataDao())
-        // TODO: implement ulang
-        /*
-        existingUserData = repository.getUserData()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = null
-            )
-        */
+    private val _uiState = MutableStateFlow<OnboardingUiState>(OnboardingUiState.Initial)
+    val uiState: StateFlow<OnboardingUiState> = _uiState
+
+    val existingUserData = repository.getUserProfile()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
+    suspend fun checkUserExists(): Boolean {
+        return repository.isUserCreated()
     }
-//
-//    private val _uiState = MutableStateFlow<OnboardingUiState>(OnboardingUiState.Initial)
-//    val uiState: StateFlow<OnboardingUiState> = _uiState
-//
-//    fun createUserData(
-//        age: Int,
-//        weight: Double,
-//        height: Double,
-//        isMale: Boolean,
-//        activityLevel: ActivityLevel,
-//        goalType: GoalType
-//    ) {
-//        viewModelScope.launch {
-//            try {
-//                repository.createUserData(
-//                    age = age,
-//                    weight = weight,
-//                    height = height,
-//                    isMale = isMale,
-//                    activityLevel = activityLevel,
-//                    goalType = goalType
-//                )
-//                _uiState.value = OnboardingUiState.Success
-//            } catch (e: Exception) {
-//                _uiState.value = OnboardingUiState.Error(e.message ?: "Unknown error occurred")
-//            }
-//        }
-//    }
+
+    fun createUserData(
+        name: String,
+        age: Int,
+        gender: String,
+        weight: Float,
+        height: Float,
+        activityLevel: ActivityLevel,
+        goalType: GoalType,
+        dailyCalorieTarget: Int
+    ) {
+        viewModelScope.launch {
+            try {
+                _uiState.value = OnboardingUiState.Loading
+                
+                val userData = UserData(
+                    name = name,
+                    age = age,
+                    gender = gender,
+                    weight = weight,
+                    height = height,
+                    activityLevel = activityLevel,
+                    goalType = goalType,
+                    dailyCalorieTarget = dailyCalorieTarget
+                )
+                
+                repository.createUser(userData)
+                _uiState.value = OnboardingUiState.Success
+            } catch (e: Exception) {
+                _uiState.value = OnboardingUiState.Error(e.message ?: "Unknown error occurred")
+            }
+        }
+    }
+
+    fun resetUiState() {
+        _uiState.value = OnboardingUiState.Initial
+    }
 }
 
 sealed class OnboardingUiState {
     object Initial : OnboardingUiState()
+    object Loading : OnboardingUiState()
     object Success : OnboardingUiState()
     data class Error(val message: String) : OnboardingUiState()
 }

@@ -9,14 +9,42 @@ class MifflinModel {
                 (10 * weight) + (6.25 * height) - (5 * age) - 161
             }
         }
+        // TODO: add flexibility for +- min-max calorie based on actual consumption, add UI modal to adjust this
+        private var granularityValue = 500
+        fun adjustTargetCalorie(newValue: Int){
+            this.granularityValue = newValue
+        }
+        
+        fun getGranularityValue(): Int {
+            return granularityValue
+        }
 
         fun calculateDailyCaloriesTarget(rmr: Double, activityLevel: ActivityLevel, goalType: GoalType): Double {
             val baseCalories = rmr * activityLevel.multiplier
             
             return when (goalType) {
-                GoalType.LOSE_WEIGHT -> baseCalories - 500
-                GoalType.GAIN_WEIGHT -> baseCalories + 500
+                GoalType.LOSE_WEIGHT -> baseCalories - granularityValue
+                GoalType.GAIN_WEIGHT -> baseCalories + granularityValue
             }
+        }
+        
+        // Convenience method that combines RMR calculation and daily calories target
+        fun calculateDailyCalories(
+            weight: Float,
+            height: Float,
+            age: Int,
+            isMale: Boolean,
+            activityLevel: ActivityLevel,
+            goalType: GoalType
+        ): Int {
+            val rmr = calculateRMR(
+                weight = weight.toDouble(),
+                height = height.toDouble(),
+                age = age,
+                isMale = isMale
+            )
+            val dailyCaloriesTarget = calculateDailyCaloriesTarget(rmr, activityLevel, goalType)
+            return dailyCaloriesTarget.toInt()
         }
     }
 } 

@@ -117,11 +117,16 @@ fun LogsDetailedModal(
                 initialCarbs = if (editLog!!.type == LogType.FOOD) carbs else "",
                 initialPortion = if (editLog!!.type == LogType.FOOD) portionOrDuration else "",
                 initialDuration = if (editLog!!.type == LogType.WORKOUT) portionOrDuration else "",
+                isEditMode = true,
                 onSubmit = { name, calories, protein, carbs, portion, duration ->
                     // TODO: Save edited data
                     showEditModal = false
                 },
-                onCancel = { showEditModal = false }
+                onCancel = { showEditModal = false },
+                onDelete = {
+                    // TODO: Implement delete functionality in history
+                    showEditModal = false
+                }
             )
         }
     }

@@ -28,6 +28,7 @@ fun AddOrEditLogModal(
     initialCarbs: String = "",
     initialPortion: String = "",
     initialDuration: String = "",
+    isEditMode: Boolean = false,
     onSubmit: (
         name: String,
         calories: String,
@@ -36,7 +37,8 @@ fun AddOrEditLogModal(
         portion: String?,
         duration: String?
     ) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onDelete: (() -> Unit)? = null
 ) {
     var name by remember { mutableStateOf(initialName) }
     var calories by remember { mutableStateOf(initialCalories) }
@@ -63,7 +65,7 @@ fun AddOrEditLogModal(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
+                    .height(80.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
@@ -71,11 +73,11 @@ fun AddOrEditLogModal(
                 Icon(
                     if (type == LogType.FOOD) Icons.Filled.Restaurant else Icons.Filled.FitnessCenter,
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(40.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = name,
@@ -133,10 +135,10 @@ fun AddOrEditLogModal(
                     singleLine = true
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
                     onClick = onCancel,
@@ -164,6 +166,23 @@ fun AddOrEditLogModal(
                     Icon(Icons.Filled.Check, contentDescription = "Submit")
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Save")
+                }
+            }
+            
+            // Delete button (only show in edit mode)
+            if (isEditMode && onDelete != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onDelete,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(Icons.Filled.Delete, contentDescription = "Delete")
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Delete Activity")
                 }
             }
         }
