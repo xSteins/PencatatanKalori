@@ -46,11 +46,26 @@ class OverviewViewModel @Inject constructor(
             val burned = activities.filter { it.type == com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT }
                 .sumOf { it.calories ?: 0 }
             
+            // Use consolidated MifflinModel for calorie calculations
+            val remainingCalories = com.ralvin.pencatatankalori.health.model.MifflinModel.calculateRemainingCalories(
+                dailyCalorieTarget = userData.dailyCalorieTarget,
+                caloriesConsumed = consumed,
+                caloriesBurned = burned,
+                goalType = userData.goalType
+            )
+            
+            val netCalories = com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
+                caloriesConsumed = consumed,
+                caloriesBurned = burned,
+                goalType = userData.goalType
+            )
+            
             OverviewData(
                 user = userData,
                 caloriesConsumed = consumed,
                 caloriesBurned = burned,
-                remainingCalories = userData.dailyCalorieTarget - consumed + burned,
+                remainingCalories = remainingCalories,
+                netCalories = netCalories,
                 todayActivities = activities
             )
         }
@@ -80,20 +95,20 @@ class OverviewViewModel @Inject constructor(
         }
     }
 
-    fun logFood(foodName: String, calories: Int, protein: Float, carbs: Float, portion: String) {
+    fun logFood(foodName: String, calories: Int, protein: Float, carbs: Float, portion: String, pictureId: String? = null) {
         viewModelScope.launch {
             try {
-                repository.logFood(foodName, calories, protein, carbs, portion)
+                repository.logFood(foodName, calories, protein, carbs, portion, pictureId)
             } catch (e: Exception) {
                 _uiState.value = OverviewUiState.Error(e.message ?: "Failed to log food")
             }
         }
     }
 
-    fun logWorkout(workoutName: String, caloriesBurned: Int, duration: Int) {
+    fun logWorkout(workoutName: String, caloriesBurned: Int, duration: Int, pictureId: String? = null) {
         viewModelScope.launch {
             try {
-                repository.logWorkout(workoutName, caloriesBurned, duration)
+                repository.logWorkout(workoutName, caloriesBurned, duration, pictureId)
             } catch (e: Exception) {
                 _uiState.value = OverviewUiState.Error(e.message ?: "Failed to log workout")
             }
@@ -119,6 +134,28 @@ class OverviewViewModel @Inject constructor(
             }
         }
     }
+
+    fun savePicture(imagePath: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val pictureId = repository.savePicture(imagePath)
+                onSuccess(pictureId)
+            } catch (e: Exception) {
+                onError(e.message ?: "Failed to save picture")
+            }
+        }
+    }
+
+    fun getPicture(pictureId: String, onSuccess: (String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val picture = repository.getPicture(pictureId)
+                onSuccess(picture?.imagePath)
+            } catch (e: Exception) {
+                onSuccess(null)
+            }
+        }
+    }
 }
 
 data class OverviewData(
@@ -126,6 +163,7 @@ data class OverviewData(
     val caloriesConsumed: Int,
     val caloriesBurned: Int,
     val remainingCalories: Int,
+    val netCalories: Int,
     val todayActivities: List<ActivityLog>
 )
 

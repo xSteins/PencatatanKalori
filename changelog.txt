@@ -1,0 +1,41 @@
+# Changelog - Code Cleanup
+
+## Removed Unused Functions and Variables
+
+### CalorieRepository.kt
+- Removed unused function `getActivityById`
+- Removed unused function `getTodayNetCalories`
+- Removed unused function `getRemainingCalories`
+- Removed unused function `getCaloriesConsumedForDate`
+- Removed unused function `getCaloriesBurnedForDate`
+- Removed unused function `getActivitiesByType`
+- Removed unused function `setDummyDataEnabled`
+- Removed unused function `getDummyUserProfile`
+- Removed unused function `getDummyActivities`
+
+### HistoryViewModel.kt
+- Removed unused property `selectedDate`
+- Removed unused function `getNetCaloriesForDate`
+- Removed unused function `getActivitiesForPeriod`
+- Removed unused function `deleteActivity`
+- Removed unused function `updateActivity`
+
+### OnboardingViewModel.kt
+- Removed unused property `existingUserData`
+- Removed unused function `checkUserExists`
+
+### AppDatabase.kt
+- Removed unused companion object with `getDatabase` function
+
+## Removed Unused Resources
+
+### colors.xml
+- Removed unused color resources:
+  - purple_200
+  - purple_500
+  - purple_700
+  - teal_200
+  - teal_700
+  - black
+  - white
+

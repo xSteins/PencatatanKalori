@@ -1,6 +1,10 @@
 package com.ralvin.pencatatankalori.ui.components
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,8 +17,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import java.io.File
+import java.io.FileOutputStream
+import java.util.UUID
 
 @Composable
 fun AddOrEditLogModal(
@@ -25,6 +36,7 @@ fun AddOrEditLogModal(
     initialCarbs: String = "",
     initialPortion: String = "",
     initialDuration: String = "",
+    initialImagePath: String? = null,
     isEditMode: Boolean = false,
     onSubmit: (
         name: String,
@@ -32,7 +44,8 @@ fun AddOrEditLogModal(
         protein: String?,
         carbs: String?,
         portion: String?,
-        duration: String?
+        duration: String?,
+        imagePath: String?
     ) -> Unit,
     onCancel: () -> Unit,
     onDelete: (() -> Unit)? = null
@@ -43,6 +56,31 @@ fun AddOrEditLogModal(
     var carbs by remember { mutableStateOf(initialCarbs) }
     var portion by remember { mutableStateOf(initialPortion) }
     var duration by remember { mutableStateOf(initialDuration) }
+    var selectedImagePath by remember { mutableStateOf(initialImagePath) }
+    
+    val context = LocalContext.current
+    
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val fileName = "${UUID.randomUUID()}.jpg"
+                val storageDir = File(context.filesDir, "StoredImage")
+                if (!storageDir.exists()) {
+                    storageDir.mkdirs()
+                }
+                val file = File(storageDir, fileName)
+                val outputStream = FileOutputStream(file)
+                inputStream?.copyTo(outputStream)
+                inputStream?.close()
+                outputStream.close()
+                selectedImagePath = file.absolutePath
+            } catch (e: Exception) {
+            }
+        }
+    }
 
     Card(
         modifier = Modifier
@@ -62,17 +100,72 @@ fun AddOrEditLogModal(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .height(120.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .clickable { imagePickerLauncher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    if (type == LogType.FOOD) Icons.Filled.Restaurant else Icons.Filled.FitnessCenter,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
+                if (selectedImagePath != null) {
+                    val imageModel = if (selectedImagePath!!.startsWith("android.resource://")) {
+                        val assetPath = selectedImagePath!!.substringAfter("assets/")
+                        "file:///android_asset/$assetPath"
+                    } else {
+                        File(selectedImagePath!!)
+                    }
+                    
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(imageModel)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Selected image",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp)
+                            .size(24.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Filled.CameraAlt,
+                            contentDescription = "Change photo",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                } else {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Filled.CameraAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (isEditMode) "Replace Photo" else "Add Photo",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Icon(
+                            if (type == LogType.FOOD) Icons.Filled.Restaurant else Icons.Filled.FitnessCenter,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -154,7 +247,8 @@ fun AddOrEditLogModal(
                             if (type == LogType.FOOD) protein else null,
                             if (type == LogType.FOOD) carbs else null,
                             if (type == LogType.FOOD) portion else null,
-                            if (type == LogType.WORKOUT) duration else null
+                            if (type == LogType.WORKOUT) duration else null,
+                            selectedImagePath
                         )
                     },
                     modifier = Modifier.weight(1f),

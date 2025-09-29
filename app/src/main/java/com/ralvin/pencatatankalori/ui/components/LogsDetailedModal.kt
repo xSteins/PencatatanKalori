@@ -9,12 +9,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
@@ -42,13 +47,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
+import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
 
 data class LogItem(
     val id: Int,
     val type: LogType,
     val calories: Int,
     val name: String,
-    val details: String
+    val details: String,
+    val pictureId: String? = null,
+    val activityId: String? = null
 )
 
 enum class LogType {
@@ -110,7 +120,9 @@ fun LogsDetailedModal(
     date: String,
     logs: List<LogItem>,
     onAddFood: () -> Unit = {},
-    onAddWorkout: () -> Unit = {}
+    onAddWorkout: () -> Unit = {},
+    overviewViewModel: OverviewViewModel = hiltViewModel(),
+    historyViewModel: HistoryViewModel = hiltViewModel()
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -168,7 +180,7 @@ fun LogsDetailedModal(
                             LogListItem(item = item, onEdit = {
                                 editLog = item
                                 showEditModal = true
-                            })
+                            }, viewModel = overviewViewModel)
                             Divider(color = Color.LightGray, thickness = 1.dp)
                         }
                     }
@@ -190,6 +202,14 @@ fun LogsDetailedModal(
 
     if (showEditModal && editLog != null) {
         val (protein, carbs, portionOrDuration) = parseDetails(editLog!!.type, editLog!!.details)
+        var initialImagePath by remember { mutableStateOf<String?>(null) }
+        
+        editLog!!.pictureId?.let { pictureId ->
+            overviewViewModel.getPicture(pictureId) { path ->
+                initialImagePath = path
+            }
+        }
+        
         Dialog(onDismissRequest = { showEditModal = false }) {
             AddOrEditLogModal(
                 type = editLog!!.type,
@@ -199,12 +219,59 @@ fun LogsDetailedModal(
                 initialCarbs = if (editLog!!.type == LogType.FOOD) carbs else "",
                 initialPortion = if (editLog!!.type == LogType.FOOD) portionOrDuration else "",
                 initialDuration = if (editLog!!.type == LogType.WORKOUT) portionOrDuration else "",
+                initialImagePath = initialImagePath,
                 isEditMode = true,
-                onSubmit = { name, calories, protein, carbs, portion, duration ->
+                onSubmit = { name, calories, protein, carbs, portion, duration, imagePath ->
+                    val activityId = editLog!!.activityId
+                    if (activityId != null) {
+                        if (imagePath != null && imagePath != initialImagePath) {
+                            historyViewModel.savePicture(imagePath,
+                                onSuccess = { pictureId ->
+                                    historyViewModel.updateActivity(
+                                        activityId = activityId,
+                                        name = name,
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        protein = protein?.toFloatOrNull(),
+                                        carbs = carbs?.toFloatOrNull(),
+                                        portion = portion,
+                                        duration = duration?.toIntOrNull(),
+                                        pictureId = pictureId
+                                    )
+                                },
+                                onError = { _ ->
+                                    historyViewModel.updateActivity(
+                                        activityId = activityId,
+                                        name = name,
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        protein = protein?.toFloatOrNull(),
+                                        carbs = carbs?.toFloatOrNull(),
+                                        portion = portion,
+                                        duration = duration?.toIntOrNull(),
+                                        pictureId = editLog!!.pictureId
+                                    )
+                                }
+                            )
+                        } else {
+                            historyViewModel.updateActivity(
+                                activityId = activityId,
+                                name = name,
+                                calories = calories.toIntOrNull() ?: 0,
+                                protein = protein?.toFloatOrNull(),
+                                carbs = carbs?.toFloatOrNull(),
+                                portion = portion,
+                                duration = duration?.toIntOrNull(),
+                                pictureId = if (imagePath != null) imagePath else editLog!!.pictureId
+                            )
+                        }
+                    }
                     showEditModal = false
                 },
                 onCancel = { showEditModal = false },
                 onDelete = {
+                    val activityId = editLog!!.activityId
+                    if (activityId != null) {
+                        historyViewModel.deleteActivity(activityId)
+                    }
                     showEditModal = false
                 }
             )
@@ -213,13 +280,46 @@ fun LogsDetailedModal(
 }
 
 @Composable
-fun LogListItem(item: LogItem, onEdit: () -> Unit) {
+fun LogListItem(item: LogItem, onEdit: () -> Unit, viewModel: OverviewViewModel = hiltViewModel()) {
+    var imagePath by remember { mutableStateOf<String?>(null) }
+    
+    item.pictureId?.let { pictureId ->
+        viewModel.getPicture(pictureId) { path ->
+            imagePath = path
+        }
+    }
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Image section
+        val currentImagePath = imagePath
+        if (currentImagePath != null) {
+            val imageModel = if (currentImagePath.startsWith("android.resource://")) {
+                val assetPath = currentImagePath.substringAfter("assets/")
+                "file:///android_asset/$assetPath"
+            } else {
+                java.io.File(currentImagePath)
+            }
+            
+            coil.compose.AsyncImage(
+                model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    .data(imageModel)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = item.name,
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                fallback = androidx.compose.ui.res.painterResource(android.R.drawable.ic_menu_gallery)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+        }
+        
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = if (item.type == LogType.FOOD) "${item.calories} Calories Added" else "${item.calories} Calories Burned",
@@ -247,9 +347,9 @@ fun LogListItem(item: LogItem, onEdit: () -> Unit) {
 fun LogsDetailedModalPreview() {
     MaterialTheme {
         LogsDetailedModal(onDismissRequest = {/*do nothing*/}, date = "Thursday, 24th April", logs = listOf(
-            LogItem(1, LogType.FOOD, 1600, "Ribeye Steak", "600 Calories | 60.5g Protein | 50.5g Carbs"),
-            LogItem(2, LogType.WORKOUT, 600, "Jogging", "4.50km"),
-            LogItem(3, LogType.FOOD, 1600, "Ribeye Steak", "600 Calories | 60.5g Protein | 50.5g Carbs")
+            LogItem(1, LogType.FOOD, 1600, "Ribeye Steak", "600 Calories | 60.5g Protein | 50.5g Carbs", activityId = "sample-id-1"),
+            LogItem(2, LogType.WORKOUT, 600, "Jogging", "4.50km", activityId = "sample-id-2"),
+            LogItem(3, LogType.FOOD, 1600, "Ribeye Steak", "600 Calories | 60.5g Protein | 50.5g Carbs", activityId = "sample-id-3")
         ))
     }
 }

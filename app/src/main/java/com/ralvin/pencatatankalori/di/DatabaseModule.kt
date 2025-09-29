@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.ralvin.pencatatankalori.data.database.AppDatabase
 import com.ralvin.pencatatankalori.data.database.dao.ActivityLogDao
+import com.ralvin.pencatatankalori.data.database.dao.ActivityPicturesDao
 import com.ralvin.pencatatankalori.data.database.dao.UserDataDao
 import dagger.Module
 import dagger.Provides
@@ -37,6 +38,11 @@ object DatabaseModule {
     @Provides
     fun provideActivityLogDao(database: AppDatabase): ActivityLogDao {
         return database.activityLogDao()
+    }
+
+    @Provides
+    fun provideActivityPicturesDao(database: AppDatabase): ActivityPicturesDao {
+        return database.activityPicturesDao()
     }
 }
 

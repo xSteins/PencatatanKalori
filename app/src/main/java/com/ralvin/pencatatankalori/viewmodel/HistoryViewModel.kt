@@ -79,7 +79,19 @@ class HistoryViewModel @Inject constructor(
             val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }.sumOf { it.calories ?: 0 }
             val burned = activitiesForDay.filter { it.type == ActivityType.WORKOUT }.sumOf { it.calories ?: 0 }
             
-            dayDataList.add(DayData(date, consumed, burned, consumed - burned))
+            // Use MifflinModel for consistent net calorie calculation
+            val profile = userProfile.value
+            val netCalories = if (profile != null) {
+                com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
+                    caloriesConsumed = consumed,
+                    caloriesBurned = burned,
+                    goalType = profile.goalType
+                )
+            } else {
+                consumed - burned
+            }
+            
+            dayDataList.add(DayData(date, consumed, burned, netCalories))
         }
         
         return dayDataList
@@ -109,11 +121,87 @@ class HistoryViewModel @Inject constructor(
             val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }.sumOf { it.calories ?: 0 }
             val burned = activitiesForDay.filter { it.type == ActivityType.WORKOUT }.sumOf { it.calories ?: 0 }
             
-            dayDataList.add(DayData(date, consumed, burned, consumed - burned))
+            // Use MifflinModel for consistent net calorie calculation
+            val profile = userProfile.value
+            val netCalories = if (profile != null) {
+                com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
+                    caloriesConsumed = consumed,
+                    caloriesBurned = burned,
+                    goalType = profile.goalType
+                )
+            } else {
+                consumed - burned
+            }
+            
+            dayDataList.add(DayData(date, consumed, burned, netCalories))
             currentDate.add(Calendar.DAY_OF_YEAR, 1)
         }
         
         return dayDataList.reversed()
+    }
+
+    fun logFood(foodName: String, calories: Int, protein: Float, carbs: Float, portion: String, pictureId: String? = null) {
+        viewModelScope.launch {
+            try {
+                repository.logFood(foodName, calories, protein, carbs, portion, pictureId)
+            } catch (e: Exception) {
+                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to log food")
+            }
+        }
+    }
+
+    fun logWorkout(workoutName: String, caloriesBurned: Int, duration: Int, pictureId: String? = null) {
+        viewModelScope.launch {
+            try {
+                repository.logWorkout(workoutName, caloriesBurned, duration, pictureId)
+            } catch (e: Exception) {
+                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to log workout")
+            }
+        }
+    }
+
+    fun savePicture(imagePath: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val pictureId = repository.savePicture(imagePath)
+                onSuccess(pictureId)
+            } catch (e: Exception) {
+                onError(e.message ?: "Failed to save picture")
+            }
+        }
+    }
+
+    fun updateActivity(activityId: String, name: String, calories: Int, protein: Float?, carbs: Float?, portion: String?, duration: Int?, pictureId: String?) {
+        viewModelScope.launch {
+            try {
+                val existingActivity = allActivities.value.find { it.id == activityId }
+                if (existingActivity != null) {
+                    val updatedActivity = existingActivity.copy(
+                        foodName = if (existingActivity.type == ActivityType.CONSUMPTION) name else existingActivity.foodName,
+                        workoutName = if (existingActivity.type == ActivityType.WORKOUT) name else existingActivity.workoutName,
+                        calories = calories,
+                        protein = protein,
+                        carbs = carbs,
+                        portion = portion,
+                        duration = duration,
+                        pictureId = pictureId
+                    )
+                    repository.updateActivity(updatedActivity)
+                }
+            } catch (e: Exception) {
+                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to update activity")
+            }
+        }
+    }
+
+    fun deleteActivity(activityId: String) {
+        viewModelScope.launch {
+            try {
+                repository.deleteActivity(activityId)
+            } catch (e: Exception) {
+                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to delete activity")
+            }
+        }
     }
 }
 

@@ -229,8 +229,8 @@ fun ProfileSettings(
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.Tune,
-                                    label = "Calorie Target Value",
-                                    value = "${MifflinModel.getGranularityValue()} cal",
+                                    label = "Calorie Strategy",
+                                    value = "${MifflinModel.getCurrentStrategy().displayName} (${MifflinModel.getGranularityValue()} cal)",
                                     onClick = { showCalorieAdjustmentDialog = true },
                                     isEditable = true
                                 )
@@ -323,12 +323,15 @@ fun ProfileSettings(
         }
 
         if (showCalorieAdjustmentDialog) {
-            CalorieAdjustmentDialog(
-                onDismiss = { showCalorieAdjustmentDialog = false },
-                onSave = { newValue ->
-                    MifflinModel.adjustTargetCalorie(newValue)
-                }
-            )
+            userProfile?.let { profile ->
+                CalorieAdjustmentDialog(
+                    onDismiss = { showCalorieAdjustmentDialog = false },
+                    onSave = { newValue ->
+                        MifflinModel.adjustTargetCalorie(newValue)
+                    },
+                    goalType = profile.goalType
+                )
+            }
         }
     }
 }

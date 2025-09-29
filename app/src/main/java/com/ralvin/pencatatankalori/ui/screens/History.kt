@@ -63,7 +63,9 @@ fun ActivityLog.toLogItem(): LogItem {
             ActivityType.WORKOUT -> {
                 "${this.duration ?: 0} minutes"
             }
-        }
+        },
+        pictureId = this.pictureId,
+        activityId = this.id
     )
 }
 @OptIn(ExperimentalMaterial3Api::class)
@@ -223,7 +225,72 @@ fun History(
                     if (showAddModal) {
                         AddOrEditLogModal(
                             type = addModalType,
-                            onSubmit = { name, calories, protein, carbs, portion, duration ->
+                            onSubmit = { name, calories, protein, carbs, portion, duration, imagePath ->
+                                if (imagePath != null) {
+                                    viewModel.savePicture(imagePath,
+                                        onSuccess = { pictureId ->
+                                            when (addModalType) {
+                                                LogType.FOOD -> {
+                                                    viewModel.logFood(
+                                                        foodName = name,
+                                                        calories = calories.toIntOrNull() ?: 0,
+                                                        protein = protein?.toFloatOrNull() ?: 0f,
+                                                        carbs = carbs?.toFloatOrNull() ?: 0f,
+                                                        portion = portion ?: "",
+                                                        pictureId = pictureId
+                                                    )
+                                                }
+                                                LogType.WORKOUT -> {
+                                                    viewModel.logWorkout(
+                                                        workoutName = name,
+                                                        caloriesBurned = calories.toIntOrNull() ?: 0,
+                                                        duration = duration?.toIntOrNull() ?: 0,
+                                                        pictureId = pictureId
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        onError = { error ->
+                                            when (addModalType) {
+                                                LogType.FOOD -> {
+                                                    viewModel.logFood(
+                                                        foodName = name,
+                                                        calories = calories.toIntOrNull() ?: 0,
+                                                        protein = protein?.toFloatOrNull() ?: 0f,
+                                                        carbs = carbs?.toFloatOrNull() ?: 0f,
+                                                        portion = portion ?: ""
+                                                    )
+                                                }
+                                                LogType.WORKOUT -> {
+                                                    viewModel.logWorkout(
+                                                        workoutName = name,
+                                                        caloriesBurned = calories.toIntOrNull() ?: 0,
+                                                        duration = duration?.toIntOrNull() ?: 0
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    when (addModalType) {
+                                        LogType.FOOD -> {
+                                            viewModel.logFood(
+                                                foodName = name,
+                                                calories = calories.toIntOrNull() ?: 0,
+                                                protein = protein?.toFloatOrNull() ?: 0f,
+                                                carbs = carbs?.toFloatOrNull() ?: 0f,
+                                                portion = portion ?: ""
+                                            )
+                                        }
+                                        LogType.WORKOUT -> {
+                                            viewModel.logWorkout(
+                                                workoutName = name,
+                                                caloriesBurned = calories.toIntOrNull() ?: 0,
+                                                duration = duration?.toIntOrNull() ?: 0
+                                            )
+                                        }
+                                    }
+                                }
                                 showAddModal = false
                             },
                             onCancel = { showAddModal = false }
@@ -303,9 +370,9 @@ fun HistoryPreview() {
         }
         val logsPerDay = days.mapIndexed { idx, date ->
             date to listOf(
-                LogItem(idx * 10 + 1, LogType.FOOD, 600 + idx * 100, "Ribeye Steak", "${600 + idx * 100} Calories | 60.5g Protein | 50.5g Carbs"),
-                LogItem(idx * 10 + 2, LogType.WORKOUT, 400 + idx * 50, "Jogging", "${4.5 + idx} km"),
-                LogItem(idx * 10 + 3, LogType.FOOD, 500 + idx * 80, "Chicken Salad", "${500 + idx * 80} Calories | 30g Protein | 20g Carbs")
+                LogItem(idx * 10 + 1, LogType.FOOD, 600 + idx * 100, "Ribeye Steak", "${600 + idx * 100} Calories | 60.5g Protein | 50.5g Carbs", activityId = "sample-id-${idx * 10 + 1}"),
+                LogItem(idx * 10 + 2, LogType.WORKOUT, 400 + idx * 50, "Jogging", "${4.5 + idx} km", activityId = "sample-id-${idx * 10 + 2}"),
+                LogItem(idx * 10 + 3, LogType.FOOD, 500 + idx * 80, "Chicken Salad", "${500 + idx * 80} Calories | 30g Protein | 20g Carbs", activityId = "sample-id-${idx * 10 + 3}")
             )
         }
 

@@ -34,5 +34,8 @@ data class ActivityLog(
     
     // workout specific column
     @ColumnInfo(name = "workout_name") val workoutName: String? = null,
-    @ColumnInfo(name = "duration") val duration: Int? = null
+    @ColumnInfo(name = "duration") val duration: Int? = null,
+    
+    // picture reference
+    @ColumnInfo(name = "picture_id") val pictureId: String? = null
 ) 

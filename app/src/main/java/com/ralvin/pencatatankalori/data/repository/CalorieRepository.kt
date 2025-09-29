@@ -1,8 +1,10 @@
 package com.ralvin.pencatatankalori.data.repository
 
 import com.ralvin.pencatatankalori.data.database.dao.ActivityLogDao
+import com.ralvin.pencatatankalori.data.database.dao.ActivityPicturesDao
 import com.ralvin.pencatatankalori.data.database.dao.UserDataDao
 import com.ralvin.pencatatankalori.data.database.entities.ActivityLog
+import com.ralvin.pencatatankalori.data.database.entities.ActivityPicture
 import com.ralvin.pencatatankalori.data.database.entities.ActivityType
 import com.ralvin.pencatatankalori.data.database.entities.UserData
 import com.ralvin.pencatatankalori.health.model.ActivityLevel
@@ -20,7 +22,8 @@ import javax.inject.Singleton
 @Singleton
 class CalorieRepository @Inject constructor(
     private val userDataDao: UserDataDao,
-    private val activityLogDao: ActivityLogDao
+    private val activityLogDao: ActivityLogDao,
+    private val activityPicturesDao: ActivityPicturesDao
 ) {
     
     private val _isDummyDataEnabled = MutableStateFlow(false)
@@ -57,7 +60,8 @@ class CalorieRepository @Inject constructor(
         calories: Int,
         protein: Float,
         carbs: Float,
-        portion: String
+        portion: String,
+        pictureId: String? = null
     ) {
         val user = getUserProfileOnce() ?: return
         val foodLog = ActivityLog(
@@ -68,7 +72,8 @@ class CalorieRepository @Inject constructor(
             calories = calories,
             protein = protein,
             carbs = carbs,
-            portion = portion
+            portion = portion,
+            pictureId = pictureId
         )
         activityLogDao.insertActivity(foodLog)
     }
@@ -76,7 +81,8 @@ class CalorieRepository @Inject constructor(
     suspend fun logWorkout(
         workoutName: String,
         caloriesBurned: Int,
-        duration: Int
+        duration: Int,
+        pictureId: String? = null
     ) {
         val user = getUserProfileOnce() ?: return
         val workoutLog = ActivityLog(
@@ -85,7 +91,8 @@ class CalorieRepository @Inject constructor(
             timestamp = Date(),
             calories = caloriesBurned,
             workoutName = workoutName,
-            duration = duration
+            duration = duration,
+            pictureId = pictureId
         )
         activityLogDao.insertActivity(workoutLog)
     }
@@ -99,6 +106,32 @@ class CalorieRepository @Inject constructor(
     suspend fun deleteActivity(activityId: String) {
         if (!_isDummyDataEnabled.value) {
             activityLogDao.deleteActivityById(activityId)
+        }
+    }
+    
+    suspend fun savePicture(imagePath: String): String {
+        if (_isDummyDataEnabled.value) {
+            return "dummy_picture_id"
+        }
+        val picture = ActivityPicture(imagePath = imagePath)
+        activityPicturesDao.insertPicture(picture)
+        return picture.id
+    }
+    
+    suspend fun getPicture(pictureId: String): ActivityPicture? {
+        if (_isDummyDataEnabled.value || pictureId.endsWith("_placeholder")) {
+            val imageName = pictureId.replace("_placeholder", "")
+            return ActivityPicture(
+                id = pictureId,
+                imagePath = "android.resource://com.ralvin.pencatatankalori/assets/PlaceholderImage/$imageName.jpg"
+            )
+        }
+        return activityPicturesDao.getPictureById(pictureId)
+    }
+    
+    suspend fun deletePicture(pictureId: String) {
+        if (!_isDummyDataEnabled.value) {
+            activityPicturesDao.deletePictureById(pictureId)
         }
     }
     
@@ -238,6 +271,8 @@ class CalorieRepository @Inject constructor(
                 calendar.add(Calendar.HOUR_OF_DAY, (8..20).random())
                 calendar.add(Calendar.MINUTE, (0..59).random())
                 
+                val foodImageId = "food${(1..3).random()}_placeholder"
+                
                 activities.add(ActivityLog(
                     userId = "1000",
                     type = ActivityType.CONSUMPTION,
@@ -246,7 +281,8 @@ class CalorieRepository @Inject constructor(
                     calories = calories,
                     protein = (calories * 0.15f / 4).toFloat(),
                     carbs = (calories * 0.55f / 4).toFloat(),
-                    portion = portion
+                    portion = portion,
+                    pictureId = foodImageId
                 ))
             }
             
@@ -267,13 +303,16 @@ class CalorieRepository @Inject constructor(
                     calendar.add(Calendar.HOUR_OF_DAY, (6..19).random())
                     calendar.add(Calendar.MINUTE, (0..59).random())
                     
+                    val workoutImageId = "workout${(1..2).random()}_placeholder"
+                    
                     activities.add(ActivityLog(
                         userId = "1000",
                         type = ActivityType.WORKOUT,
                         timestamp = calendar.time,
                         workoutName = name,
                         calories = calories,
-                        duration = duration
+                        duration = duration,
+                        pictureId = workoutImageId
                     ))
                 }
             }

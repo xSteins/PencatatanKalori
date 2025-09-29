@@ -1,15 +1,40 @@
 package com.ralvin.pencatatankalori.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.ralvin.pencatatankalori.health.model.CalorieStrategy
+import com.ralvin.pencatatankalori.health.model.GoalType
 import com.ralvin.pencatatankalori.health.model.MifflinModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -17,16 +42,20 @@ import com.ralvin.pencatatankalori.health.model.MifflinModel
 fun CalorieAdjustmentDialog(
     onDismiss: () -> Unit,
     onSave: (Int) -> Unit,
-    currentValue: Int = MifflinModel.getGranularityValue()
+    currentValue: Int = MifflinModel.getGranularityValue(),
+    goalType: GoalType
 ) {
-    var adjustmentValue by remember { mutableStateOf(currentValue.toString()) }
-    var showPresets by remember { mutableStateOf(false) }
-    
-    val isValid = adjustmentValue.isNotBlank() && 
-                  adjustmentValue.toIntOrNull() != null && 
-                  adjustmentValue.toInt() in 100..1000
+    var selectedStrategy by remember {
+        mutableStateOf(CalorieStrategy.fromGranularityValue(currentValue))
+    }
+    var baseAdjustment by remember {
+        mutableStateOf(currentValue.toString())
+    }
 
-    Dialog(onDismissRequest = onDismiss) {
+    // Validation for the base adjustment input
+    val isBaseAdjustmentValid = baseAdjustment.isNotEmpty() && baseAdjustment.toIntOrNull() != null
+
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -39,79 +68,79 @@ fun CalorieAdjustmentDialog(
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = "Adjust Calorie Target",
+                    text = "Calorie Strategy",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
+                Spacer(modifier = Modifier.height(8.dp))
+                
                 Text(
-                    text = "Customize how many calories to add/subtract from your base metabolism for weight goals.",
+                    text = "Pick how strict you want your calories for ${goalType.getDisplayName()}.\nEach option sets your base calorie adjustment and how much of your exercise calories you eat back.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 20.dp)
                 )
 
-                OutlinedTextField(
-                    value = adjustmentValue,
-                    onValueChange = { 
-                        if (it.isEmpty() || (it.toIntOrNull() != null && it.toInt() <= 1000)) {
-                            adjustmentValue = it
-                        }
-                    },
-                    label = { Text("Calorie Adjustment") },
-                    suffix = { Text("cal") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = !isValid,
-                    supportingText = {
-                        if (!isValid) {
-                            Text(
-                                text = "Please enter a value between 100-1000 calories",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        } else {
-                            Text("Recommended range: 300-700 calories")
-                        }
-                    }
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
                 Text(
-                    text = "Quick Presets:",
+                    text = "Adjustment Options:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CalorieStrategy.values().forEach { strategy ->
+                        StrategyChip(
+                            strategy = strategy,
+                            isSelected = selectedStrategy == strategy,
+                            onClick = { selectedStrategy = strategy }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Base Calorie Adjustment Input
+                Text(
+                    text = "Base Calorie Adjustment:",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                
-                Row(
+
+                OutlinedTextField(
+                    value = baseAdjustment,
+                    onValueChange = { newValue ->
+                        // Only allow numbers
+                        if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
+                            baseAdjustment = newValue
+                        }
+                    },
+                    label = { Text("Calories to ${if (goalType == GoalType.LOSE_WEIGHT) "subtract" else "add"} from TDEE") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PresetButton(
-                        text = "Conservative\n(300 cal)",
-                        value = 300,
-                        onClick = { adjustmentValue = "300" },
-                        modifier = Modifier.weight(1f)
-                    )
-                    PresetButton(
-                        text = "Moderate\n(500 cal)",
-                        value = 500,
-                        onClick = { adjustmentValue = "500" },
-                        modifier = Modifier.weight(1f)
-                    )
-                    PresetButton(
-                        text = "Aggressive\n(700 cal)",
-                        value = 700,
-                        onClick = { adjustmentValue = "700" },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
+                    isError = !isBaseAdjustmentValid && baseAdjustment.isNotEmpty(),
+                    supportingText = {
+                        if (!isBaseAdjustmentValid && baseAdjustment.isNotEmpty()) {
+                            Text("Please enter a valid number")
+                        }
+                    }
+                )
+
+                Text(
+                    text = "Your TDEE (Total Daily Energy Expenditure) is calculated using the Mifflin-St Jeor equation. " +
+                           "This value ${if (goalType == GoalType.LOSE_WEIGHT) "subtracts from" else "adds to"} your TDEE to create your ${if (goalType == GoalType.LOSE_WEIGHT) "deficit" else "surplus"}.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -122,18 +151,35 @@ fun CalorieAdjustmentDialog(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "How this affects your calorie target:",
+                            text = "${selectedStrategy.displayName} Plan",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(bottom = 4.dp)
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
+
+                        val baseText = if (selectedStrategy.granularityValue == 0) {
+                            "This plan uses your TDEE without additional base adjustment."
+                        } else {
+                            "This plan ${if (goalType == GoalType.LOSE_WEIGHT) "subtracts" else "adds"} ${selectedStrategy.granularityValue} calories from your TDEE."
+                        }
+
+                        val goalSpecificText = when (goalType) {
+                            GoalType.LOSE_WEIGHT -> {
+                                val lossPercentage = ((1.0 - selectedStrategy.weightLossExercisePercentage) * 100).toInt()
+                                "You'll eat back ${(selectedStrategy.weightLossExercisePercentage * 100).toInt()}% of exercise calories, creating an additional ${lossPercentage}% deficit for consistent fat loss while maintaining performance."
+                            }
+                            GoalType.GAIN_WEIGHT -> {
+                                val eatBackPercentage = (selectedStrategy.weightGainExercisePercentage * 100).toInt()
+                                if (selectedStrategy.weightGainAdditionalCalories > 0) {
+                                    "You'll eat back ${eatBackPercentage}% of exercise calories plus ${selectedStrategy.weightGainAdditionalCalories} additional calories for moderate surplus and muscle growth."
+                                } else {
+                                    "You'll eat back ${eatBackPercentage}% of exercise calories for conservative, lean muscle growth."
+                                }
+                            }
+                        }
+
                         Text(
-                            text = "• Weight Loss: Base calories - ${adjustmentValue.toIntOrNull() ?: currentValue}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "• Weight Gain: Base calories + ${adjustmentValue.toIntOrNull() ?: currentValue}",
+                            text = "$baseText $goalSpecificText",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -152,12 +198,11 @@ fun CalorieAdjustmentDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if (isValid) {
-                                onSave(adjustmentValue.toInt())
-                                onDismiss()
-                            }
+                            val customValue = baseAdjustment.toIntOrNull() ?: selectedStrategy.granularityValue
+                            onSave(customValue)
+                            onDismiss()
                         },
-                        enabled = isValid
+                        enabled = isBaseAdjustmentValid
                     ) {
                         Text("Save")
                     }
@@ -168,20 +213,34 @@ fun CalorieAdjustmentDialog(
 }
 
 @Composable
-private fun PresetButton(
-    text: String,
-    value: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun StrategyChip(
+    strategy: CalorieStrategy,
+    isSelected: Boolean,
+    onClick: () -> Unit
 ) {
-    OutlinedButton(
+    FilterChip(
         onClick = onClick,
-        modifier = modifier.height(56.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 2
-        )
-    }
+        label = {
+            Column {
+                Text(
+                    text = strategy.displayName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                val displayValue = if (strategy.granularityValue == 0) "0" else strategy.granularityValue
+                Text(
+                    text = "$displayValue cal base adjustment",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = strategy.description,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        selected = isSelected,
+        modifier = Modifier.fillMaxWidth()
+    )
 }

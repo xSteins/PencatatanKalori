@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,11 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -29,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -41,15 +45,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import java.io.File
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ralvin.pencatatankalori.data.database.entities.ActivityLog
@@ -59,6 +71,7 @@ import com.ralvin.pencatatankalori.ui.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.ui.components.LogType
 import com.ralvin.pencatatankalori.ui.theme.PencatatanKaloriTheme
 import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
+import com.ralvin.pencatatankalori.health.model.MifflinModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -80,7 +93,9 @@ fun OverviewScreen(
     val todayBurnedCalorie = overviewData?.caloriesBurned ?: 0
     val dailyCalorieTarget = overviewData?.user?.dailyCalorieTarget ?: 2000
     val remainingCalories = overviewData?.remainingCalories ?: dailyCalorieTarget
+    val netCalories = overviewData?.netCalories ?: 0
     val activities = overviewData?.todayActivities ?: emptyList()
+    val goalType = overviewData?.user?.goalType
     
     val user = overviewData?.user
     val bmiValue = user?.let {
@@ -158,15 +173,49 @@ fun OverviewScreen(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-                CalorieInfoRow("Added Calories", todayConsumedCalorie, Color.Yellow)
-                Spacer(modifier = Modifier.height(8.dp))
-                CalorieInfoRow("Calories Burned", todayBurnedCalorie, Color.Green)
+                CalorieInfoRow("Net Calories", netCalories, Color.Cyan)
                 Spacer(modifier = Modifier.height(8.dp))
                 CalorieInfoRow("Remaining Calories", remainingCalories, Color.Magenta, dailyCalorieTarget)
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (goalType != null) {
+                    Column {
+                        Text(
+                            text = "• Net Calories: Effective calorie intake after exercise strategy",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "• Remaining Calories: Calories left to consume today",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val strategy = MifflinModel.getCurrentStrategy()
+                        Text(
+                            text = "Strategy: ${strategy.displayName} (${MifflinModel.getGranularityValue()} cal base adjustment)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        val percentage = (MifflinModel.getExerciseCaloriePercentage(goalType) * 100).toInt()
+                        Text(
+                            text = "Exercise calories: Eating back $percentage%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
 
         BmiCard(
             bmiValue = bmiValue,
@@ -251,39 +300,123 @@ fun OverviewScreen(
                 initialCarbs = editData?.carbs?.toString() ?: "",
                 initialPortion = editData?.portion ?: "",
                 initialDuration = editData?.duration?.toString() ?: "",
+                initialImagePath = editData?.pictureId?.let { pictureId ->
+                    var imagePath: String? = null
+                    viewModel.getPicture(pictureId) { path -> imagePath = path }
+                    imagePath
+                },
                 isEditMode = editData != null,
-                onSubmit = { name, calories, protein, carbs, portion, duration ->
-                    Log.d("OverviewScreen", "Log Submitted: Type: $modalType, Name: $name, Calories: $calories, EditData: $editData")
+                onSubmit = { name, calories, protein, carbs, portion, duration, imagePath ->
+                    Log.d("OverviewScreen", "Log Submitted: Type: $modalType, Name: $name, Calories: $calories, EditData: $editData, ImagePath: $imagePath")
                     
                     val currentEditData = editData
                     if (currentEditData != null) {
-                        val updatedActivity = currentEditData.copy(
-                            calories = calories.toIntOrNull() ?: 0,
-                            foodName = if (modalType == LogType.FOOD) name else currentEditData.foodName,
-                            workoutName = if (modalType == LogType.WORKOUT) name else currentEditData.workoutName,
-                            protein = if (modalType == LogType.FOOD) protein?.toFloatOrNull() ?: 0f else currentEditData.protein,
-                            carbs = if (modalType == LogType.FOOD) carbs?.toFloatOrNull() ?: 0f else currentEditData.carbs,
-                            portion = if (modalType == LogType.FOOD) portion ?: "" else currentEditData.portion,
-                            duration = if (modalType == LogType.WORKOUT) duration?.toIntOrNull() ?: 0 else currentEditData.duration
-                        )
-                        viewModel.updateActivity(updatedActivity)
+                        if (imagePath != null && imagePath != currentEditData.pictureId) {
+                            viewModel.savePicture(imagePath, 
+                                onSuccess = { pictureId ->
+                                    val updatedActivity = currentEditData.copy(
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        foodName = if (modalType == LogType.FOOD) name else currentEditData.foodName,
+                                        workoutName = if (modalType == LogType.WORKOUT) name else currentEditData.workoutName,
+                                        protein = if (modalType == LogType.FOOD) protein?.toFloatOrNull() ?: 0f else currentEditData.protein,
+                                        carbs = if (modalType == LogType.FOOD) carbs?.toFloatOrNull() ?: 0f else currentEditData.carbs,
+                                        portion = if (modalType == LogType.FOOD) portion ?: "" else currentEditData.portion,
+                                        duration = if (modalType == LogType.WORKOUT) duration?.toIntOrNull() ?: 0 else currentEditData.duration,
+                                        pictureId = pictureId
+                                    )
+                                    viewModel.updateActivity(updatedActivity)
+                                },
+                                onError = { error ->
+                                    Log.e("OverviewScreen", "Failed to save image: $error")
+                                    val updatedActivity = currentEditData.copy(
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        foodName = if (modalType == LogType.FOOD) name else currentEditData.foodName,
+                                        workoutName = if (modalType == LogType.WORKOUT) name else currentEditData.workoutName,
+                                        protein = if (modalType == LogType.FOOD) protein?.toFloatOrNull() ?: 0f else currentEditData.protein,
+                                        carbs = if (modalType == LogType.FOOD) carbs?.toFloatOrNull() ?: 0f else currentEditData.carbs,
+                                        portion = if (modalType == LogType.FOOD) portion ?: "" else currentEditData.portion,
+                                        duration = if (modalType == LogType.WORKOUT) duration?.toIntOrNull() ?: 0 else currentEditData.duration
+                                    )
+                                    viewModel.updateActivity(updatedActivity)
+                                }
+                            )
+                        } else {
+                            val updatedActivity = currentEditData.copy(
+                                calories = calories.toIntOrNull() ?: 0,
+                                foodName = if (modalType == LogType.FOOD) name else currentEditData.foodName,
+                                workoutName = if (modalType == LogType.WORKOUT) name else currentEditData.workoutName,
+                                protein = if (modalType == LogType.FOOD) protein?.toFloatOrNull() ?: 0f else currentEditData.protein,
+                                carbs = if (modalType == LogType.FOOD) carbs?.toFloatOrNull() ?: 0f else currentEditData.carbs,
+                                portion = if (modalType == LogType.FOOD) portion ?: "" else currentEditData.portion,
+                                duration = if (modalType == LogType.WORKOUT) duration?.toIntOrNull() ?: 0 else currentEditData.duration
+                            )
+                            viewModel.updateActivity(updatedActivity)
+                        }
                     } else {
-                        when (modalType) {
-                            LogType.FOOD -> {
-                                viewModel.logFood(
-                                    foodName = name,
-                                    calories = calories.toIntOrNull() ?: 0,
-                                    protein = protein?.toFloatOrNull() ?: 0f,
-                                    carbs = carbs?.toFloatOrNull() ?: 0f,
-                                    portion = portion ?: ""
-                                )
-                            }
-                            LogType.WORKOUT -> {
-                                viewModel.logWorkout(
-                                    workoutName = name,
-                                    caloriesBurned = calories.toIntOrNull() ?: 0,
-                                    duration = duration?.toIntOrNull() ?: 0
-                                )
+                        if (imagePath != null) {
+                            viewModel.savePicture(imagePath,
+                                onSuccess = { pictureId ->
+                                    when (modalType) {
+                                        LogType.FOOD -> {
+                                            viewModel.logFood(
+                                                foodName = name,
+                                                calories = calories.toIntOrNull() ?: 0,
+                                                protein = protein?.toFloatOrNull() ?: 0f,
+                                                carbs = carbs?.toFloatOrNull() ?: 0f,
+                                                portion = portion ?: "",
+                                                pictureId = pictureId
+                                            )
+                                        }
+                                        LogType.WORKOUT -> {
+                                            viewModel.logWorkout(
+                                                workoutName = name,
+                                                caloriesBurned = calories.toIntOrNull() ?: 0,
+                                                duration = duration?.toIntOrNull() ?: 0,
+                                                pictureId = pictureId
+                                            )
+                                        }
+                                    }
+                                },
+                                onError = { error ->
+                                    Log.e("OverviewScreen", "Failed to save image: $error")
+                                    when (modalType) {
+                                        LogType.FOOD -> {
+                                            viewModel.logFood(
+                                                foodName = name,
+                                                calories = calories.toIntOrNull() ?: 0,
+                                                protein = protein?.toFloatOrNull() ?: 0f,
+                                                carbs = carbs?.toFloatOrNull() ?: 0f,
+                                                portion = portion ?: ""
+                                            )
+                                        }
+                                        LogType.WORKOUT -> {
+                                            viewModel.logWorkout(
+                                                workoutName = name,
+                                                caloriesBurned = calories.toIntOrNull() ?: 0,
+                                                duration = duration?.toIntOrNull() ?: 0
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+                        } else {
+                            when (modalType) {
+                                LogType.FOOD -> {
+                                    viewModel.logFood(
+                                        foodName = name,
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        protein = protein?.toFloatOrNull() ?: 0f,
+                                        carbs = carbs?.toFloatOrNull() ?: 0f,
+                                        portion = portion ?: ""
+                                    )
+                                }
+                                LogType.WORKOUT -> {
+                                    viewModel.logWorkout(
+                                        workoutName = name,
+                                        caloriesBurned = calories.toIntOrNull() ?: 0,
+                                        duration = duration?.toIntOrNull() ?: 0
+                                    )
+                                }
                             }
                         }
                     }
@@ -307,6 +440,7 @@ fun OverviewScreen(
             )
         }
     }
+    
 }
 
 @Composable
@@ -328,7 +462,13 @@ fun CalorieInfoRow(label: String, value: Int, progressBarColor: Color, target: I
             )
         }
         LinearProgressIndicator(
-            progress = { if (target != null) value.toFloat() / target.toFloat() else 0.7f },
+            progress = {
+                when {
+                    target != null -> value.toFloat() / target.toFloat()
+                    value > 0 -> minOf(1.0f, value.toFloat() / 2000f) // Normalize to 2000 calories max
+                    else -> 0.0f // Start from 0 when value is 0 or negative
+                }
+            },
             modifier = Modifier.fillMaxWidth().height(8.dp),
             color = progressBarColor,
             trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
@@ -462,29 +602,62 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
         else -> activity.workoutName ?: "Workout"
     }
     
+    val viewModel: OverviewViewModel = hiltViewModel()
+    var imagePath by remember { mutableStateOf<String?>(null) }
+    
+    activity.pictureId?.let { pictureId ->
+        viewModel.getPicture(pictureId) { path ->
+            imagePath = path
+        }
+    }
+    
     Card(
         modifier = Modifier
             .fillMaxHeight()
-            .widthIn(min = 300.dp)
+            .aspectRatio(3f / 4f)
             .clickable { onClick(activity) }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceAround
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                 Icon(
-                    imageVector = icon,
-                    contentDescription = description,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (imagePath != null) {
+                    val imageModel = if (imagePath!!.startsWith("android.resource://")) {
+                        val assetPath = imagePath!!.substringAfter("assets/")
+                        "file:///android_asset/$assetPath"
+                    } else {
+                        File(imagePath!!)
+                    }
+                    
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageModel)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = description,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop,
+                        fallback = painterResource(android.R.drawable.ic_menu_gallery)
+                    )
+                } else {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = description,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             Text(
                 text = calorieText,
@@ -494,8 +667,8 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                lineHeight = 16.sp
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
