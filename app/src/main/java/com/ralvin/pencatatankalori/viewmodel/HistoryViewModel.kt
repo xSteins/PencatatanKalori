@@ -138,10 +138,10 @@ class HistoryViewModel @Inject constructor(
         return dayDataList.reversed()
     }
 
-    fun logActivity(name: String, calories: Int, type: com.ralvin.pencatatankalori.data.database.entities.ActivityType, pictureId: String? = null) {
+    fun logActivity(name: String, calories: Int, type: com.ralvin.pencatatankalori.data.database.entities.ActivityType, pictureId: String? = null, notes: String? = null) {
         viewModelScope.launch {
             try {
-                repository.logActivity(name, calories, type, pictureId)
+                repository.logActivity(name, calories, type, pictureId, notes)
             } catch (e: Exception) {
                 _uiState.value = HistoryUiState.Error(e.message ?: "Failed to log activity")
             }
@@ -159,7 +159,7 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    fun updateActivity(activityId: String, name: String, calories: Int, protein: Float?, carbs: Float?, portion: String?, duration: Int?, pictureId: String?) {
+    fun updateActivity(activityId: String, name: String, calories: Int, notes: String?, pictureId: String?) {
         viewModelScope.launch {
             try {
                 val existingActivity = allActivities.value.find { it.id == activityId }
@@ -167,8 +167,8 @@ class HistoryViewModel @Inject constructor(
                     val updatedActivity = existingActivity.copy(
                         name = name,
                         calories = calories,
+                        notes = notes,
                         pictureId = pictureId
-                        // Keep notes as-is, don't auto-generate from protein/carbs/etc
                     )
                     repository.updateActivity(updatedActivity)
                 }

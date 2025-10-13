@@ -272,13 +272,10 @@ fun OverviewScreen(
                 type = modalType,
                 initialName = editData?.name ?: "",
                 initialCalories = editData?.calories?.toString() ?: "",
-                initialProtein = "",
-                initialCarbs = "",
-                initialPortion = "",
-                initialDuration = "",
+                initialNotes = editData?.notes ?: "",
                 initialImagePath = initialImagePath,
                 isEditMode = editData != null,
-                onSubmit = { name, calories, protein, carbs, portion, duration, imagePath ->
+                onSubmit = { name, calories, notes, imagePath ->
                     Log.d("OverviewScreen", "Log Submitted: Type: $modalType, Name: $name, Calories: $calories, EditData: $editData, ImagePath: $imagePath")
                     
                     val currentEditData = editData
@@ -289,6 +286,7 @@ fun OverviewScreen(
                                     val updatedActivity = currentEditData.copy(
                                         name = name,
                                         calories = calories.toIntOrNull() ?: 0,
+                                        notes = notes,
                                         pictureId = pictureId
                                     )
                                     viewModel.updateActivity(updatedActivity)
@@ -297,7 +295,8 @@ fun OverviewScreen(
                                     Log.e("OverviewScreen", "Failed to save image: $error")
                                     val updatedActivity = currentEditData.copy(
                                         name = name,
-                                        calories = calories.toIntOrNull() ?: 0
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        notes = notes
                                     )
                                     viewModel.updateActivity(updatedActivity)
                                 }
@@ -305,7 +304,8 @@ fun OverviewScreen(
                         } else {
                             val updatedActivity = currentEditData.copy(
                                 name = name,
-                                calories = calories.toIntOrNull() ?: 0
+                                calories = calories.toIntOrNull() ?: 0,
+                                notes = notes
                             )
                             viewModel.updateActivity(updatedActivity)
                         }
@@ -322,7 +322,8 @@ fun OverviewScreen(
                                         name = name,
                                         calories = calories.toIntOrNull() ?: 0,
                                         type = activityType,
-                                        pictureId = pictureId
+                                        pictureId = pictureId,
+                                        notes = notes
                                     )
                                 },
                                 onError = { error ->
@@ -330,7 +331,8 @@ fun OverviewScreen(
                                     viewModel.logActivity(
                                         name = name,
                                         calories = calories.toIntOrNull() ?: 0,
-                                        type = activityType
+                                        type = activityType,
+                                        notes = notes
                                     )
                                 }
                             )
@@ -338,7 +340,8 @@ fun OverviewScreen(
                             viewModel.logActivity(
                                 name = name,
                                 calories = calories.toIntOrNull() ?: 0,
-                                type = activityType
+                                type = activityType,
+                                notes = notes
                             )
                         }
                     }

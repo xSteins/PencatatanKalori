@@ -94,10 +94,10 @@ class OverviewViewModel @Inject constructor(
         }
     }
 
-    fun logActivity(name: String, calories: Int, type: com.ralvin.pencatatankalori.data.database.entities.ActivityType, pictureId: String? = null) {
+    fun logActivity(name: String, calories: Int, type: com.ralvin.pencatatankalori.data.database.entities.ActivityType, pictureId: String? = null, notes: String? = null) {
         viewModelScope.launch {
             try {
-                repository.logActivity(name, calories, type, pictureId)
+                repository.logActivity(name, calories, type, pictureId, notes)
             } catch (e: Exception) {
                 _uiState.value = OverviewUiState.Error(e.message ?: "Failed to log activity")
             }

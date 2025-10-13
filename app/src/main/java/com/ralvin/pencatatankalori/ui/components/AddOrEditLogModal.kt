@@ -32,19 +32,13 @@ fun AddOrEditLogModal(
     type: LogType,
     initialName: String = "",
     initialCalories: String = "",
-    initialProtein: String = "",
-    initialCarbs: String = "",
-    initialPortion: String = "",
-    initialDuration: String = "",
+    initialNotes: String = "",
     initialImagePath: String? = null,
     isEditMode: Boolean = false,
     onSubmit: (
         name: String,
         calories: String,
-        protein: String?,
-        carbs: String?,
-        portion: String?,
-        duration: String?,
+        notes: String,
         imagePath: String?
     ) -> Unit,
     onCancel: () -> Unit,
@@ -52,10 +46,7 @@ fun AddOrEditLogModal(
 ) {
     var name by remember { mutableStateOf(initialName) }
     var calories by remember { mutableStateOf(initialCalories) }
-    var protein by remember { mutableStateOf(initialProtein) }
-    var carbs by remember { mutableStateOf(initialCarbs) }
-    var portion by remember { mutableStateOf(initialPortion) }
-    var duration by remember { mutableStateOf(initialDuration) }
+    var notes by remember { mutableStateOf(initialNotes) }
     var selectedImagePath by remember { mutableStateOf(initialImagePath) }
     
     val context = LocalContext.current
@@ -172,59 +163,32 @@ fun AddOrEditLogModal(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(if (type == LogType.FOOD) "Item Name" else "Activity Name") },
-                placeholder = { Text(if (type == LogType.FOOD) "Customize item name" else "e.g. Jogging, Cycling") },
+                label = { Text("Name") },
+                placeholder = { Text(if (type == LogType.FOOD) "Food name" else "Activity name") },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                 singleLine = true
             )
             OutlinedTextField(
                 value = calories,
                 onValueChange = { calories = it },
-                label = { Text("Calorie Count (Cal)") },
+                label = { Text("Calorie Count") },
                 placeholder = { Text("600") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                 singleLine = true
             )
-            if (type == LogType.FOOD) {
-                OutlinedTextField(
-                    value = protein,
-                    onValueChange = { protein = it },
-                    label = { Text("Protein Size (Grams)") },
-                    placeholder = { Text("60.5") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = carbs,
-                    onValueChange = { carbs = it },
-                    label = { Text("Carbs Size (Grams)") },
-                    placeholder = { Text("50.5") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = portion,
-                    onValueChange = { portion = it },
-                    label = { Text("Portion Size (Grams)") },
-                    placeholder = { Text("150") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    singleLine = true
-                )
-            } else {
-                OutlinedTextField(
-                    value = duration,
-                    onValueChange = { duration = it },
-                    label = { Text("Duration") },
-                    placeholder = { Text("e.g. 30 minutes, 1h 15m, 01:15:00") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    singleLine = true
-                )
-            }
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Notes") },
+                placeholder = { Text("Add additional details...") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .padding(bottom = 16.dp),
+                singleLine = false,
+                maxLines = 5
+            )
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -244,10 +208,7 @@ fun AddOrEditLogModal(
                         onSubmit(
                             name,
                             calories,
-                            if (type == LogType.FOOD) protein else null,
-                            if (type == LogType.FOOD) carbs else null,
-                            if (type == LogType.FOOD) portion else null,
-                            if (type == LogType.WORKOUT) duration else null,
+                            notes,
                             selectedImagePath
                         )
                     },

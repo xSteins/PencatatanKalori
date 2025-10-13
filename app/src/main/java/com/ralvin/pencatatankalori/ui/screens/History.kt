@@ -265,7 +265,7 @@ fun History(
                     if (showAddModal) {
                         AddOrEditLogModal(
                             type = addModalType,
-                            onSubmit = { name, calories, protein, carbs, portion, duration, imagePath ->
+                            onSubmit = { name, calories, notes, imagePath ->
                                 val activityType = when (addModalType) {
                                     LogType.FOOD -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.CONSUMPTION
                                     LogType.WORKOUT -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT
@@ -278,14 +278,16 @@ fun History(
                                                 name = name,
                                                 calories = calories.toIntOrNull() ?: 0,
                                                 type = activityType,
-                                                pictureId = pictureId
+                                                pictureId = pictureId,
+                                                notes = notes
                                             )
                                         },
                                         onError = { error ->
                                             viewModel.logActivity(
                                                 name = name,
                                                 calories = calories.toIntOrNull() ?: 0,
-                                                type = activityType
+                                                type = activityType,
+                                                notes = notes
                                             )
                                         }
                                     )
@@ -293,7 +295,8 @@ fun History(
                                     viewModel.logActivity(
                                         name = name,
                                         calories = calories.toIntOrNull() ?: 0,
-                                        type = activityType
+                                        type = activityType,
+                                        notes = notes
                                     )
                                 }
                                 showAddModal = false

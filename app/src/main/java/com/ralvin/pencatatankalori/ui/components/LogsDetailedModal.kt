@@ -65,17 +65,7 @@ enum class LogType {
     FOOD, WORKOUT
 }
 
-fun parseDetails(type: LogType, details: String): Triple<String, String, String> {
-    return if (type == LogType.FOOD) {
-        val parts = details.split("|").map { it.trim() }
-        val protein = parts.getOrNull(1)?.substringBefore("g")?.filter { it.isDigit() || it == '.' } ?: ""
-        val carbs = parts.getOrNull(2)?.substringBefore("g")?.filter { it.isDigit() || it == '.' } ?: ""
-        val portion = ""
-        Triple(protein, carbs, portion)
-    } else {
-        Triple("", "", details)
-    }
-}
+
 
 @Composable
 fun AddActivityButtons(
@@ -204,7 +194,6 @@ fun LogsDetailedModal(
     }
 
     if (showEditModal && editLog != null) {
-        val (protein, carbs, portionOrDuration) = parseDetails(editLog!!.type, editLog!!.details)
         var initialImagePath by remember { mutableStateOf<String?>(null) }
         
         editLog!!.pictureId?.let { pictureId ->
@@ -218,13 +207,10 @@ fun LogsDetailedModal(
                 type = editLog!!.type,
                 initialName = editLog!!.name,
                 initialCalories = editLog!!.calories.toString(),
-                initialProtein = if (editLog!!.type == LogType.FOOD) protein else "",
-                initialCarbs = if (editLog!!.type == LogType.FOOD) carbs else "",
-                initialPortion = if (editLog!!.type == LogType.FOOD) portionOrDuration else "",
-                initialDuration = if (editLog!!.type == LogType.WORKOUT) portionOrDuration else "",
+                initialNotes = editLog!!.details,
                 initialImagePath = initialImagePath,
                 isEditMode = true,
-                onSubmit = { name, calories, protein, carbs, portion, duration, imagePath ->
+                onSubmit = { name, calories, notes, imagePath ->
                     val activityId = editLog!!.activityId
                     if (activityId != null) {
                         if (imagePath != null && imagePath != initialImagePath) {
@@ -234,10 +220,7 @@ fun LogsDetailedModal(
                                         activityId = activityId,
                                         name = name,
                                         calories = calories.toIntOrNull() ?: 0,
-                                        protein = protein?.toFloatOrNull(),
-                                        carbs = carbs?.toFloatOrNull(),
-                                        portion = portion,
-                                        duration = duration?.toIntOrNull(),
+                                        notes = notes,
                                         pictureId = pictureId
                                     )
                                 },
@@ -246,10 +229,7 @@ fun LogsDetailedModal(
                                         activityId = activityId,
                                         name = name,
                                         calories = calories.toIntOrNull() ?: 0,
-                                        protein = protein?.toFloatOrNull(),
-                                        carbs = carbs?.toFloatOrNull(),
-                                        portion = portion,
-                                        duration = duration?.toIntOrNull(),
+                                        notes = notes,
                                         pictureId = editLog!!.pictureId
                                     )
                                 }
@@ -259,10 +239,7 @@ fun LogsDetailedModal(
                                 activityId = activityId,
                                 name = name,
                                 calories = calories.toIntOrNull() ?: 0,
-                                protein = protein?.toFloatOrNull(),
-                                carbs = carbs?.toFloatOrNull(),
-                                portion = portion,
-                                duration = duration?.toIntOrNull(),
+                                notes = notes,
                                 pictureId = editLog!!.pictureId
                             )
                         }
