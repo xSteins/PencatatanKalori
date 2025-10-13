@@ -23,19 +23,13 @@ data class ActivityLog(
     @ColumnInfo(name = "user_id") val userId: String,
     @ColumnInfo(name = "type") val type: ActivityType,
     @ColumnInfo(name = "timestamp") val timestamp: Date,
-    // used in both, food and workout
+    // normalized
+    @ColumnInfo(name = "name") val name: String? = null,
     @ColumnInfo(name = "calories") val calories: Int? = null,
-    
-    // food specific column
-    @ColumnInfo(name = "food_name") val foodName: String? = null,
-    @ColumnInfo(name = "protein") val protein: Float? = null,
-    @ColumnInfo(name = "carbs") val carbs: Float? = null,
-    @ColumnInfo(name = "portion") val portion: String? = null,
-    
-    // workout specific column
-    @ColumnInfo(name = "workout_name") val workoutName: String? = null,
-    @ColumnInfo(name = "duration") val duration: Int? = null,
+    @ColumnInfo(name = "notes") val notes: String? = null,
     
     // picture reference
     @ColumnInfo(name = "picture_id") val pictureId: String? = null
+
+    // TODO: Add FK to daily data, make daily entity, user id move to daily
 ) 

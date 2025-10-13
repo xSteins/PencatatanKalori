@@ -56,9 +56,10 @@ fun ProfileSettings(
         }
     }
 
-    LaunchedEffect(onboardingUiState) {
+    LaunchedEffect(onboardingUiState, userProfile) {
         val currentOnboardingState = onboardingUiState
-        if (currentOnboardingState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Success) {
+        val currentUserProfile = userProfile
+        if (currentOnboardingState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Success && currentUserProfile != null) {
             showOnboardingDialog = false
             onboardingViewModel.resetUiState()
         }
@@ -231,8 +232,8 @@ fun ProfileSettings(
                                     icon = Icons.Filled.Tune,
                                     label = "Calorie Strategy",
                                     value = "${MifflinModel.getCurrentStrategy().displayName} (${MifflinModel.getGranularityValue()} cal)",
-                                    onClick = { showCalorieAdjustmentDialog = true },
-                                    isEditable = true
+                                    onClick = if (hasUserData) { { showCalorieAdjustmentDialog = true } } else { {} },
+                                    isEditable = hasUserData
                                 )
                             }
                         }

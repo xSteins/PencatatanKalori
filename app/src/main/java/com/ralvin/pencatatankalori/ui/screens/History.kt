@@ -49,19 +49,18 @@ fun ActivityLog.toLogItem(): LogItem {
             ActivityType.WORKOUT -> LogType.WORKOUT
         },
         calories = this.calories ?: 0,
-        name = when(this.type) {
-            ActivityType.CONSUMPTION -> this.foodName ?: "Unknown Food"
-            ActivityType.WORKOUT -> this.workoutName ?: "Unknown Workout"
+        name = this.name ?: when(this.type) {
+            ActivityType.CONSUMPTION -> "Unknown Food"
+            ActivityType.WORKOUT -> "Unknown Workout"
         },
         details = when(this.type) {
             ActivityType.CONSUMPTION -> {
                 val caloriesStr = "${this.calories ?: 0} Calories"
-                val proteinStr = "${this.protein ?: 0}g Protein"
-                val carbsStr = "${this.carbs ?: 0}g Carbs"
-                "$caloriesStr | $proteinStr | $carbsStr"
+                "$caloriesStr${this.notes?.let { " | $it" } ?: ""}"
             }
             ActivityType.WORKOUT -> {
-                "${this.duration ?: 0} minutes"
+                val caloriesStr = "${this.calories ?: 0} Calories"
+                "$caloriesStr${this.notes?.let { " | $it" } ?: ""}"
             }
         },
         pictureId = this.pictureId,
@@ -93,15 +92,29 @@ fun History(
     }
     
     val daysData = remember(allActivities, dateRange) {
-        if (isDefaultRange) {
+        val allDaysData = if (isDefaultRange) {
             viewModel.getLastNDaysData(7)
         } else {
             viewModel.getDayDataForSelectedRange()
         }
+        
+        // Filter to only include days that have activities
+        allDaysData.filter { dayData ->
+            allActivities.any { activity ->
+                val activityCalendar = Calendar.getInstance()
+                activityCalendar.time = activity.timestamp
+                
+                val dayCalendar = Calendar.getInstance()
+                dayCalendar.time = dayData.date
+                
+                activityCalendar.get(Calendar.YEAR) == dayCalendar.get(Calendar.YEAR) &&
+                activityCalendar.get(Calendar.DAY_OF_YEAR) == dayCalendar.get(Calendar.DAY_OF_YEAR)
+            }
+        }
     }
     
-    val logsPerDay = remember(daysData, allActivities) {
-        daysData.map { dayData ->
+    val filteredDaysWithLogs = remember(daysData, allActivities) {
+        daysData.mapNotNull { dayData ->
             val dateString = dateFormat.format(dayData.date)
             val activitiesForDay = allActivities.filter { activity ->
                 val activityCalendar = Calendar.getInstance()
@@ -114,7 +127,12 @@ fun History(
                 activityCalendar.get(Calendar.DAY_OF_YEAR) == dayCalendar.get(Calendar.DAY_OF_YEAR)
             }
             
-            dateString to activitiesForDay.map { it.toLogItem() }
+            // Only include days that have activities
+            if (activitiesForDay.isNotEmpty()) {
+                Triple(dayData, dateString, activitiesForDay.map { it.toLogItem() })
+            } else {
+                null
+            }
         }
     }
 
@@ -176,37 +194,59 @@ fun History(
                         )
                     }
 
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
-                    ) {
-                        items(logsPerDay.size) { idx ->
-                            val date = logsPerDay[idx].first
-                            val logs = logsPerDay[idx].second
-                            val dayData = daysData[idx]
-                            val profile = userProfile
-                            val dailyTarget = profile?.dailyCalorieTarget ?: 2000
-                            
-                            HistoryListItem(
-                                item = HistoryItemData(
-                                    date = date,
-                                    caloriesText = "${dayData.caloriesConsumed} / $dailyTarget Calories",
-                                    intakeBurnedText = "${dayData.caloriesConsumed} Intake | ${dayData.caloriesBurned} Burned",
-                                    mealWorkoutText = "${logs.count { it.type == LogType.FOOD }} Meal | ${logs.count { it.type == LogType.WORKOUT }} Workout"
-                                ),
-                                onClick = {
-                                    selectedDayIdx = idx
-                                    showModal = true
-                                }
-                            )
+                    if (filteredDaysWithLogs.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "No activity data found",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Start logging your meals and workouts to see your history",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
+                        ) {
+                            items(filteredDaysWithLogs.size) { idx ->
+                                val (dayData, date, logs) = filteredDaysWithLogs[idx]
+                                val profile = userProfile
+                                val dailyTarget = profile?.dailyCalorieTarget ?: 2000
+                                
+                                HistoryListItem(
+                                    item = HistoryItemData(
+                                        date = date,
+                                        caloriesText = "${dayData.caloriesConsumed} / $dailyTarget Calories",
+                                        intakeBurnedText = "${dayData.caloriesConsumed} Intake | ${dayData.caloriesBurned} Burned",
+                                        mealWorkoutText = "${logs.count { it.type == LogType.FOOD }} Meal | ${logs.count { it.type == LogType.WORKOUT }} Workout"
+                                    ),
+                                    onClick = {
+                                        selectedDayIdx = idx
+                                        showModal = true
+                                    }
+                                )
+                            }
                         }
                     }
 
                     if (showModal) {
-                        val (date, logs) = logsPerDay[selectedDayIdx]
+                        val (_, date, logs) = filteredDaysWithLogs[selectedDayIdx]
                         LogsDetailedModal(
                             onDismissRequest = { showModal = false },
                             date = date,
@@ -226,70 +266,35 @@ fun History(
                         AddOrEditLogModal(
                             type = addModalType,
                             onSubmit = { name, calories, protein, carbs, portion, duration, imagePath ->
+                                val activityType = when (addModalType) {
+                                    LogType.FOOD -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.CONSUMPTION
+                                    LogType.WORKOUT -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT
+                                }
+                                
                                 if (imagePath != null) {
                                     viewModel.savePicture(imagePath,
                                         onSuccess = { pictureId ->
-                                            when (addModalType) {
-                                                LogType.FOOD -> {
-                                                    viewModel.logFood(
-                                                        foodName = name,
-                                                        calories = calories.toIntOrNull() ?: 0,
-                                                        protein = protein?.toFloatOrNull() ?: 0f,
-                                                        carbs = carbs?.toFloatOrNull() ?: 0f,
-                                                        portion = portion ?: "",
-                                                        pictureId = pictureId
-                                                    )
-                                                }
-                                                LogType.WORKOUT -> {
-                                                    viewModel.logWorkout(
-                                                        workoutName = name,
-                                                        caloriesBurned = calories.toIntOrNull() ?: 0,
-                                                        duration = duration?.toIntOrNull() ?: 0,
-                                                        pictureId = pictureId
-                                                    )
-                                                }
-                                            }
+                                            viewModel.logActivity(
+                                                name = name,
+                                                calories = calories.toIntOrNull() ?: 0,
+                                                type = activityType,
+                                                pictureId = pictureId
+                                            )
                                         },
                                         onError = { error ->
-                                            when (addModalType) {
-                                                LogType.FOOD -> {
-                                                    viewModel.logFood(
-                                                        foodName = name,
-                                                        calories = calories.toIntOrNull() ?: 0,
-                                                        protein = protein?.toFloatOrNull() ?: 0f,
-                                                        carbs = carbs?.toFloatOrNull() ?: 0f,
-                                                        portion = portion ?: ""
-                                                    )
-                                                }
-                                                LogType.WORKOUT -> {
-                                                    viewModel.logWorkout(
-                                                        workoutName = name,
-                                                        caloriesBurned = calories.toIntOrNull() ?: 0,
-                                                        duration = duration?.toIntOrNull() ?: 0
-                                                    )
-                                                }
-                                            }
+                                            viewModel.logActivity(
+                                                name = name,
+                                                calories = calories.toIntOrNull() ?: 0,
+                                                type = activityType
+                                            )
                                         }
                                     )
                                 } else {
-                                    when (addModalType) {
-                                        LogType.FOOD -> {
-                                            viewModel.logFood(
-                                                foodName = name,
-                                                calories = calories.toIntOrNull() ?: 0,
-                                                protein = protein?.toFloatOrNull() ?: 0f,
-                                                carbs = carbs?.toFloatOrNull() ?: 0f,
-                                                portion = portion ?: ""
-                                            )
-                                        }
-                                        LogType.WORKOUT -> {
-                                            viewModel.logWorkout(
-                                                workoutName = name,
-                                                caloriesBurned = calories.toIntOrNull() ?: 0,
-                                                duration = duration?.toIntOrNull() ?: 0
-                                            )
-                                        }
-                                    }
+                                    viewModel.logActivity(
+                                        name = name,
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        type = activityType
+                                    )
                                 }
                                 showAddModal = false
                             },

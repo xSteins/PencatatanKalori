@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -91,10 +92,11 @@ fun OverviewScreen(
     
     val todayConsumedCalorie = overviewData?.caloriesConsumed ?: 0
     val todayBurnedCalorie = overviewData?.caloriesBurned ?: 0
-    val dailyCalorieTarget = overviewData?.user?.dailyCalorieTarget ?: 2000
-    val remainingCalories = overviewData?.remainingCalories ?: dailyCalorieTarget
-    val netCalories = overviewData?.netCalories ?: 0
-    val activities = overviewData?.todayActivities ?: emptyList()
+    val hasUserProfile = overviewData?.user != null
+    val dailyCalorieTarget = if (hasUserProfile) (overviewData?.user?.dailyCalorieTarget ?: 0) else 0
+    val remainingCalories = if (hasUserProfile) (overviewData?.remainingCalories ?: 0) else 0
+    val netCalories = if (hasUserProfile) (overviewData?.netCalories ?: 0) else 0
+    val activities = if (hasUserProfile) (overviewData?.todayActivities ?: emptyList()) else emptyList()
     val goalType = overviewData?.user?.goalType
     
     val user = overviewData?.user
@@ -177,45 +179,10 @@ fun OverviewScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 CalorieInfoRow("Remaining Calories", remainingCalories, Color.Magenta, dailyCalorieTarget)
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (goalType != null) {
-                    Column {
-                        Text(
-                            text = "• Net Calories: Effective calorie intake after exercise strategy",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "• Remaining Calories: Calories left to consume today",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        val strategy = MifflinModel.getCurrentStrategy()
-                        Text(
-                            text = "Strategy: ${strategy.displayName} (${MifflinModel.getGranularityValue()} cal base adjustment)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        val percentage = (MifflinModel.getExerciseCaloriePercentage(goalType) * 100).toInt()
-                        Text(
-                            text = "Exercise calories: Eating back $percentage%",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
 
         BmiCard(
             bmiValue = bmiValue,
@@ -239,7 +206,8 @@ fun OverviewScreen(
                 modalType = LogType.WORKOUT
                 editData = null
                 showLogModal = true
-            }
+            },
+            enabled = hasUserProfile
         )
         Spacer(modifier = Modifier.height(24.dp))
         
@@ -285,43 +253,42 @@ fun OverviewScreen(
     }
 
     if (showLogModal) {
+        var initialImagePath by remember(editData?.pictureId) { mutableStateOf<String?>(null) }
+        val editPictureId = editData?.pictureId
+        LaunchedEffect(editPictureId) {
+            if (editPictureId != null) {
+                viewModel.getPicture(editPictureId) { path ->
+                    initialImagePath = path
+                }
+            } else {
+                initialImagePath = null
+            }
+        }
         Dialog(
             onDismissRequest = { showLogModal = false },
             properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = true)
         ) {
             AddOrEditLogModal(
                 type = modalType,
-                initialName = when (modalType) {
-                    LogType.FOOD -> editData?.foodName ?: ""
-                    LogType.WORKOUT -> editData?.workoutName ?: ""
-                },
+                initialName = editData?.name ?: "",
                 initialCalories = editData?.calories?.toString() ?: "",
-                initialProtein = editData?.protein?.toString() ?: "",
-                initialCarbs = editData?.carbs?.toString() ?: "",
-                initialPortion = editData?.portion ?: "",
-                initialDuration = editData?.duration?.toString() ?: "",
-                initialImagePath = editData?.pictureId?.let { pictureId ->
-                    var imagePath: String? = null
-                    viewModel.getPicture(pictureId) { path -> imagePath = path }
-                    imagePath
-                },
+                initialProtein = "",
+                initialCarbs = "",
+                initialPortion = "",
+                initialDuration = "",
+                initialImagePath = initialImagePath,
                 isEditMode = editData != null,
                 onSubmit = { name, calories, protein, carbs, portion, duration, imagePath ->
                     Log.d("OverviewScreen", "Log Submitted: Type: $modalType, Name: $name, Calories: $calories, EditData: $editData, ImagePath: $imagePath")
                     
                     val currentEditData = editData
                     if (currentEditData != null) {
-                        if (imagePath != null && imagePath != currentEditData.pictureId) {
+                        if (imagePath != null && imagePath != initialImagePath) {
                             viewModel.savePicture(imagePath, 
                                 onSuccess = { pictureId ->
                                     val updatedActivity = currentEditData.copy(
+                                        name = name,
                                         calories = calories.toIntOrNull() ?: 0,
-                                        foodName = if (modalType == LogType.FOOD) name else currentEditData.foodName,
-                                        workoutName = if (modalType == LogType.WORKOUT) name else currentEditData.workoutName,
-                                        protein = if (modalType == LogType.FOOD) protein?.toFloatOrNull() ?: 0f else currentEditData.protein,
-                                        carbs = if (modalType == LogType.FOOD) carbs?.toFloatOrNull() ?: 0f else currentEditData.carbs,
-                                        portion = if (modalType == LogType.FOOD) portion ?: "" else currentEditData.portion,
-                                        duration = if (modalType == LogType.WORKOUT) duration?.toIntOrNull() ?: 0 else currentEditData.duration,
                                         pictureId = pictureId
                                     )
                                     viewModel.updateActivity(updatedActivity)
@@ -329,95 +296,50 @@ fun OverviewScreen(
                                 onError = { error ->
                                     Log.e("OverviewScreen", "Failed to save image: $error")
                                     val updatedActivity = currentEditData.copy(
-                                        calories = calories.toIntOrNull() ?: 0,
-                                        foodName = if (modalType == LogType.FOOD) name else currentEditData.foodName,
-                                        workoutName = if (modalType == LogType.WORKOUT) name else currentEditData.workoutName,
-                                        protein = if (modalType == LogType.FOOD) protein?.toFloatOrNull() ?: 0f else currentEditData.protein,
-                                        carbs = if (modalType == LogType.FOOD) carbs?.toFloatOrNull() ?: 0f else currentEditData.carbs,
-                                        portion = if (modalType == LogType.FOOD) portion ?: "" else currentEditData.portion,
-                                        duration = if (modalType == LogType.WORKOUT) duration?.toIntOrNull() ?: 0 else currentEditData.duration
+                                        name = name,
+                                        calories = calories.toIntOrNull() ?: 0
                                     )
                                     viewModel.updateActivity(updatedActivity)
                                 }
                             )
                         } else {
                             val updatedActivity = currentEditData.copy(
-                                calories = calories.toIntOrNull() ?: 0,
-                                foodName = if (modalType == LogType.FOOD) name else currentEditData.foodName,
-                                workoutName = if (modalType == LogType.WORKOUT) name else currentEditData.workoutName,
-                                protein = if (modalType == LogType.FOOD) protein?.toFloatOrNull() ?: 0f else currentEditData.protein,
-                                carbs = if (modalType == LogType.FOOD) carbs?.toFloatOrNull() ?: 0f else currentEditData.carbs,
-                                portion = if (modalType == LogType.FOOD) portion ?: "" else currentEditData.portion,
-                                duration = if (modalType == LogType.WORKOUT) duration?.toIntOrNull() ?: 0 else currentEditData.duration
+                                name = name,
+                                calories = calories.toIntOrNull() ?: 0
                             )
                             viewModel.updateActivity(updatedActivity)
                         }
                     } else {
+                        val activityType = when (modalType) {
+                            LogType.FOOD -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.CONSUMPTION
+                            LogType.WORKOUT -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT
+                        }
+                        
                         if (imagePath != null) {
                             viewModel.savePicture(imagePath,
                                 onSuccess = { pictureId ->
-                                    when (modalType) {
-                                        LogType.FOOD -> {
-                                            viewModel.logFood(
-                                                foodName = name,
-                                                calories = calories.toIntOrNull() ?: 0,
-                                                protein = protein?.toFloatOrNull() ?: 0f,
-                                                carbs = carbs?.toFloatOrNull() ?: 0f,
-                                                portion = portion ?: "",
-                                                pictureId = pictureId
-                                            )
-                                        }
-                                        LogType.WORKOUT -> {
-                                            viewModel.logWorkout(
-                                                workoutName = name,
-                                                caloriesBurned = calories.toIntOrNull() ?: 0,
-                                                duration = duration?.toIntOrNull() ?: 0,
-                                                pictureId = pictureId
-                                            )
-                                        }
-                                    }
+                                    viewModel.logActivity(
+                                        name = name,
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        type = activityType,
+                                        pictureId = pictureId
+                                    )
                                 },
                                 onError = { error ->
                                     Log.e("OverviewScreen", "Failed to save image: $error")
-                                    when (modalType) {
-                                        LogType.FOOD -> {
-                                            viewModel.logFood(
-                                                foodName = name,
-                                                calories = calories.toIntOrNull() ?: 0,
-                                                protein = protein?.toFloatOrNull() ?: 0f,
-                                                carbs = carbs?.toFloatOrNull() ?: 0f,
-                                                portion = portion ?: ""
-                                            )
-                                        }
-                                        LogType.WORKOUT -> {
-                                            viewModel.logWorkout(
-                                                workoutName = name,
-                                                caloriesBurned = calories.toIntOrNull() ?: 0,
-                                                duration = duration?.toIntOrNull() ?: 0
-                                            )
-                                        }
-                                    }
+                                    viewModel.logActivity(
+                                        name = name,
+                                        calories = calories.toIntOrNull() ?: 0,
+                                        type = activityType
+                                    )
                                 }
                             )
                         } else {
-                            when (modalType) {
-                                LogType.FOOD -> {
-                                    viewModel.logFood(
-                                        foodName = name,
-                                        calories = calories.toIntOrNull() ?: 0,
-                                        protein = protein?.toFloatOrNull() ?: 0f,
-                                        carbs = carbs?.toFloatOrNull() ?: 0f,
-                                        portion = portion ?: ""
-                                    )
-                                }
-                                LogType.WORKOUT -> {
-                                    viewModel.logWorkout(
-                                        workoutName = name,
-                                        caloriesBurned = calories.toIntOrNull() ?: 0,
-                                        duration = duration?.toIntOrNull() ?: 0
-                                    )
-                                }
-                            }
+                            viewModel.logActivity(
+                                name = name,
+                                calories = calories.toIntOrNull() ?: 0,
+                                type = activityType
+                            )
                         }
                     }
                     showLogModal = false
@@ -451,7 +373,7 @@ fun CalorieInfoRow(label: String, value: Int, progressBarColor: Color, target: I
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = if (target != null) "$value / $target" else "$value",
+                text = if (target != null && target > 0) "$value / $target" else "$value",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -464,7 +386,7 @@ fun CalorieInfoRow(label: String, value: Int, progressBarColor: Color, target: I
         LinearProgressIndicator(
             progress = {
                 when {
-                    target != null -> value.toFloat() / target.toFloat()
+                    target != null && target > 0 -> (value.coerceAtLeast(0)).toFloat() / target.toFloat()
                     value > 0 -> minOf(1.0f, value.toFloat() / 2000f) // Normalize to 2000 calories max
                     else -> 0.0f // Start from 0 when value is 0 or negative
                 }
@@ -524,7 +446,7 @@ fun BmiCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "$bmiStatus\n(Healthy Range: $bmiRange)",
+                    text = "$bmiStatus ($bmiRange)",
                     style = MaterialTheme.typography.bodyMedium,
                     color = statusColor,
                     fontWeight = FontWeight.Medium
@@ -597,9 +519,9 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
     val icon = if (isFood) Icons.Default.Restaurant else Icons.Default.FitnessCenter
     val calories = activity.calories ?: 0
     val calorieText = "$calories Calories"
-    val description = when {
-        isFood -> activity.foodName ?: "Food Item"
-        else -> activity.workoutName ?: "Workout"
+    val description = activity.name ?: when {
+        isFood -> "Food Item"
+        else -> "Workout"
     }
     
     val viewModel: OverviewViewModel = hiltViewModel()

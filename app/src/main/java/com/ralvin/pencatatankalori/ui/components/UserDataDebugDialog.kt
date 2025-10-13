@@ -190,15 +190,10 @@ private fun DebugDataContent(
                     Text("Type: ${activity.type}")
                     Text("Timestamp: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(activity.timestamp)}")
                     
+                    activity.name?.let { Text("Name: $it") }
                     activity.calories?.let { Text("Calories: $it") }
-                    
-                    activity.foodName?.let { Text("Food Name: $it") }
-                    activity.protein?.let { Text("Protein: $it") }
-                    activity.carbs?.let { Text("Carbs: $it") }
-                    activity.portion?.let { Text("Portion: $it") }
-                    
-                    activity.workoutName?.let { Text("Workout Name: $it") }
-                    activity.duration?.let { Text("Duration: $it") }
+                    activity.notes?.let { Text("Notes: $it") }
+                    activity.pictureId?.let { Text("Picture ID: $it") }
                 }
             }
         }

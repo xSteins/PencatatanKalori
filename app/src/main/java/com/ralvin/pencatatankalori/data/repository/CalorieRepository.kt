@@ -55,46 +55,26 @@ class CalorieRepository @Inject constructor(
     suspend fun isUserCreated(): Boolean = userDataDao.getUserDataCount() > 0
     
     
-    suspend fun logFood(
-        foodName: String,
+    suspend fun logActivity(
+        name: String,
         calories: Int,
-        protein: Float,
-        carbs: Float,
-        portion: String,
-        pictureId: String? = null
+        type: ActivityType,
+        pictureId: String? = null,
+        notes: String? = null
     ) {
-        val user = getUserProfileOnce() ?: return
-        val foodLog = ActivityLog(
-            userId = user.id,
-            type = ActivityType.CONSUMPTION,
-            timestamp = Date(),
-            foodName = foodName,
-            calories = calories,
-            protein = protein,
-            carbs = carbs,
-            portion = portion,
-            pictureId = pictureId
-        )
-        activityLogDao.insertActivity(foodLog)
-    }
-    
-    suspend fun logWorkout(
-        workoutName: String,
-        caloriesBurned: Int,
-        duration: Int,
-        pictureId: String? = null
-    ) {
-        val user = getUserProfileOnce() ?: return
-        val workoutLog = ActivityLog(
-            userId = user.id,
-            type = ActivityType.WORKOUT,
-            timestamp = Date(),
-            calories = caloriesBurned,
-            workoutName = workoutName,
-            duration = duration,
-            pictureId = pictureId
-        )
-        activityLogDao.insertActivity(workoutLog)
+        if (!_isDummyDataEnabled.value) {
+            val user = getUserProfileOnce() ?: return
+            val activityLog = ActivityLog(
+                userId = user.id,
+                type = type,
+                timestamp = Date(),
+                name = name,
+                calories = calories,
+                notes = notes,
+                pictureId = pictureId
+            )
+            activityLogDao.insertActivity(activityLog)
+        }
     }
     
     suspend fun updateActivity(activity: ActivityLog) {
@@ -277,11 +257,9 @@ class CalorieRepository @Inject constructor(
                     userId = "1000",
                     type = ActivityType.CONSUMPTION,
                     timestamp = calendar.time,
-                    foodName = name,
+                    name = name,
                     calories = calories,
-                    protein = (calories * 0.15f / 4).toFloat(),
-                    carbs = (calories * 0.55f / 4).toFloat(),
-                    portion = portion,
+                    notes = "Portion: $portion",
                     pictureId = foodImageId
                 ))
             }
@@ -309,9 +287,9 @@ class CalorieRepository @Inject constructor(
                         userId = "1000",
                         type = ActivityType.WORKOUT,
                         timestamp = calendar.time,
-                        workoutName = name,
+                        name = name,
                         calories = calories,
-                        duration = duration,
+                        notes = "Duration: ${duration} minutes",
                         pictureId = workoutImageId
                     ))
                 }

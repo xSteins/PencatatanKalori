@@ -52,7 +52,6 @@ fun CalorieAdjustmentDialog(
         mutableStateOf(currentValue.toString())
     }
 
-    // Validation for the base adjustment input
     val isBaseAdjustmentValid = baseAdjustment.isNotEmpty() && baseAdjustment.toIntOrNull() != null
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -103,7 +102,6 @@ fun CalorieAdjustmentDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Base Calorie Adjustment Input
                 Text(
                     text = "Base Calorie Adjustment:",
                     style = MaterialTheme.typography.bodyMedium,
@@ -114,7 +112,6 @@ fun CalorieAdjustmentDialog(
                 OutlinedTextField(
                     value = baseAdjustment,
                     onValueChange = { newValue ->
-                        // Only allow numbers
                         if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
                             baseAdjustment = newValue
                         }

@@ -44,11 +44,7 @@ class MifflinModel {
             val dailyCaloriesTarget = calculateDailyCaloriesTarget(rmr, activityLevel, goalType)
             return dailyCaloriesTarget.toInt()
         }
-        
-        /**
-         * Calculates remaining calories for the day including exercise calories based on strategy.
-         * Uses CalorieStrategy to determine exercise calorie handling based on granularityValue.
-         */
+
         fun calculateRemainingCalories(
             dailyCalorieTarget: Int,
             caloriesConsumed: Int,
@@ -68,10 +64,7 @@ class MifflinModel {
                 }
             }
         }
-        
-        /**
-         * Calculates net calories for tracking purposes using current strategy
-         */
+
         fun calculateNetCalories(
             caloriesConsumed: Int,
             caloriesBurned: Int,
@@ -79,7 +72,7 @@ class MifflinModel {
         ): Int {
             val strategy = CalorieStrategy.fromGranularityValue(granularityValue)
             
-            return when (goalType) {
+            val rawNet = when (goalType) {
                 GoalType.LOSE_WEIGHT -> {
                     val exerciseCaloriesEatenBack = (caloriesBurned * strategy.weightLossExercisePercentage).toInt()
                     caloriesConsumed - exerciseCaloriesEatenBack
@@ -89,19 +82,14 @@ class MifflinModel {
                     caloriesConsumed - exerciseCaloriesEatenBack - strategy.weightGainAdditionalCalories
                 }
             }
+            return maxOf(0, rawNet)
         }
-        
-        /**
-         * Provides explanation text for calorie adjustments based on current strategy
-         */
+
         fun getCalorieAdjustmentExplanation(goalType: GoalType): String {
             val strategy = CalorieStrategy.fromGranularityValue(granularityValue)
             return strategy.getExerciseCalorieExplanation(goalType)
         }
-        
-        /**
-         * Gets the exercise calorie eating percentage based on current strategy
-         */
+
         fun getExerciseCaloriePercentage(goalType: GoalType): Double {
             val strategy = CalorieStrategy.fromGranularityValue(granularityValue)
             return when (goalType) {
@@ -109,10 +97,7 @@ class MifflinModel {
                 GoalType.GAIN_WEIGHT -> strategy.weightGainExercisePercentage
             }
         }
-        
-        /**
-         * Gets the current calorie strategy
-         */
+
         fun getCurrentStrategy(): CalorieStrategy {
             return CalorieStrategy.fromGranularityValue(granularityValue)
         }

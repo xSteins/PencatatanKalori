@@ -45,8 +45,7 @@ class OverviewViewModel @Inject constructor(
                 .sumOf { it.calories ?: 0 }
             val burned = activities.filter { it.type == com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT }
                 .sumOf { it.calories ?: 0 }
-            
-            // Use consolidated MifflinModel for calorie calculations
+
             val remainingCalories = com.ralvin.pencatatankalori.health.model.MifflinModel.calculateRemainingCalories(
                 dailyCalorieTarget = userData.dailyCalorieTarget,
                 caloriesConsumed = consumed,
@@ -95,22 +94,12 @@ class OverviewViewModel @Inject constructor(
         }
     }
 
-    fun logFood(foodName: String, calories: Int, protein: Float, carbs: Float, portion: String, pictureId: String? = null) {
+    fun logActivity(name: String, calories: Int, type: com.ralvin.pencatatankalori.data.database.entities.ActivityType, pictureId: String? = null) {
         viewModelScope.launch {
             try {
-                repository.logFood(foodName, calories, protein, carbs, portion, pictureId)
+                repository.logActivity(name, calories, type, pictureId)
             } catch (e: Exception) {
-                _uiState.value = OverviewUiState.Error(e.message ?: "Failed to log food")
-            }
-        }
-    }
-
-    fun logWorkout(workoutName: String, caloriesBurned: Int, duration: Int, pictureId: String? = null) {
-        viewModelScope.launch {
-            try {
-                repository.logWorkout(workoutName, caloriesBurned, duration, pictureId)
-            } catch (e: Exception) {
-                _uiState.value = OverviewUiState.Error(e.message ?: "Failed to log workout")
+                _uiState.value = OverviewUiState.Error(e.message ?: "Failed to log activity")
             }
         }
     }

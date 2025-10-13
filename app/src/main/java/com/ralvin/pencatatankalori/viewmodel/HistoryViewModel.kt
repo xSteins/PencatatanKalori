@@ -64,22 +64,21 @@ class HistoryViewModel @Inject constructor(
             calendar.time = Date()
             calendar.add(Calendar.DAY_OF_YEAR, -index)
             val date = calendar.time
-            
+
             val activitiesForDay = allActivities.value.filter { activity ->
                 val activityCalendar = Calendar.getInstance()
                 activityCalendar.time = activity.timestamp
-                
+
                 val dateCalendar = Calendar.getInstance()
                 dateCalendar.time = date
-                
+
                 activityCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
                 activityCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
             }
-            
+
             val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }.sumOf { it.calories ?: 0 }
             val burned = activitiesForDay.filter { it.type == ActivityType.WORKOUT }.sumOf { it.calories ?: 0 }
-            
-            // Use MifflinModel for consistent net calorie calculation
+
             val profile = userProfile.value
             val netCalories = if (profile != null) {
                 com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
@@ -106,22 +105,21 @@ class HistoryViewModel @Inject constructor(
         
         while (currentDate.time <= endDate) {
             val date = currentDate.time
-            
+
             val activitiesForDay = allActivities.value.filter { activity ->
                 val activityCalendar = Calendar.getInstance()
                 activityCalendar.time = activity.timestamp
-                
+
                 val dateCalendar = Calendar.getInstance()
                 dateCalendar.time = date
-                
+
                 activityCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
                 activityCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
             }
-            
+
             val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }.sumOf { it.calories ?: 0 }
             val burned = activitiesForDay.filter { it.type == ActivityType.WORKOUT }.sumOf { it.calories ?: 0 }
-            
-            // Use MifflinModel for consistent net calorie calculation
+
             val profile = userProfile.value
             val netCalories = if (profile != null) {
                 com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
@@ -140,22 +138,12 @@ class HistoryViewModel @Inject constructor(
         return dayDataList.reversed()
     }
 
-    fun logFood(foodName: String, calories: Int, protein: Float, carbs: Float, portion: String, pictureId: String? = null) {
+    fun logActivity(name: String, calories: Int, type: com.ralvin.pencatatankalori.data.database.entities.ActivityType, pictureId: String? = null) {
         viewModelScope.launch {
             try {
-                repository.logFood(foodName, calories, protein, carbs, portion, pictureId)
+                repository.logActivity(name, calories, type, pictureId)
             } catch (e: Exception) {
-                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to log food")
-            }
-        }
-    }
-
-    fun logWorkout(workoutName: String, caloriesBurned: Int, duration: Int, pictureId: String? = null) {
-        viewModelScope.launch {
-            try {
-                repository.logWorkout(workoutName, caloriesBurned, duration, pictureId)
-            } catch (e: Exception) {
-                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to log workout")
+                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to log activity")
             }
         }
     }
@@ -177,14 +165,10 @@ class HistoryViewModel @Inject constructor(
                 val existingActivity = allActivities.value.find { it.id == activityId }
                 if (existingActivity != null) {
                     val updatedActivity = existingActivity.copy(
-                        foodName = if (existingActivity.type == ActivityType.CONSUMPTION) name else existingActivity.foodName,
-                        workoutName = if (existingActivity.type == ActivityType.WORKOUT) name else existingActivity.workoutName,
+                        name = name,
                         calories = calories,
-                        protein = protein,
-                        carbs = carbs,
-                        portion = portion,
-                        duration = duration,
                         pictureId = pictureId
+                        // Keep notes as-is, don't auto-generate from protein/carbs/etc
                     )
                     repository.updateActivity(updatedActivity)
                 }

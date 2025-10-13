@@ -81,7 +81,8 @@ fun parseDetails(type: LogType, details: String): Triple<String, String, String>
 fun AddActivityButtons(
     onAddFood: () -> Unit,
     onAddWorkout: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -93,7 +94,8 @@ fun AddActivityButtons(
                 .weight(1f)
                 .height(56.dp),
             shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            enabled = enabled
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add Food")
             Spacer(modifier = Modifier.width(4.dp))
@@ -105,7 +107,8 @@ fun AddActivityButtons(
                 .weight(1f)
                 .height(56.dp),
             shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+            enabled = enabled
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add Workout")
             Spacer(modifier = Modifier.width(4.dp))
@@ -260,7 +263,7 @@ fun LogsDetailedModal(
                                 carbs = carbs?.toFloatOrNull(),
                                 portion = portion,
                                 duration = duration?.toIntOrNull(),
-                                pictureId = if (imagePath != null) imagePath else editLog!!.pictureId
+                                pictureId = editLog!!.pictureId
                             )
                         }
                     }
@@ -295,7 +298,6 @@ fun LogListItem(item: LogItem, onEdit: () -> Unit, viewModel: OverviewViewModel 
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Image section
         val currentImagePath = imagePath
         if (currentImagePath != null) {
             val imageModel = if (currentImagePath.startsWith("android.resource://")) {

@@ -56,14 +56,25 @@ fun EditUserDataDialog(
 
                 when (editType) {
                     EditUserDataType.WEIGHT, EditUserDataType.HEIGHT, EditUserDataType.AGE -> {
+                        val isDecimalAllowed = editType == EditUserDataType.WEIGHT || editType == EditUserDataType.HEIGHT
                         OutlinedTextField(
                             value = textFieldValue,
-                            onValueChange = { if (it.all { c -> c.isDigit() }) textFieldValue = it },
+                            onValueChange = { newValue ->
+                                if (isDecimalAllowed) {
+                                    if (newValue.isEmpty() || newValue.toFloatOrNull() != null) {
+                                        textFieldValue = newValue
+                                    }
+                                } else {
+                                    if (newValue.all { c -> c.isDigit() }) {
+                                        textFieldValue = newValue
+                                    }
+                                }
+                            },
                             label = { Text(editType.name.lowercase().replaceFirstChar { it.titlecase() }) },
                             suffix = { Text(if (editType == EditUserDataType.WEIGHT) "kg" else if (editType == EditUserDataType.HEIGHT) "cm" else "years") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            keyboardOptions = KeyboardOptions(keyboardType = if (isDecimalAllowed) KeyboardType.Decimal else KeyboardType.Number)
                         )
                     }
                     EditUserDataType.GENDER -> {

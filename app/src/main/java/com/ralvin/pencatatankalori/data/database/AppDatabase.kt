@@ -15,7 +15,7 @@ import com.ralvin.pencatatankalori.data.database.entities.*
         ActivityLog::class,
         ActivityPicture::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
