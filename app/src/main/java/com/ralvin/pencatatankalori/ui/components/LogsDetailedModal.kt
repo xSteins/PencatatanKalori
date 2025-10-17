@@ -33,6 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -114,6 +115,7 @@ fun LogsDetailedModal(
     logs: List<LogItem>,
     onAddFood: () -> Unit = {},
     onAddWorkout: () -> Unit = {},
+    dayData: com.ralvin.pencatatankalori.viewmodel.DayData? = null,
     overviewViewModel: OverviewViewModel = hiltViewModel(),
     historyViewModel: HistoryViewModel = hiltViewModel()
 ) {
@@ -142,6 +144,48 @@ fun LogsDetailedModal(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+                
+                // Daily Summary Information
+                dayData?.let { data ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            // Text(
+                            //     text = "Daily Summary",
+                            //     style = MaterialTheme.typography.titleSmall,
+                            //     fontWeight = FontWeight.Bold,
+                            //     color = MaterialTheme.colorScheme.primary
+                            // )
+                            Text(
+                                text = "Target Calorie: ${data.tdee}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "Consumed: ${data.caloriesConsumed} Calorie \nBurned: ${data.caloriesBurned} Calorie",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "Meal: ${data.mealCount} | Workouts: ${data.workoutCount}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = "Goal: ${data.goalType.getDisplayName()}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
 
                 if (logs.isEmpty()) {
                     Column(
@@ -194,11 +238,14 @@ fun LogsDetailedModal(
     }
 
     if (showEditModal && editLog != null) {
-        var initialImagePath by remember { mutableStateOf<String?>(null) }
+        var initialImagePath by remember(editLog!!.pictureId) { mutableStateOf<String?>(null) }
         
-        editLog!!.pictureId?.let { pictureId ->
-            overviewViewModel.getPicture(pictureId) { path ->
-                initialImagePath = path
+        LaunchedEffect(editLog!!.pictureId) {
+            initialImagePath = null 
+            editLog!!.pictureId?.let { pictureId ->
+                overviewViewModel.getPicture(pictureId) { path ->
+                    initialImagePath = path
+                }
             }
         }
         
@@ -207,7 +254,7 @@ fun LogsDetailedModal(
                 type = editLog!!.type,
                 initialName = editLog!!.name,
                 initialCalories = editLog!!.calories.toString(),
-                initialNotes = editLog!!.details,
+                initialNotes = "",
                 initialImagePath = initialImagePath,
                 isEditMode = true,
                 onSubmit = { name, calories, notes, imagePath ->
@@ -261,11 +308,14 @@ fun LogsDetailedModal(
 
 @Composable
 fun LogListItem(item: LogItem, onEdit: () -> Unit, viewModel: OverviewViewModel = hiltViewModel()) {
-    var imagePath by remember { mutableStateOf<String?>(null) }
+    var imagePath by remember(item.pictureId) { mutableStateOf<String?>(null) }
     
-    item.pictureId?.let { pictureId ->
-        viewModel.getPicture(pictureId) { path ->
-            imagePath = path
+    LaunchedEffect(item.pictureId) {
+        imagePath = null // Reset first
+        item.pictureId?.let { pictureId ->
+            viewModel.getPicture(pictureId) { path ->
+                imagePath = path
+            }
         }
     }
     

@@ -26,6 +26,9 @@ class HistoryViewModel @Inject constructor(
     private val _dateRange = MutableStateFlow(getDefaultDateRange())
     val dateRange: StateFlow<Pair<Date, Date>> = _dateRange
 
+    private val _dailyDataList = MutableStateFlow<List<com.ralvin.pencatatankalori.data.database.entities.DailyData>>(emptyList())
+    val dailyDataList: StateFlow<List<com.ralvin.pencatatankalori.data.database.entities.DailyData>> = _dailyDataList
+
     val allActivities = repository.getAllUserActivities()
         .stateIn(
             scope = viewModelScope,
@@ -42,6 +45,7 @@ class HistoryViewModel @Inject constructor(
 
     init {
         _uiState.value = HistoryUiState.Success
+        loadDailyData()
     }
 
     private fun getDefaultDateRange(): Pair<Date, Date> {
@@ -54,11 +58,26 @@ class HistoryViewModel @Inject constructor(
 
     fun selectDateRange(startDate: Date, endDate: Date) {
         _dateRange.value = Pair(startDate, endDate)
+        loadDailyData()
+    }
+
+    private fun loadDailyData() {
+        viewModelScope.launch {
+            try {
+                _uiState.value = HistoryUiState.Loading
+                val (startDate, endDate) = _dateRange.value
+                val dailyData = repository.getDailyDataForDateRange(startDate, endDate)
+                _dailyDataList.value = dailyData
+                _uiState.value = HistoryUiState.Success
+            } catch (e: Exception) {
+                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to load daily data")
+            }
+        }
     }
 
     fun getLastNDaysData(days: Int): List<DayData> {
-        val calendar = Calendar.getInstance()
         val dayDataList = mutableListOf<DayData>()
+        val calendar = Calendar.getInstance()
         
         repeat(days) { index ->
             calendar.time = Date()
@@ -78,64 +97,85 @@ class HistoryViewModel @Inject constructor(
 
             val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }.sumOf { it.calories ?: 0 }
             val burned = activitiesForDay.filter { it.type == ActivityType.WORKOUT }.sumOf { it.calories ?: 0 }
+            val mealCount = activitiesForDay.count { it.type == ActivityType.CONSUMPTION }
+            val workoutCount = activitiesForDay.count { it.type == ActivityType.WORKOUT }
+
+            // Find corresponding daily data or use defaults
+            val dailyData = dailyDataList.value.find { dailyDataItem ->
+                val dailyDataCalendar = Calendar.getInstance()
+                dailyDataCalendar.time = dailyDataItem.date
+                val dateCalendar = Calendar.getInstance()
+                dateCalendar.time = date
+
+                dailyDataCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
+                dailyDataCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
+            }
 
             val profile = userProfile.value
-            val netCalories = if (profile != null) {
-                com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
-                    caloriesConsumed = consumed,
-                    caloriesBurned = burned,
-                    goalType = profile.goalType
-                )
-            } else {
-                consumed - burned
-            }
+            val tdee = dailyData?.tdee ?: profile?.dailyCalorieTarget ?: 2000
+            val goalType = dailyData?.goalType ?: profile?.goalType ?: com.ralvin.pencatatankalori.health.model.GoalType.LOSE_WEIGHT
+            val weight = dailyData?.weight
             
-            dayDataList.add(DayData(date, consumed, burned, netCalories))
+            // Check if this date is today
+            val todayCalendar = Calendar.getInstance()
+            val isToday = todayCalendar.get(Calendar.YEAR) == Calendar.getInstance().apply { time = date }.get(Calendar.YEAR) &&
+                         todayCalendar.get(Calendar.DAY_OF_YEAR) == Calendar.getInstance().apply { time = date }.get(Calendar.DAY_OF_YEAR)
+            
+            val netCalories = com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
+                caloriesConsumed = consumed,
+                caloriesBurned = burned,
+                goalType = goalType
+            )
+            
+            dayDataList.add(DayData(date, consumed, burned, netCalories, tdee, goalType, mealCount, workoutCount, weight, isToday))
         }
         
         return dayDataList
     }
 
     fun getDayDataForSelectedRange(): List<DayData> {
-        val (startDate, endDate) = _dateRange.value
-        val dayDataList = mutableListOf<DayData>()
-        
-        val currentDate = Calendar.getInstance()
-        currentDate.time = startDate
-        
-        while (currentDate.time <= endDate) {
-            val date = currentDate.time
-
+        return dailyDataList.value.map { dailyDataItem ->
             val activitiesForDay = allActivities.value.filter { activity ->
                 val activityCalendar = Calendar.getInstance()
                 activityCalendar.time = activity.timestamp
 
-                val dateCalendar = Calendar.getInstance()
-                dateCalendar.time = date
+                val dailyDataCalendar = Calendar.getInstance()
+                dailyDataCalendar.time = dailyDataItem.date
 
-                activityCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
-                activityCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
+                activityCalendar.get(Calendar.YEAR) == dailyDataCalendar.get(Calendar.YEAR) &&
+                activityCalendar.get(Calendar.DAY_OF_YEAR) == dailyDataCalendar.get(Calendar.DAY_OF_YEAR)
             }
 
             val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }.sumOf { it.calories ?: 0 }
             val burned = activitiesForDay.filter { it.type == ActivityType.WORKOUT }.sumOf { it.calories ?: 0 }
+            val mealCount = activitiesForDay.count { it.type == ActivityType.CONSUMPTION }
+            val workoutCount = activitiesForDay.count { it.type == ActivityType.WORKOUT }
 
-            val profile = userProfile.value
-            val netCalories = if (profile != null) {
-                com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
-                    caloriesConsumed = consumed,
-                    caloriesBurned = burned,
-                    goalType = profile.goalType
-                )
-            } else {
-                consumed - burned
-            }
+            val netCalories = com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
+                caloriesConsumed = consumed,
+                caloriesBurned = burned,
+                goalType = dailyDataItem.goalType
+            )
             
-            dayDataList.add(DayData(date, consumed, burned, netCalories))
-            currentDate.add(Calendar.DAY_OF_YEAR, 1)
+            // Check if this date is today
+            val todayCalendar = Calendar.getInstance()
+            val dateCalendar = Calendar.getInstance().apply { time = dailyDataItem.date }
+            val isToday = todayCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
+                         todayCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
+            
+            DayData(
+                date = dailyDataItem.date,
+                caloriesConsumed = consumed,
+                caloriesBurned = burned,
+                netCalories = netCalories,
+                tdee = dailyDataItem.tdee,
+                goalType = dailyDataItem.goalType,
+                mealCount = mealCount,
+                workoutCount = workoutCount,
+                weight = dailyDataItem.weight,
+                isToday = isToday
+            )
         }
-        
-        return dayDataList.reversed()
     }
 
     fun logActivity(name: String, calories: Int, type: com.ralvin.pencatatankalori.data.database.entities.ActivityType, pictureId: String? = null, notes: String? = null) {
@@ -187,13 +227,34 @@ class HistoryViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateTodayWeight(weight: Float) {
+        viewModelScope.launch {
+            try {
+                repository.updateWeight(weight)
+                loadDailyData() // Refresh data to reflect changes
+            } catch (e: Exception) {
+                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to update weight")
+            }
+        }
+    }
+
+    suspend fun getCurrentWeight(): Float? {
+        return repository.getCurrentWeight()
+    }
 }
 
 data class DayData(
     val date: Date,
     val caloriesConsumed: Int,
     val caloriesBurned: Int,
-    val netCalories: Int
+    val netCalories: Int,
+    val tdee: Int,
+    val goalType: com.ralvin.pencatatankalori.health.model.GoalType,
+    val mealCount: Int = 0,
+    val workoutCount: Int = 0,
+    val weight: Float? = null,
+    val isToday: Boolean = false
 )
 
 sealed class HistoryUiState {

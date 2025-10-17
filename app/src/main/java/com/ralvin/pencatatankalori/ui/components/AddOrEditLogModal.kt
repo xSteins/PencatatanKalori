@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -49,7 +50,36 @@ fun AddOrEditLogModal(
     var notes by remember { mutableStateOf(initialNotes) }
     var selectedImagePath by remember { mutableStateOf(initialImagePath) }
     
+    var nameError by remember { mutableStateOf<String?>(null) }
+    var caloriesError by remember { mutableStateOf<String?>(null) }
+    
     val context = LocalContext.current
+    fun validateName(input: String): String? {
+        return when {
+            input.isBlank() -> "Name cannot be empty"
+            input.trim().length < 3 -> "Name must be at least 3 characters"
+            else -> null
+        }
+    }
+    
+    fun validateCalories(input: String): String? {
+        return when {
+            input.isBlank() -> "Calorie count cannot be empty"
+            input.toIntOrNull() == null -> "Please enter a valid number"
+            input.toInt() <= 0 -> "Calorie count must be greater than 0"
+            else -> null
+        }
+    }
+    
+    fun isFormValid(): Boolean {
+        val nameValidation = validateName(name)
+        val caloriesValidation = validateCalories(calories)
+        
+        nameError = nameValidation
+        caloriesError = caloriesValidation
+        
+        return nameValidation == null && caloriesValidation == null
+    }
     
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -160,22 +190,50 @@ fun AddOrEditLogModal(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
+            Text(
+                text = if (isEditMode) {
+                    when (type) {
+                        LogType.FOOD -> "Edit Consumption Record"
+                        LogType.WORKOUT -> "Edit Workout Record"
+                    }
+                } else {
+                    when (type) {
+                        LogType.FOOD -> "Create Consumption Record"
+                        LogType.WORKOUT -> "Create Workout Record"
+                    }
+                },
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = { 
+                    name = it
+                    nameError = null
+                },
                 label = { Text("Name") },
                 placeholder = { Text(if (type == LogType.FOOD) "Food name" else "Activity name") },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                singleLine = true
+                singleLine = true,
+                isError = nameError != null,
+                supportingText = nameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
             )
             OutlinedTextField(
                 value = calories,
-                onValueChange = { calories = it },
+                onValueChange = { 
+                    calories = it
+                    caloriesError = null
+                },
                 label = { Text("Calorie Count") },
                 placeholder = { Text("600") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                singleLine = true
+                singleLine = true,
+                isError = caloriesError != null,
+                supportingText = caloriesError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
             )
             OutlinedTextField(
                 value = notes,
@@ -205,12 +263,14 @@ fun AddOrEditLogModal(
                 }
                 Button(
                     onClick = {
-                        onSubmit(
-                            name,
-                            calories,
-                            notes,
-                            selectedImagePath
-                        )
+                        if (isFormValid()) {
+                            onSubmit(
+                                name,
+                                calories,
+                                notes,
+                                selectedImagePath
+                            )
+                        }
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(50)

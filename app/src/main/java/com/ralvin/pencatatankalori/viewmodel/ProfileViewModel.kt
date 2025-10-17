@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ralvin.pencatatankalori.data.repository.CalorieRepository
 import com.ralvin.pencatatankalori.data.database.entities.UserData
 import com.ralvin.pencatatankalori.health.model.ActivityLevel
+import com.ralvin.pencatatankalori.health.model.CalorieStrategy
 import com.ralvin.pencatatankalori.health.model.GoalType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,8 @@ class ProfileViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            // Load calorie settings from database on initialization
+            repository.loadCalorieSettingsFromDatabase()
             _uiState.value = ProfileUiState.Success
         }
     }
@@ -82,7 +85,7 @@ class ProfileViewModel @Inject constructor(
                 }
                 
                 if (currentUser != null) {
-                    repository.updateUserProfile(updatedUser)
+                    repository.updateUserDataAndTodayTdee(updatedUser)
                 } else {
                     repository.createUser(updatedUser)
                 }
@@ -100,7 +103,7 @@ class ProfileViewModel @Inject constructor(
                 val currentUser = repository.getUserProfileOnce()
                 currentUser?.let { user ->
                     val updatedUser = user.copy(weight = newWeight)
-                    repository.updateUserProfile(updatedUser)
+                    repository.updateUserDataAndTodayTdee(updatedUser)
                 }
             } catch (e: Exception) {
                 _uiState.value = ProfileUiState.Error(e.message ?: "Failed to update weight")
@@ -114,7 +117,7 @@ class ProfileViewModel @Inject constructor(
                 val currentUser = repository.getUserProfileOnce()
                 currentUser?.let { user ->
                     val updatedUser = user.copy(height = newHeight)
-                    repository.updateUserProfile(updatedUser)
+                    repository.updateUserDataAndTodayTdee(updatedUser)
                 }
             } catch (e: Exception) {
                 _uiState.value = ProfileUiState.Error(e.message ?: "Failed to update height")
@@ -128,7 +131,7 @@ class ProfileViewModel @Inject constructor(
                 val currentUser = repository.getUserProfileOnce()
                 currentUser?.let { user ->
                     val updatedUser = user.copy(activityLevel = activityLevel)
-                    repository.updateUserProfile(updatedUser)
+                    repository.updateUserDataAndTodayTdee(updatedUser)
                 }
             } catch (e: Exception) {
                 _uiState.value = ProfileUiState.Error(e.message ?: "Failed to update activity level")
@@ -142,7 +145,7 @@ class ProfileViewModel @Inject constructor(
                 val currentUser = repository.getUserProfileOnce()
                 currentUser?.let { user ->
                     val updatedUser = user.copy(goalType = goalType)
-                    repository.updateUserProfile(updatedUser)
+                    repository.updateUserDataAndTodayTdee(updatedUser)
                 }
             } catch (e: Exception) {
                 _uiState.value = ProfileUiState.Error(e.message ?: "Failed to update goal type")
@@ -190,6 +193,23 @@ class ProfileViewModel @Inject constructor(
             else -> "Obese"
         }
     }
+    
+    fun updateCalorieSettings(granularityValue: Int, strategy: CalorieStrategy?, advancedEnabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                repository.updateCalorieSettings(granularityValue, strategy, advancedEnabled)
+            } catch (e: Exception) {
+                _uiState.value = ProfileUiState.Error(e.message ?: "Failed to update calorie settings")
+            }
+        }
+    }
+    
+    val todayDailyData = repository.getTodayDailyDataFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
     
     fun toggleDummyData() {
         repository.toggleDummyData()

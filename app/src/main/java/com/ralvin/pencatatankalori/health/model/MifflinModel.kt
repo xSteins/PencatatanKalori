@@ -9,16 +9,36 @@ class MifflinModel {
                 (10 * weight) + (6.25 * height) - (5 * age) - 161
             }
         }
+        
         private var granularityValue = 250
-        fun adjustTargetCalorie(newValue: Int){
+        private var calorieStrategy = CalorieStrategy.MODERATE
+        private var isAdvancedEnabled = false
+        
+        fun adjustTargetCalorie(newValue: Int) {
             this.granularityValue = newValue
         }
         
         fun getGranularityValue(): Int {
             return granularityValue
         }
+        
+        fun setCalorieStrategy(strategy: CalorieStrategy) {
+            this.calorieStrategy = strategy
+        }
+        
+        fun getCalorieStrategy(): CalorieStrategy {
+            return calorieStrategy
+        }
+        
+        fun setAdvancedEnabled(enabled: Boolean) {
+            this.isAdvancedEnabled = enabled
+        }
+        
+        fun isAdvancedEnabled(): Boolean {
+            return isAdvancedEnabled
+        }
 
-        fun calculateDailyCaloriesTarget(rmr: Double, activityLevel: ActivityLevel, goalType: GoalType): Double {
+        fun calculateDailyCaloriesTarget(rmr: Double, activityLevel: ActivityLevel, goalType: GoalType, granularityValue: Int): Double {
             val baseCalories = rmr * activityLevel.multiplier
             
             return when (goalType) {
@@ -33,7 +53,8 @@ class MifflinModel {
             age: Int,
             isMale: Boolean,
             activityLevel: ActivityLevel,
-            goalType: GoalType
+            goalType: GoalType,
+            granularityValue: Int = getGranularityValue()
         ): Int {
             val rmr = calculateRMR(
                 weight = weight.toDouble(),
@@ -41,7 +62,7 @@ class MifflinModel {
                 age = age,
                 isMale = isMale
             )
-            val dailyCaloriesTarget = calculateDailyCaloriesTarget(rmr, activityLevel, goalType)
+            val dailyCaloriesTarget = calculateDailyCaloriesTarget(rmr, activityLevel, goalType, granularityValue)
             return dailyCaloriesTarget.toInt()
         }
 
@@ -49,57 +70,123 @@ class MifflinModel {
             dailyCalorieTarget: Int,
             caloriesConsumed: Int,
             caloriesBurned: Int,
+            goalType: GoalType,
+            advancedEnabled: Boolean = isAdvancedEnabled,
+            calorieStrategy: CalorieStrategy = getCalorieStrategy()
+        ): Int {
+            return if (advancedEnabled) {
+                when (goalType) {
+                    GoalType.LOSE_WEIGHT -> {
+                        val exerciseCaloriesEatenBack = (caloriesBurned * calorieStrategy.weightLossExercisePercentage).toInt()
+                        dailyCalorieTarget - caloriesConsumed + exerciseCaloriesEatenBack
+                    }
+                    GoalType.GAIN_WEIGHT -> {
+                        val exerciseCaloriesEatenBack = (caloriesBurned * calorieStrategy.weightGainExercisePercentage).toInt()
+                        dailyCalorieTarget - caloriesConsumed + exerciseCaloriesEatenBack + calorieStrategy.weightGainAdditionalCalories
+                    }
+                }
+            } else {
+                dailyCalorieTarget - caloriesConsumed + caloriesBurned
+            }
+        }
+        
+        fun calculateRemainingCalories(
+            dailyCalorieTarget: Int,
+            caloriesConsumed: Int,
+            caloriesBurned: Int,
             goalType: GoalType
         ): Int {
-            val strategy = CalorieStrategy.fromGranularityValue(granularityValue)
-            
-            return when (goalType) {
-                GoalType.LOSE_WEIGHT -> {
-                    val exerciseCaloriesEatenBack = (caloriesBurned * strategy.weightLossExercisePercentage).toInt()
-                    dailyCalorieTarget - caloriesConsumed + exerciseCaloriesEatenBack
-                }
-                GoalType.GAIN_WEIGHT -> {
-                    val exerciseCaloriesEatenBack = (caloriesBurned * strategy.weightGainExercisePercentage).toInt()
-                    dailyCalorieTarget - caloriesConsumed + exerciseCaloriesEatenBack + strategy.weightGainAdditionalCalories
-                }
-            }
+            return calculateRemainingCalories(
+                dailyCalorieTarget, caloriesConsumed, caloriesBurned, goalType,
+                isAdvancedEnabled, calorieStrategy
+            )
         }
 
         fun calculateNetCalories(
             caloriesConsumed: Int,
             caloriesBurned: Int,
-            goalType: GoalType
+            goalType: GoalType,
+            advancedEnabled: Boolean = isAdvancedEnabled,
+            calorieStrategy: CalorieStrategy = getCalorieStrategy()
         ): Int {
-            val strategy = CalorieStrategy.fromGranularityValue(granularityValue)
-            
-            val rawNet = when (goalType) {
-                GoalType.LOSE_WEIGHT -> {
-                    val exerciseCaloriesEatenBack = (caloriesBurned * strategy.weightLossExercisePercentage).toInt()
-                    caloriesConsumed - exerciseCaloriesEatenBack
+            val rawNet = if (advancedEnabled) {
+                when (goalType) {
+                    GoalType.LOSE_WEIGHT -> {
+                        val exerciseCaloriesEatenBack = (caloriesBurned * calorieStrategy.weightLossExercisePercentage).toInt()
+                        caloriesConsumed - exerciseCaloriesEatenBack
+                    }
+                    GoalType.GAIN_WEIGHT -> {
+                        val exerciseCaloriesEatenBack = (caloriesBurned * calorieStrategy.weightGainExercisePercentage).toInt()
+                        caloriesConsumed - exerciseCaloriesEatenBack - calorieStrategy.weightGainAdditionalCalories
+                    }
                 }
-                GoalType.GAIN_WEIGHT -> {
-                    val exerciseCaloriesEatenBack = (caloriesBurned * strategy.weightGainExercisePercentage).toInt()
-                    caloriesConsumed - exerciseCaloriesEatenBack - strategy.weightGainAdditionalCalories
-                }
+            } else {
+                caloriesConsumed - caloriesBurned
             }
             return maxOf(0, rawNet)
         }
+        
+        fun calculateNetCalories(
+            caloriesConsumed: Int,
+            caloriesBurned: Int,
+            goalType: GoalType
+        ): Int {
+            return calculateNetCalories(
+                caloriesConsumed, caloriesBurned, goalType,
+                isAdvancedEnabled, calorieStrategy
+            )
+        }
 
-        fun getCalorieAdjustmentExplanation(goalType: GoalType): String {
-            val strategy = CalorieStrategy.fromGranularityValue(granularityValue)
-            return strategy.getExerciseCalorieExplanation(goalType)
+        fun getCalorieAdjustmentExplanation(
+            goalType: GoalType, 
+            weight: Double, 
+            height: Double, 
+            age: Int, 
+            isMale: Boolean, 
+            activityLevel: ActivityLevel,
+            granularityValue: Int = getGranularityValue(),
+            strategy: CalorieStrategy = getCalorieStrategy(),
+            advancedEnabled: Boolean = isAdvancedEnabled()
+        ): String {
+            val rmr = calculateRMR(weight, height, age, isMale)
+            val activityFactor = activityLevel.multiplier
+            
+            return strategy.getExerciseCalorieExplanation(
+                goalType, 
+                rmr, 
+                activityFactor, 
+                granularityValue, 
+                advancedEnabled
+            )
+        }
+        
+        fun getCalorieAdjustmentExplanation(
+            goalType: GoalType, 
+            weight: Double, 
+            height: Double, 
+            age: Int, 
+            isMale: Boolean, 
+            activityLevel: ActivityLevel
+        ): String {
+            return getCalorieAdjustmentExplanation(
+                goalType, weight, height, age, isMale, activityLevel,
+                granularityValue, calorieStrategy, isAdvancedEnabled
+            )
         }
 
         fun getExerciseCaloriePercentage(goalType: GoalType): Double {
-            val strategy = CalorieStrategy.fromGranularityValue(granularityValue)
-            return when (goalType) {
-                GoalType.LOSE_WEIGHT -> strategy.weightLossExercisePercentage
-                GoalType.GAIN_WEIGHT -> strategy.weightGainExercisePercentage
+            return if (isAdvancedEnabled) {
+                when (goalType) {
+                    GoalType.LOSE_WEIGHT -> calorieStrategy.weightLossExercisePercentage
+                    GoalType.GAIN_WEIGHT -> calorieStrategy.weightGainExercisePercentage
+                }
+            } else {
+                1.0
             }
         }
 
         fun getCurrentStrategy(): CalorieStrategy {
-            return CalorieStrategy.fromGranularityValue(granularityValue)
+            return calorieStrategy
         }
     }
 } 

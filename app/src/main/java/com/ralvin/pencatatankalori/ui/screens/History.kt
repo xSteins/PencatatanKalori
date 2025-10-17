@@ -38,6 +38,7 @@ data class HistoryItemData(
     val caloriesText: String,
     val intakeBurnedText: String,
     val mealWorkoutText: String,
+    val goalText: String,
     val id: UUID = UUID.randomUUID()
 )
 
@@ -226,15 +227,21 @@ fun History(
                         ) {
                             items(filteredDaysWithLogs.size) { idx ->
                                 val (dayData, date, logs) = filteredDaysWithLogs[idx]
-                                val profile = userProfile
-                                val dailyTarget = profile?.dailyCalorieTarget ?: 2000
+                                
+                                val caloriesText = when (dayData.goalType) {
+                                    com.ralvin.pencatatankalori.health.model.GoalType.LOSE_WEIGHT -> 
+                                        "Consumed ${dayData.caloriesConsumed} calorie.\nDaily Maximum: ${dayData.tdee} calorie"
+                                    com.ralvin.pencatatankalori.health.model.GoalType.GAIN_WEIGHT -> 
+                                        "Consumed ${dayData.caloriesConsumed} calorie.\nDaily Minimum: ${dayData.tdee} calorie"
+                                }
                                 
                                 HistoryListItem(
                                     item = HistoryItemData(
                                         date = date,
-                                        caloriesText = "${dayData.caloriesConsumed} / $dailyTarget Calories",
+                                        caloriesText = caloriesText,
                                         intakeBurnedText = "${dayData.caloriesConsumed} Intake | ${dayData.caloriesBurned} Burned",
-                                        mealWorkoutText = "${logs.count { it.type == LogType.FOOD }} Meal | ${logs.count { it.type == LogType.WORKOUT }} Workout"
+                                        mealWorkoutText = "${dayData.mealCount} Meal | ${dayData.workoutCount} Workout",
+                                        goalText = dayData.goalType.getDisplayName()
                                     ),
                                     onClick = {
                                         selectedDayIdx = idx
@@ -246,11 +253,12 @@ fun History(
                     }
 
                     if (showModal) {
-                        val (_, date, logs) = filteredDaysWithLogs[selectedDayIdx]
+                        val (dayData, date, logs) = filteredDaysWithLogs[selectedDayIdx]
                         LogsDetailedModal(
                             onDismissRequest = { showModal = false },
                             date = date,
                             logs = logs,
+                            dayData = dayData,
                             onAddFood = {
                                 addModalType = LogType.FOOD
                                 showAddModal = true
@@ -344,6 +352,11 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
                         text = item.mealWorkoutText,
                         style = MaterialTheme.typography.bodySmall
                     )
+                    Text(
+                        text = "Goal: ${item.goalText}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Box(
@@ -420,9 +433,10 @@ fun HistoryPreview() {
                         HistoryListItem(
                             item = HistoryItemData(
                                 date = date,
-                                caloriesText = "${logs.sumOf { it.calories }} / 2000 Calories",
+                                caloriesText = "Consumed ${logs.filter { it.type == LogType.FOOD }.sumOf { it.calories }}, from Maximum calorie of 2000",
                                 intakeBurnedText = "${logs.filter { it.type == LogType.FOOD }.sumOf { it.calories }} Intake | ${logs.filter { it.type == LogType.WORKOUT }.sumOf { it.calories }} Burned",
-                                mealWorkoutText = "${logs.count { it.type == LogType.FOOD }} Meal | ${logs.count { it.type == LogType.WORKOUT }} Workout"
+                                mealWorkoutText = "${logs.count { it.type == LogType.FOOD }} Meal | ${logs.count { it.type == LogType.WORKOUT }} Workout",
+                                goalText = "Weight Loss (Cutting)"
                             ),
                             onClick = {
                                 selectedDayIdx = idx

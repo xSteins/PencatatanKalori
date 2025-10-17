@@ -11,9 +11,9 @@ import java.util.UUID
     tableName = "activity_log",
     foreignKeys = [
         ForeignKey(
-            entity = UserData::class,
+            entity = DailyData::class,
             parentColumns = ["id"],
-            childColumns = ["user_id"],
+            childColumns = ["daily_data_id"],
             onDelete = ForeignKey.CASCADE
         )
     ]
@@ -21,15 +21,11 @@ import java.util.UUID
 data class ActivityLog(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     @ColumnInfo(name = "user_id") val userId: String,
+    @ColumnInfo(name = "daily_data_id") val dailyDataId: String,
     @ColumnInfo(name = "type") val type: ActivityType,
     @ColumnInfo(name = "timestamp") val timestamp: Date,
-    // normalized
     @ColumnInfo(name = "name") val name: String? = null,
     @ColumnInfo(name = "calories") val calories: Int? = null,
     @ColumnInfo(name = "notes") val notes: String? = null,
-    
-    // picture reference
     @ColumnInfo(name = "picture_id") val pictureId: String? = null
-
-    // TODO: Add FK to daily data, make daily entity, user id move to daily
-) 
+)

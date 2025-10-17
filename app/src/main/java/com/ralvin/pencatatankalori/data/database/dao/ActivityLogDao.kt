@@ -64,4 +64,25 @@ interface ActivityLogDao {
     
     @Query("DELETE FROM activity_log WHERE user_id = :userId")
     suspend fun deleteActivitiesByUserId(userId: String)
+    
+    @Query("SELECT al.* FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId ORDER BY al.timestamp DESC")
+    fun getActivitiesByUserIdNew(userId: String): Flow<List<ActivityLog>>
+    
+    @Query("SELECT al.* FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId AND DATE(al.timestamp/1000, 'unixepoch') = DATE('now') ORDER BY al.timestamp DESC")
+    fun getTodayActivitiesNew(userId: String): Flow<List<ActivityLog>>
+    
+    @Query("SELECT al.* FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId AND al.type = :type ORDER BY al.timestamp DESC")
+    fun getActivitiesByTypeNew(userId: String, type: ActivityType): Flow<List<ActivityLog>>
+    
+    @Query("SELECT al.* FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId AND DATE(al.timestamp/1000, 'unixepoch') = DATE(:date/1000, 'unixepoch') ORDER BY al.timestamp DESC")
+    suspend fun getActivitiesForDateNew(userId: String, date: Date): List<ActivityLog>
+    
+    @Query("SELECT COALESCE(SUM(al.calories), 0) FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId AND al.type = :type AND DATE(al.timestamp/1000, 'unixepoch') = DATE('now')")
+    suspend fun getTodayCaloriesConsumedNew(userId: String, type: ActivityType = ActivityType.CONSUMPTION): Int
+    
+    @Query("SELECT COALESCE(SUM(al.calories), 0) FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId AND al.type = :type AND DATE(al.timestamp/1000, 'unixepoch') = DATE('now')")
+    suspend fun getTodayCaloriesBurnedNew(userId: String, type: ActivityType = ActivityType.WORKOUT): Int
+    
+    @Query("SELECT al.* FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId AND DATE(al.timestamp/1000, 'unixepoch') BETWEEN DATE(:startDate/1000, 'unixepoch') AND DATE(:endDate/1000, 'unixepoch') ORDER BY al.timestamp DESC")
+    suspend fun getActivitiesForPeriodNew(userId: String, startDate: Date, endDate: Date): List<ActivityLog>
 } 

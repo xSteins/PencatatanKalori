@@ -23,10 +23,11 @@ import com.ralvin.pencatatankalori.ui.components.EditUserDataDialog
 import com.ralvin.pencatatankalori.ui.components.EditUserDataType
 import com.ralvin.pencatatankalori.ui.components.OnboardingDialog
 import com.ralvin.pencatatankalori.ui.components.UserDataDebugDialog
-import com.ralvin.pencatatankalori.ui.components.CalorieAdjustmentDialog
+import com.ralvin.pencatatankalori.ui.components.CalorieSettingsDialog
 import com.ralvin.pencatatankalori.viewmodel.ProfileViewModel
 import com.ralvin.pencatatankalori.viewmodel.OnboardingViewModel
 import com.ralvin.pencatatankalori.health.model.ActivityLevel
+import com.ralvin.pencatatankalori.health.model.CalorieStrategy
 import com.ralvin.pencatatankalori.health.model.GoalType
 import com.ralvin.pencatatankalori.health.model.MifflinModel
 import com.ralvin.pencatatankalori.ui.theme.PencatatanKaloriTheme
@@ -40,7 +41,7 @@ fun ProfileSettings(
     var showOnboardingDialog by remember { mutableStateOf(false) }
     var showUserDataDebugDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var showCalorieAdjustmentDialog by remember { mutableStateOf(false) }
+    var showCalorieSettingsDialog by remember { mutableStateOf(false) }
     var currentEditType by remember { mutableStateOf(EditUserDataType.WEIGHT) }
     var currentEditValue by remember { mutableStateOf("") }
 
@@ -48,6 +49,7 @@ fun ProfileSettings(
     val profileUiState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val onboardingUiState by onboardingViewModel.uiState.collectAsStateWithLifecycle()
     val isDummyDataEnabled by profileViewModel.isDummyDataEnabled.collectAsStateWithLifecycle()
+    val todayDailyData by profileViewModel.todayDailyData.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         val userExists = profileViewModel.checkUserExists()
@@ -230,9 +232,13 @@ fun ProfileSettings(
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.Tune,
-                                    label = "Calorie Strategy",
-                                    value = "${MifflinModel.getCurrentStrategy().displayName} (${MifflinModel.getGranularityValue()} cal)",
-                                    onClick = if (hasUserData) { { showCalorieAdjustmentDialog = true } } else { {} },
+                                    label = "Calorie Settings",
+                                    value = if (MifflinModel.isAdvancedEnabled()) {
+                                        "Advanced: ${MifflinModel.getCalorieStrategy().displayName} (${MifflinModel.getGranularityValue()} cal)"
+                                    } else {
+                                        "Basic: ${MifflinModel.getGranularityValue()} cal adjustment"
+                                    },
+                                    onClick = if (hasUserData) { { showCalorieSettingsDialog = true } } else { {} },
                                     isEditable = hasUserData
                                 )
                             }
@@ -323,14 +329,23 @@ fun ProfileSettings(
             )
         }
 
-        if (showCalorieAdjustmentDialog) {
+        if (showCalorieSettingsDialog) {
             userProfile?.let { profile ->
-                CalorieAdjustmentDialog(
-                    onDismiss = { showCalorieAdjustmentDialog = false },
-                    onSave = { newValue ->
-                        MifflinModel.adjustTargetCalorie(newValue)
+                CalorieSettingsDialog(
+                    onDismiss = { showCalorieSettingsDialog = false },
+                    onSave = { granularityValue, strategy, advancedEnabled ->
+                        profileViewModel.updateCalorieSettings(granularityValue, strategy, advancedEnabled)
+                        showCalorieSettingsDialog = false
                     },
-                    goalType = profile.goalType
+                    goalType = profile.goalType,
+                    userWeight = profile.weight.toDouble(),
+                    userHeight = profile.height.toDouble(),
+                    userAge = profile.age,
+                    isMale = profile.gender == "Male",
+                    activityLevel = profile.activityLevel,
+                    initialGranularityValue = todayDailyData?.granularityValue ?: 250,
+                    initialCalorieStrategy = todayDailyData?.calorieStrategy ?: CalorieStrategy.MODERATE,
+                    initialAdvancedEnabled = todayDailyData?.advancedEnabled ?: false
                 )
             }
         }

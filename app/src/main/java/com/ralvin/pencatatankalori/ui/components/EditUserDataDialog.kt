@@ -61,11 +61,13 @@ fun EditUserDataDialog(
                             value = textFieldValue,
                             onValueChange = { newValue ->
                                 if (isDecimalAllowed) {
+                                    // Allow empty, digits, and single decimal point
                                     if (newValue.isEmpty() || newValue.toFloatOrNull() != null) {
                                         textFieldValue = newValue
                                     }
                                 } else {
-                                    if (newValue.all { c -> c.isDigit() }) {
+                                    // Age: only allow digits
+                                    if (newValue.isEmpty() || newValue.all { c -> c.isDigit() }) {
                                         textFieldValue = newValue
                                     }
                                 }

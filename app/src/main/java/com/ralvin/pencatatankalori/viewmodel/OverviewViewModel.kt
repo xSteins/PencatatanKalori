@@ -38,26 +38,48 @@ class OverviewViewModel @Inject constructor(
 
     val overviewData = combine(
         userProfile,
-        todayActivities
-    ) { user, activities ->
+        todayActivities,
+        repository.getTodayDailyDataFlow()
+    ) { user, activities, dailyData ->
         user?.let { userData ->
             val consumed = activities.filter { it.type == com.ralvin.pencatatankalori.data.database.entities.ActivityType.CONSUMPTION }
                 .sumOf { it.calories ?: 0 }
             val burned = activities.filter { it.type == com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT }
                 .sumOf { it.calories ?: 0 }
 
-            val remainingCalories = com.ralvin.pencatatankalori.health.model.MifflinModel.calculateRemainingCalories(
-                dailyCalorieTarget = userData.dailyCalorieTarget,
-                caloriesConsumed = consumed,
-                caloriesBurned = burned,
-                goalType = userData.goalType
-            )
+            val remainingCalories = if (dailyData != null) {
+                com.ralvin.pencatatankalori.health.model.MifflinModel.calculateRemainingCalories(
+                    dailyCalorieTarget = dailyData.tdee,
+                    caloriesConsumed = consumed,
+                    caloriesBurned = burned,
+                    goalType = userData.goalType,
+                    advancedEnabled = dailyData.advancedEnabled,
+                    calorieStrategy = dailyData.calorieStrategy
+                )
+            } else {
+                com.ralvin.pencatatankalori.health.model.MifflinModel.calculateRemainingCalories(
+                    dailyCalorieTarget = userData.dailyCalorieTarget,
+                    caloriesConsumed = consumed,
+                    caloriesBurned = burned,
+                    goalType = userData.goalType
+                )
+            }
             
-            val netCalories = com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
-                caloriesConsumed = consumed,
-                caloriesBurned = burned,
-                goalType = userData.goalType
-            )
+            val netCalories = if (dailyData != null) {
+                com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
+                    caloriesConsumed = consumed,
+                    caloriesBurned = burned,
+                    goalType = userData.goalType,
+                    advancedEnabled = dailyData.advancedEnabled,
+                    calorieStrategy = dailyData.calorieStrategy
+                )
+            } else {
+                com.ralvin.pencatatankalori.health.model.MifflinModel.calculateNetCalories(
+                    caloriesConsumed = consumed,
+                    caloriesBurned = burned,
+                    goalType = userData.goalType
+                )
+            }
             
             OverviewData(
                 user = userData,
@@ -65,7 +87,8 @@ class OverviewViewModel @Inject constructor(
                 caloriesBurned = burned,
                 remainingCalories = remainingCalories,
                 netCalories = netCalories,
-                todayActivities = activities
+                todayActivities = activities,
+                dailyData = dailyData
             )
         }
     }.stateIn(
@@ -76,6 +99,8 @@ class OverviewViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            // Load calorie settings from database on initialization
+            repository.loadCalorieSettingsFromDatabase()
             _uiState.value = OverviewUiState.Success
         }
     }
@@ -83,11 +108,8 @@ class OverviewViewModel @Inject constructor(
     fun updateUserWeight(newWeight: Float) {
         viewModelScope.launch {
             try {
-                val currentUser = repository.getUserProfileOnce()
-                currentUser?.let { user ->
-                    val updatedUser = user.copy(weight = newWeight)
-                    repository.updateUserProfile(updatedUser)
-                }
+                // Update both user profile weight and today's daily data
+                repository.updateWeight(newWeight)
             } catch (e: Exception) {
                 _uiState.value = OverviewUiState.Error(e.message ?: "Failed to update weight")
             }
@@ -153,7 +175,8 @@ data class OverviewData(
     val caloriesBurned: Int,
     val remainingCalories: Int,
     val netCalories: Int,
-    val todayActivities: List<ActivityLog>
+    val todayActivities: List<ActivityLog>,
+    val dailyData: com.ralvin.pencatatankalori.data.database.entities.DailyData? = null
 )
 
 sealed class OverviewUiState {

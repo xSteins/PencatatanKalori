@@ -70,6 +70,8 @@ import com.ralvin.pencatatankalori.data.database.entities.ActivityType
 import com.ralvin.pencatatankalori.ui.components.AddActivityButtons
 import com.ralvin.pencatatankalori.ui.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.ui.components.LogType
+import com.ralvin.pencatatankalori.ui.components.EditUserDataDialog
+import com.ralvin.pencatatankalori.ui.components.EditUserDataType
 import com.ralvin.pencatatankalori.ui.theme.PencatatanKaloriTheme
 import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
 import com.ralvin.pencatatankalori.health.model.MifflinModel
@@ -93,25 +95,31 @@ fun OverviewScreen(
     val todayConsumedCalorie = overviewData?.caloriesConsumed ?: 0
     val todayBurnedCalorie = overviewData?.caloriesBurned ?: 0
     val hasUserProfile = overviewData?.user != null
-    val dailyCalorieTarget = if (hasUserProfile) (overviewData?.user?.dailyCalorieTarget ?: 0) else 0
+    val dailyCalorieTarget = if (hasUserProfile) {
+        // Use TDEE from DailyData if available, otherwise fallback to user profile
+        overviewData?.dailyData?.tdee ?: overviewData?.user?.dailyCalorieTarget ?: 0
+    } else 0
     val remainingCalories = if (hasUserProfile) (overviewData?.remainingCalories ?: 0) else 0
     val netCalories = if (hasUserProfile) (overviewData?.netCalories ?: 0) else 0
     val activities = if (hasUserProfile) (overviewData?.todayActivities ?: emptyList()) else emptyList()
     val goalType = overviewData?.user?.goalType
     
     val user = overviewData?.user
-    val bmiValue = user?.let {
-        val heightInMeters = it.height / 100
-        if (heightInMeters > 0) it.weight / (heightInMeters * heightInMeters) else 0f
+    val bmiValue = user?.let { userData ->
+        val heightInMeters = userData.height / 100
+        if (heightInMeters > 0) userData.weight / (heightInMeters * heightInMeters) else 0f
     } ?: 0f
     
-    val bmiStatus = when {
-        bmiValue == 0f -> "No data"
-        bmiValue < 18.5 -> "Underweight"
-        bmiValue < 25 -> "Normal"
-        bmiValue < 30 -> "Overweight"
-        else -> "Obese"
-    }
+    val bmiStatus = user?.let { userData ->
+        val statusText = when {
+            bmiValue == 0f -> "No data"
+            bmiValue < 18.5 -> "Underweight"
+            bmiValue < 25 -> "Normal"
+            bmiValue < 30 -> "Overweight"
+            else -> "Obese"
+        }
+        "$statusText".format(userData.weight, userData.height)
+    } ?: "No data"
     
     val bmiRange = "18.5 - 24.9"
     val bmiStatusColor = when {
@@ -187,8 +195,8 @@ fun OverviewScreen(
         BmiCard(
             bmiValue = bmiValue,
             bmiStatus = bmiStatus,
-            bmiRange = bmiRange,
             statusColor = bmiStatusColor,
+            currentWeight = user?.weight,
             onWeightUpdate = { newWeight ->
                 viewModel.updateUserWeight(newWeight)
             }
@@ -272,7 +280,7 @@ fun OverviewScreen(
                 type = modalType,
                 initialName = editData?.name ?: "",
                 initialCalories = editData?.calories?.toString() ?: "",
-                initialNotes = editData?.notes ?: "",
+                initialNotes = "",
                 initialImagePath = initialImagePath,
                 isEditMode = editData != null,
                 onSubmit = { name, calories, notes, imagePath ->
@@ -405,9 +413,9 @@ fun CalorieInfoRow(label: String, value: Int, progressBarColor: Color, target: I
 fun BmiCard(
     bmiValue: Float,
     bmiStatus: String,
-    bmiRange: String,
     statusColor: Color,
-    onWeightUpdate: (Float) -> Unit = {}
+    onWeightUpdate: (Float) -> Unit = {},
+    currentWeight: Float? = null
 ) {
     var showWeightDialog by remember { mutableStateOf(false) }
     Card(
@@ -449,7 +457,7 @@ fun BmiCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "$bmiStatus ($bmiRange)",
+                    text = "$bmiStatus",
                     style = MaterialTheme.typography.bodyMedium,
                     color = statusColor,
                     fontWeight = FontWeight.Medium
@@ -467,40 +475,15 @@ fun BmiCard(
     }
     
     if (showWeightDialog) {
-        var newWeight by remember { mutableStateOf("") }
-        
-        AlertDialog(
-            onDismissRequest = { showWeightDialog = false },
-            title = { Text("Update Weight") },
-            text = {
-                Column {
-                    Text("Enter your new weight:")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = newWeight,
-                        onValueChange = { newWeight = it },
-                        label = { Text("Weight (kg)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
+        EditUserDataDialog(
+            editType = EditUserDataType.WEIGHT,
+            currentValue = currentWeight?.toString() ?: "",
+            onDismiss = { showWeightDialog = false },
+            onSave = { newValue ->
+                newValue.toFloatOrNull()?.let { weight ->
+                    onWeightUpdate(weight)
                 }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        newWeight.toFloatOrNull()?.let { weight ->
-                            onWeightUpdate(weight)
-                        }
-                        showWeightDialog = false
-                    }
-                ) {
-                    Text("Update")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showWeightDialog = false }) {
-                    Text("Cancel")
-                }
+                showWeightDialog = false
             }
         )
     }
@@ -528,11 +511,14 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
     }
     
     val viewModel: OverviewViewModel = hiltViewModel()
-    var imagePath by remember { mutableStateOf<String?>(null) }
+    var imagePath by remember(activity.pictureId) { mutableStateOf<String?>(null) }
     
-    activity.pictureId?.let { pictureId ->
-        viewModel.getPicture(pictureId) { path ->
-            imagePath = path
+    LaunchedEffect(activity.pictureId) {
+        imagePath = null // fix: previous image will be shown here
+        activity.pictureId?.let { pictureId ->
+            viewModel.getPicture(pictureId) { path ->
+                imagePath = path
+            }
         }
     }
     
@@ -652,6 +638,6 @@ fun OverviewScreenPreview() {
 @Composable
 fun BmiCardPreview() {
     PencatatanKaloriTheme {
-        BmiCard(bmiValue = 22.5f, bmiStatus = "Normal (55kg, 170cm)", bmiRange = "18.5 - 24.9", statusColor = Color(0xFF4CAF50))
+        BmiCard(bmiValue = 22.5f, bmiStatus = "Normal (55kg, 170cm)", statusColor = Color(0xFF4CAF50), currentWeight = 55f)
     }
 }

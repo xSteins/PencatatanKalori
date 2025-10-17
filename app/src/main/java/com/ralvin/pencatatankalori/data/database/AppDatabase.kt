@@ -13,9 +13,10 @@ import com.ralvin.pencatatankalori.data.database.entities.*
     entities = [
         UserData::class,
         ActivityLog::class,
-        ActivityPicture::class
+        ActivityPicture::class,
+        DailyData::class
     ],
-    version = 5,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -23,5 +24,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDataDao(): UserDataDao
     abstract fun activityLogDao(): ActivityLogDao
     abstract fun activityPicturesDao(): ActivityPicturesDao
+    abstract fun dailyDataDao(): DailyDataDao
 
 } 
