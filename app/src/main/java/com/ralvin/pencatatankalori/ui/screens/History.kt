@@ -4,8 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ralvin.pencatatankalori.ui.components.LogsDetailedModal
 import com.ralvin.pencatatankalori.ui.components.LogItem
@@ -29,16 +31,18 @@ import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
 import com.ralvin.pencatatankalori.viewmodel.HistoryUiState
 import com.ralvin.pencatatankalori.data.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.data.database.entities.ActivityType
+import com.ralvin.pencatatankalori.health.model.GoalType
 import java.text.SimpleDateFormat
 import java.util.*
 import com.ralvin.pencatatankalori.ui.components.HistoryDatePicker
 
 data class HistoryItemData(
     val date: String,
-    val caloriesText: String,
-    val intakeBurnedText: String,
-    val mealWorkoutText: String,
+    val consumedText: String,
+    val targetText: String,
     val goalText: String,
+    val mealWorkoutText: String,
+    val isGoalMet: Boolean,
     val id: UUID = UUID.randomUUID()
 )
 
@@ -75,10 +79,14 @@ fun History(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val allActivities by viewModel.allActivities.collectAsState()
-    val userProfile by viewModel.userProfile.collectAsState()
     val dateRange by viewModel.dateRange.collectAsState()
     
     val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
+    val rangeFormat = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
+    val dateRangeText = remember(dateRange) {
+        val (startDate, endDate) = dateRange
+        "${rangeFormat.format(startDate)} - ${rangeFormat.format(endDate)}"
+    }
     
     val isDefaultRange = remember(dateRange) {
         val (startDate, endDate) = dateRange
@@ -92,44 +100,27 @@ fun History(
         daysDiff <= 1 && startDaysDiff <= 1
     }
     
-    val daysData = remember(allActivities, dateRange) {
+    val dayEntries = remember(allActivities, dateRange) {
         val allDaysData = if (isDefaultRange) {
             viewModel.getLastNDaysData(7)
         } else {
             viewModel.getDayDataForSelectedRange()
         }
-        
-        // Filter to only include days that have activities
-        allDaysData.filter { dayData ->
-            allActivities.any { activity ->
-                val activityCalendar = Calendar.getInstance()
-                activityCalendar.time = activity.timestamp
-                
-                val dayCalendar = Calendar.getInstance()
-                dayCalendar.time = dayData.date
-                
-                activityCalendar.get(Calendar.YEAR) == dayCalendar.get(Calendar.YEAR) &&
-                activityCalendar.get(Calendar.DAY_OF_YEAR) == dayCalendar.get(Calendar.DAY_OF_YEAR)
-            }
-        }
-    }
-    
-    val filteredDaysWithLogs = remember(daysData, allActivities) {
-        daysData.mapNotNull { dayData ->
+
+        allDaysData.mapNotNull { dayData ->
             val dateString = dateFormat.format(dayData.date)
             val activitiesForDay = allActivities.filter { activity ->
                 val activityCalendar = Calendar.getInstance()
                 activityCalendar.time = activity.timestamp
-                
+
                 val dayCalendar = Calendar.getInstance()
                 dayCalendar.time = dayData.date
-                
+
                 activityCalendar.get(Calendar.YEAR) == dayCalendar.get(Calendar.YEAR) &&
                 activityCalendar.get(Calendar.DAY_OF_YEAR) == dayCalendar.get(Calendar.DAY_OF_YEAR)
             }
-            
-            // Only include days that have activities
-            if (activitiesForDay.isNotEmpty()) {
+
+            if (dayData.dailyDataId != null || activitiesForDay.isNotEmpty()) {
                 Triple(dayData, dateString, activitiesForDay.map { it.toLogItem() })
             } else {
                 null
@@ -147,18 +138,26 @@ fun History(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "User Calories History",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Column {
+                        Text(
+                            text = "Riwayat Pencatatan",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = dateRangeText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 },
                 actions = {
                     IconButton(onClick = { showDatePicker = true }) {
                         Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
                     }
-                }
+                },
+                windowInsets = WindowInsets(0)
             )
         }
     ) { innerPadding ->
@@ -195,7 +194,7 @@ fun History(
                         )
                     }
 
-                    if (filteredDaysWithLogs.isEmpty()) {
+                    if (dayEntries.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -225,23 +224,39 @@ fun History(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
                         ) {
-                            items(filteredDaysWithLogs.size) { idx ->
-                                val (dayData, date, logs) = filteredDaysWithLogs[idx]
+                            items(dayEntries.size) { idx ->
+                                val (dayData, date, logs) = dayEntries[idx]
+                                val goalType = dayData.goalType
+                                val difference = dayData.caloriesConsumed - dayData.tdee
+                                val absDifference = if (difference < 0) -difference else difference
                                 
-                                val caloriesText = when (dayData.goalType) {
-                                    com.ralvin.pencatatankalori.health.model.GoalType.LOSE_WEIGHT -> 
-                                        "Consumed ${dayData.caloriesConsumed} calorie.\nDaily Maximum: ${dayData.tdee} calorie"
-                                    com.ralvin.pencatatankalori.health.model.GoalType.GAIN_WEIGHT -> 
-                                        "Consumed ${dayData.caloriesConsumed} calorie.\nDaily Minimum: ${dayData.tdee} calorie"
+                                val goalMet = when (goalType) {
+                                    GoalType.LOSE_WEIGHT -> dayData.caloriesConsumed <= dayData.tdee
+                                    GoalType.GAIN_WEIGHT -> dayData.caloriesConsumed >= dayData.tdee
+                                    else -> dayData.caloriesConsumed == dayData.tdee
+                                }
+                                
+                                val consumedText = "Konsumsi: ${dayData.caloriesConsumed} Kalori"
+                                val statusText = when (goalType) {
+                                    GoalType.LOSE_WEIGHT -> {
+                                        if (difference > 0) "Kelebihan $absDifference Kalori" 
+                                        else "Defisit $absDifference Kalori"
+                                    }
+                                    GoalType.GAIN_WEIGHT -> {
+                                        if (difference > 0) "Surplus $absDifference Kalori"
+                                        else "Kurang $absDifference Kalori"
+                                    }
+                                    else -> "Target: ${dayData.tdee} Cal"
                                 }
                                 
                                 HistoryListItem(
                                     item = HistoryItemData(
                                         date = date,
-                                        caloriesText = caloriesText,
-                                        intakeBurnedText = "${dayData.caloriesConsumed} Intake | ${dayData.caloriesBurned} Burned",
-                                        mealWorkoutText = "${dayData.mealCount} Meal | ${dayData.workoutCount} Workout",
-                                        goalText = dayData.goalType.getDisplayName()
+                                        consumedText = consumedText,
+                                        targetText = statusText,
+                                        goalText = dayData.goalType.getDisplayName(),
+                                        mealWorkoutText = "Makanan: ${dayData.mealCount} | Olahraga: ${dayData.workoutCount}",
+                                        isGoalMet = goalMet
                                     ),
                                     onClick = {
                                         selectedDayIdx = idx
@@ -253,64 +268,80 @@ fun History(
                     }
 
                     if (showModal) {
-                        val (dayData, date, logs) = filteredDaysWithLogs[selectedDayIdx]
-                        LogsDetailedModal(
-                            onDismissRequest = { showModal = false },
-                            date = date,
-                            logs = logs,
-                            dayData = dayData,
-                            onAddFood = {
-                                addModalType = LogType.FOOD
-                                showAddModal = true
-                            },
-                            onAddWorkout = {
-                                addModalType = LogType.WORKOUT
-                                showAddModal = true
-                            }
-                        )
+                        val selectedEntry = dayEntries.getOrNull(selectedDayIdx)
+                        if (selectedEntry != null) {
+                            val (dayData, date, logs) = selectedEntry
+                            LogsDetailedModal(
+                                onDismissRequest = { showModal = false },
+                                date = date,
+                                logs = logs,
+                                dayData = dayData,
+                                onAddFood = {
+                                    val dailyDataId = dayEntries.getOrNull(selectedDayIdx)?.first?.dailyDataId
+                                    if (dailyDataId != null) {
+                                        addModalType = LogType.FOOD
+                                        showAddModal = true
+                                    }
+                                },
+                                onAddWorkout = {
+                                    val dailyDataId = dayEntries.getOrNull(selectedDayIdx)?.first?.dailyDataId
+                                    if (dailyDataId != null) {
+                                        addModalType = LogType.WORKOUT
+                                        showAddModal = true
+                                    }
+                                }
+                            )
+                        } else {
+                            showModal = false
+                        }
                     }
                     
                     if (showAddModal) {
-                        AddOrEditLogModal(
-                            type = addModalType,
-                            onSubmit = { name, calories, notes, imagePath ->
-                                val activityType = when (addModalType) {
-                                    LogType.FOOD -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.CONSUMPTION
-                                    LogType.WORKOUT -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT
-                                }
-                                
-                                if (imagePath != null) {
-                                    viewModel.savePicture(imagePath,
-                                        onSuccess = { pictureId ->
-                                            viewModel.logActivity(
+                        Dialog(onDismissRequest = { showAddModal = false }) {
+                            AddOrEditLogModal(
+                                type = addModalType,
+                                onSubmit = { name, calories, notes, imagePath ->
+                                    val activityType = when (addModalType) {
+                                        LogType.FOOD -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.CONSUMPTION
+                                        LogType.WORKOUT -> com.ralvin.pencatatankalori.data.database.entities.ActivityType.WORKOUT
+                                    }
+                                    val selectedEntry = dayEntries.getOrNull(selectedDayIdx)
+                                    val selectedDayData = selectedEntry?.first
+                                    val dailyDataId = selectedDayData?.dailyDataId
+
+                                    if (selectedDayData != null && dailyDataId != null) {
+                                        val calorieValue = calories.toIntOrNull() ?: 0
+                                        val logActivity: (String?) -> Unit = { pictureId ->
+                                            viewModel.logActivityForDailyData(
+                                                dailyDataId = dailyDataId,
+                                                date = selectedDayData.date,
                                                 name = name,
-                                                calories = calories.toIntOrNull() ?: 0,
+                                                calories = calorieValue,
                                                 type = activityType,
                                                 pictureId = pictureId,
                                                 notes = notes
                                             )
-                                        },
-                                        onError = { error ->
-                                            viewModel.logActivity(
-                                                name = name,
-                                                calories = calories.toIntOrNull() ?: 0,
-                                                type = activityType,
-                                                notes = notes
-                                            )
                                         }
-                                    )
-                                } else {
-                                    viewModel.logActivity(
-                                        name = name,
-                                        calories = calories.toIntOrNull() ?: 0,
-                                        type = activityType,
-                                        notes = notes
-                                    )
-                                }
-                                showAddModal = false
-                            },
-                            onCancel = { showAddModal = false }
-                        )
+
+                                        if (imagePath != null) {
+                                            viewModel.savePicture(imagePath,
+                                                onSuccess = { pictureId ->
+                                                    logActivity(pictureId)
+                                                },
+                                                onError = { _ ->
+                                                    logActivity(null)
+                                                }
+                                            )
+                                        } else {
+                                            logActivity(null)
+                                        }
+                                    }
+
+                                    showAddModal = false
+                                },
+                                onCancel = { showAddModal = false }
+                            )
+                        }
                     }
                 }
             }
@@ -328,7 +359,9 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
             modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
         )
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick() },
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
         ) {
             Row(
@@ -339,40 +372,39 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = item.caloriesText,
+                        text = item.consumedText,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = item.intakeBurnedText,
+                        text = item.targetText,
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        text = item.mealWorkoutText,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    Text(
-                        text = "Goal: ${item.goalText}",
+                        text = "Tujuan: ${item.goalText}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .align(Alignment.CenterVertically)
-                        .clickable { onClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Filled.MoreVert,
-                        contentDescription = "More Options",
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    Text(
+                        text = item.mealWorkoutText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                Spacer(modifier = Modifier.width(16.dp))
+                val statusIcon = if (item.isGoalMet) Icons.Filled.CheckCircle else Icons.Filled.Cancel
+                val statusTint = if (item.isGoalMet) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                }
+                Icon(
+                    imageVector = statusIcon,
+                    contentDescription = if (item.isGoalMet) "Target Tercapai" else "Target Tidak Tercapai",
+                    modifier = Modifier.size(40.dp),
+                    tint = statusTint
+                )
             }
         }
     }
@@ -384,6 +416,7 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
 fun HistoryPreview() {
     PencatatanKaloriTheme {
         val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
+        val rangeFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
         val calendar = Calendar.getInstance()
         val days = (0..3).map { offset ->
             calendar.timeInMillis = System.currentTimeMillis() - offset * 24 * 60 * 60 * 1000L
@@ -399,23 +432,32 @@ fun HistoryPreview() {
 
         var showModal by remember { mutableStateOf(false) }
         var selectedDayIdx by remember { mutableStateOf(0) }
+        val dateRangeText = "${rangeFormat.format(System.currentTimeMillis() - 3 * 24 * 60 * 60 * 1000L)} - ${rangeFormat.format(System.currentTimeMillis())}"
 
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            text = "User Calories History",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Column {
+                            Text(
+                                text = "Riwayat Pencatatan",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = dateRangeText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        }
                     },
                     actions = {
                         IconButton(onClick = { }) {
                             Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
                         }
-                    }
+                    },
+                    windowInsets = WindowInsets(0)
                 )
             }
         ) { innerPadding ->
@@ -430,13 +472,18 @@ fun HistoryPreview() {
                     items(logsPerDay.size) { idx ->
                         val date = logsPerDay[idx].first
                         val logs = logsPerDay[idx].second
+                        val consumed = logs.filter { it.type == LogType.FOOD }.sumOf { it.calories }
+                        val target = 2000
+                        val difference = consumed - target
+                        val absDiff = if (difference < 0) -difference else difference
                         HistoryListItem(
                             item = HistoryItemData(
                                 date = date,
-                                caloriesText = "Consumed ${logs.filter { it.type == LogType.FOOD }.sumOf { it.calories }}, from Maximum calorie of 2000",
-                                intakeBurnedText = "${logs.filter { it.type == LogType.FOOD }.sumOf { it.calories }} Intake | ${logs.filter { it.type == LogType.WORKOUT }.sumOf { it.calories }} Burned",
-                                mealWorkoutText = "${logs.count { it.type == LogType.FOOD }} Meal | ${logs.count { it.type == LogType.WORKOUT }} Workout",
-                                goalText = "Weight Loss (Cutting)"
+                                consumedText = "Konsumsi: $consumed Kalori",
+                                targetText = if (difference > 0) "Kelebihan $absDiff Kalori" else "Defisit $absDiff Kalori",
+                                goalText = "Menurunkan berat badan (Cutting)",
+                                mealWorkoutText = "Makanan: ${logs.count { it.type == LogType.FOOD }} | Olahraga: ${logs.count { it.type == LogType.WORKOUT }}",
+                                isGoalMet = idx % 2 == 0
                             ),
                             onClick = {
                                 selectedDayIdx = idx

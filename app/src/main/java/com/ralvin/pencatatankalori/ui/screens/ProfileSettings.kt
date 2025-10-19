@@ -150,11 +150,12 @@ fun ProfileSettings(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Profile Settings",
+                        text = "Pengaturan Profil",
                         fontWeight = FontWeight.Medium,
                         fontSize = 22.sp
                     )
-                }
+                },
+                windowInsets = WindowInsets(0)
             )
         }
     ) { innerPadding ->
@@ -184,7 +185,7 @@ fun ProfileSettings(
                             ) {
                                 ProfileSettingItem(
                                     icon = Icons.Filled.FitnessCenter,
-                                    label = "Active Level",
+                                    label = "Tingkat Keaktifan",
                                     value = currentUserProfile?.activityLevel?.getDisplayName() ?: "Sedentary",
                                     onClick = if (hasUserData) { { openEditDialog(EditUserDataType.ACTIVE_LEVEL) } } else { {} },
                                     isEditable = hasUserData
@@ -192,7 +193,7 @@ fun ProfileSettings(
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.Flag,
-                                    label = "Goal",
+                                    label = "Tujuan",
                                     value = currentUserProfile?.goalType?.getDisplayName() ?: "Gain Weight",
                                     onClick = if (hasUserData) { { openEditDialog(EditUserDataType.GOAL) } } else { {} },
                                     isEditable = hasUserData
@@ -200,7 +201,7 @@ fun ProfileSettings(
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.MonitorWeight,
-                                    label = "Weight",
+                                    label = "Berat Badan",
                                     value = currentUserProfile?.let { "${it.weight}kg" } ?: "50kg",
                                     onClick = if (hasUserData) { { openEditDialog(EditUserDataType.WEIGHT) } } else { {} },
                                     isEditable = hasUserData
@@ -208,7 +209,7 @@ fun ProfileSettings(
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.Height,
-                                    label = "Height",
+                                    label = "Tinggi Badan",
                                     value = currentUserProfile?.let { "${it.height}cm" } ?: "170cm",
                                     onClick = if (hasUserData) { { openEditDialog(EditUserDataType.HEIGHT) } } else { {} },
                                     isEditable = hasUserData
@@ -216,23 +217,23 @@ fun ProfileSettings(
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.Cake,
-                                    label = "Age",
-                                    value = currentUserProfile?.let { "${it.age} Years Old" } ?: "25 Years Old",
+                                    label = "Umur",
+                                    value = currentUserProfile?.let { "${it.age} Tahun" } ?: "25 Tahun",
                                     onClick = if (hasUserData) { { openEditDialog(EditUserDataType.AGE) } } else { {} },
                                     isEditable = hasUserData
                                 )
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.People,
-                                    label = "Gender",
-                                    value = currentUserProfile?.gender ?: "Male",
+                                    label = "Jenis Kelamin",
+                                    value = currentUserProfile?.let { if (it.gender == "Male") "Pria" else "Wanita" } ?: "Pria",
                                     onClick = if (hasUserData) { { openEditDialog(EditUserDataType.GENDER) } } else { {} },
                                     isEditable = hasUserData
                                 )
                                 HorizontalDivider()
                                 ProfileSettingItem(
                                     icon = Icons.Filled.Tune,
-                                    label = "Calorie Settings",
+                                    label = "Pengaturan Kalori",
                                     value = if (MifflinModel.isAdvancedEnabled()) {
                                         "Advanced: ${MifflinModel.getCalorieStrategy().displayName} (${MifflinModel.getGranularityValue()} cal)"
                                     } else {
@@ -256,6 +257,20 @@ fun ProfileSettings(
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
                                 ) {
+                                    Row(
+                                        modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showOnboardingDialog = true }
+                                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text("Onboarding Screen", fontWeight = FontWeight.Medium)
+                                                Text("Re-run initial setup", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                            }
+                                            Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(18.dp))
+                                        }
+                                    HorizontalDivider()
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -282,20 +297,6 @@ fun ProfileSettings(
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text("User Data Debug", fontWeight = FontWeight.Medium)
                                             Text("View/Edit raw user data", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                                        }
-                                        Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(18.dp))
-                                    }
-                                    HorizontalDivider()
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { showOnboardingDialog = true }
-                                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text("Onboarding Screen", fontWeight = FontWeight.Medium)
-                                            Text("Re-run initial setup", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                                         }
                                         Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(18.dp))
                                     }

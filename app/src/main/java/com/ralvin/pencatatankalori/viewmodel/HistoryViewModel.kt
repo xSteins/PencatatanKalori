@@ -127,7 +127,21 @@ class HistoryViewModel @Inject constructor(
                 goalType = goalType
             )
             
-            dayDataList.add(DayData(date, consumed, burned, netCalories, tdee, goalType, mealCount, workoutCount, weight, isToday))
+            dayDataList.add(
+                DayData(
+                    dailyDataId = dailyData?.id,
+                    date = date,
+                    caloriesConsumed = consumed,
+                    caloriesBurned = burned,
+                    netCalories = netCalories,
+                    tdee = tdee,
+                    goalType = goalType,
+                    mealCount = mealCount,
+                    workoutCount = workoutCount,
+                    weight = weight,
+                    isToday = isToday
+                )
+            )
         }
         
         return dayDataList
@@ -164,6 +178,7 @@ class HistoryViewModel @Inject constructor(
                          todayCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
             
             DayData(
+                dailyDataId = dailyDataItem.id,
                 date = dailyDataItem.date,
                 caloriesConsumed = consumed,
                 caloriesBurned = burned,
@@ -182,6 +197,32 @@ class HistoryViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 repository.logActivity(name, calories, type, pictureId, notes)
+            } catch (e: Exception) {
+                _uiState.value = HistoryUiState.Error(e.message ?: "Failed to log activity")
+            }
+        }
+    }
+
+    fun logActivityForDailyData(
+        dailyDataId: String,
+        date: Date,
+        name: String,
+        calories: Int,
+        type: com.ralvin.pencatatankalori.data.database.entities.ActivityType,
+        pictureId: String? = null,
+        notes: String? = null
+    ) {
+        viewModelScope.launch {
+            try {
+                repository.logActivityForDailyData(
+                    dailyDataId = dailyDataId,
+                    targetDate = date,
+                    name = name,
+                    calories = calories,
+                    type = type,
+                    pictureId = pictureId,
+                    notes = notes
+                )
             } catch (e: Exception) {
                 _uiState.value = HistoryUiState.Error(e.message ?: "Failed to log activity")
             }
@@ -245,6 +286,7 @@ class HistoryViewModel @Inject constructor(
 }
 
 data class DayData(
+    val dailyDataId: String? = null,
     val date: Date,
     val caloriesConsumed: Int,
     val caloriesBurned: Int,

@@ -67,25 +67,82 @@ class CalorieRepository @Inject constructor(
         pictureId: String? = null,
         notes: String? = null
     ) {
-        if (!_isDummyDataEnabled.value) {
-            val dailyData = getOrCreateTodayDailyData() ?: return
-            val activityLog = ActivityLog(
-                userId = dailyData.userId,
-                dailyDataId = dailyData.id,
-                type = type,
-                timestamp = Date(),
-                name = name,
-                calories = calories,
-                notes = notes,
-                pictureId = pictureId
-            )
-            activityLogDao.insertActivity(activityLog)
-            
-            if (type == ActivityType.CONSUMPTION) {
-                val newTotal = dailyData.totalCaloriesConsumption + (calories ?: 0)
-                dailyDataDao.updateTotalCaloriesConsumption(dailyData.id, newTotal)
-            }
+        if (_isDummyDataEnabled.value) return
+
+        val dailyData = getOrCreateTodayDailyData() ?: return
+        insertActivityForDailyData(
+            dailyData = dailyData,
+            timestamp = Date(),
+            name = name,
+            calories = calories,
+            type = type,
+            pictureId = pictureId,
+            notes = notes
+        )
+    }
+
+    suspend fun logActivityForDailyData(
+        dailyDataId: String,
+        targetDate: Date,
+        name: String,
+        calories: Int,
+        type: ActivityType,
+        pictureId: String? = null,
+        notes: String? = null
+    ) {
+        if (_isDummyDataEnabled.value) return
+
+        val dailyData = dailyDataDao.getDailyDataById(dailyDataId) ?: return
+        val alignedTimestamp = alignTimestampWithDate(targetDate)
+        insertActivityForDailyData(
+            dailyData = dailyData,
+            timestamp = alignedTimestamp,
+            name = name,
+            calories = calories,
+            type = type,
+            pictureId = pictureId,
+            notes = notes
+        )
+    }
+
+    private suspend fun insertActivityForDailyData(
+        dailyData: DailyData,
+        timestamp: Date,
+        name: String,
+        calories: Int,
+        type: ActivityType,
+        pictureId: String?,
+        notes: String?
+    ) {
+        val activityLog = ActivityLog(
+            userId = dailyData.userId,
+            dailyDataId = dailyData.id,
+            type = type,
+            timestamp = timestamp,
+            name = name,
+            calories = calories,
+            notes = notes,
+            pictureId = pictureId
+        )
+        activityLogDao.insertActivity(activityLog)
+
+        if (type == ActivityType.CONSUMPTION) {
+            val currentDailyData = dailyDataDao.getDailyDataById(dailyData.id) ?: dailyData
+            val newTotal = currentDailyData.totalCaloriesConsumption + calories
+            dailyDataDao.updateTotalCaloriesConsumption(dailyData.id, newTotal)
         }
+    }
+
+    private fun alignTimestampWithDate(targetDate: Date): Date {
+        val targetCalendar = Calendar.getInstance().apply { time = targetDate }
+        val nowCalendar = Calendar.getInstance()
+
+        targetCalendar.set(Calendar.HOUR_OF_DAY, nowCalendar.get(Calendar.HOUR_OF_DAY))
+        targetCalendar.set(Calendar.MINUTE, nowCalendar.get(Calendar.MINUTE))
+        targetCalendar.set(Calendar.SECOND, nowCalendar.get(Calendar.SECOND))
+        targetCalendar.set(Calendar.MILLISECOND, nowCalendar.get(Calendar.MILLISECOND))
+
+        return targetCalendar.time
     }
     
     suspend fun updateActivity(activity: ActivityLog) {

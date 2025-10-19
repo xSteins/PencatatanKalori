@@ -79,6 +79,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+data class Tuple4<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+
 @Composable
 fun OverviewScreen(
     viewModel: OverviewViewModel = hiltViewModel()
@@ -112,14 +114,14 @@ fun OverviewScreen(
     
     val bmiStatus = user?.let { userData ->
         val statusText = when {
-            bmiValue == 0f -> "No data"
-            bmiValue < 18.5 -> "Underweight"
+            bmiValue == 0f -> "Belum ada data"
+            bmiValue < 18.5 -> "Kurus"
             bmiValue < 25 -> "Normal"
-            bmiValue < 30 -> "Overweight"
-            else -> "Obese"
+            bmiValue < 30 -> "Obesitas"
+            else -> "Obesitas"
         }
         "$statusText".format(userData.weight, userData.height)
-    } ?: "No data"
+    } ?: "Belum ada data"
     
     val bmiRange = "18.5 - 24.9"
     val bmiStatusColor = when {
@@ -162,75 +164,181 @@ fun OverviewScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(all = 16.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        // Content with padding (everything up to Activities section)
+        Column(
+            modifier = Modifier.padding(all = 16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Text(
-                    text = currentDate,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = currentDate,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+            var showNetCaloriesInfo by remember { mutableStateOf(false) }
+            var showSecondaryCaloriesInfo by remember { mutableStateOf(false) }
+            
+            val netCaloriesColor = when (goalType) {
+                com.ralvin.pencatatankalori.health.model.GoalType.LOSE_WEIGHT -> {
+                    if (netCalories > dailyCalorieTarget) Color(0xFFE57373) else Color(0xFF81C784)
+                }
+                com.ralvin.pencatatankalori.health.model.GoalType.GAIN_WEIGHT -> {
+                    if (netCalories >= dailyCalorieTarget) Color(0xFF81C784) else Color(0xFF9FA8DA)
+                }
+                else -> Color(0xFF9FA8DA)
+            }
+            CalorieInfoRow(
+                label = "Kalori Bersih",
+                value = netCalories,
+                progressBarColor = netCaloriesColor,
+                target = dailyCalorieTarget,
+                showTargetInValue = false,
+                onClick = { showNetCaloriesInfo = true }
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            val (calorieLabel, displayValue, progressColor, tooltipText) = when (goalType) {
+                com.ralvin.pencatatankalori.health.model.GoalType.LOSE_WEIGHT -> {
+                    if (remainingCalories < 0) {
+                        Tuple4(
+                            "Kelebihan Kalori",
+                            -remainingCalories,
+                            Color(0xFFFFAB91),
+                            "Kalori yang melebihi target harian Anda — dalam hal ini, ${-remainingCalories} kalori."
+                        )
+                    } else {
+                        Tuple4(
+                            "Sisa Kalori",
+                            remainingCalories,
+                            Color(0xFF81C784),
+                            "Kalori yang tersisa untuk mencapai target harian Anda."
+                        )
+                    }
+                }
+                com.ralvin.pencatatankalori.health.model.GoalType.GAIN_WEIGHT -> {
+                    if (remainingCalories < 0) {
+                        val excessCalories = -remainingCalories
+                        Tuple4(
+                            "Surplus Kalori",
+                            excessCalories,
+                            Color(0xFFFFAB91),
+                            "Kalori yang melebihi target harian Anda — dalam hal ini, $excessCalories kalori."
+                        )
+                    } else {
+                        Tuple4(
+                            "Sisa Kalori",
+                            remainingCalories,
+                            Color(0xFF9FA8DA),
+                            "Kalori yang tersisa untuk mencapai target harian Anda."
+                        )
+                    }
+                }
+                else -> {
+                    Tuple4(
+                        "Sisa Kalori",
+                        remainingCalories.coerceAtLeast(0),
+                        Color(0xFF9FA8DA),
+                        "Kalori yang tersisa untuk mencapai target harian Anda."
+                    )
+                }
+            }
+            CalorieInfoRow(
+                label = calorieLabel,
+                value = displayValue,
+                progressBarColor = progressColor,
+                target = dailyCalorieTarget,
+                onClick = { showSecondaryCaloriesInfo = true }
+            )
+            
+            if (showNetCaloriesInfo) {
+                AlertDialog(
+                    onDismissRequest = { showNetCaloriesInfo = false },
+                    title = { Text("Kalori Bersih") },
+                    text = {
+                        Text(
+                            "Total kalori setelah mengurangi kalori yang Anda bakar dari kalori yang Anda konsumsi.\n\n" +
+                            "Batang progres terisi hingga target harian Anda ($dailyCalorieTarget), tetapi nilai dapat melebihinya (misalnya $netCalories)."
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showNetCaloriesInfo = false }) {
+                            Text("OK")
+                        }
+                    }
                 )
-                CalorieInfoRow("Net Calories", netCalories, Color.Cyan)
-                Spacer(modifier = Modifier.height(8.dp))
-                CalorieInfoRow("Remaining Calories", remainingCalories, Color.Magenta, dailyCalorieTarget)
-
             }
+            
+            if (showSecondaryCaloriesInfo) {
+                AlertDialog(
+                    onDismissRequest = { showSecondaryCaloriesInfo = false },
+                    title = { Text(calorieLabel) },
+                    text = { Text(tooltipText) },
+                    confirmButton = {
+                        TextButton(onClick = { showSecondaryCaloriesInfo = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
+                        }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            BmiCard(
+                bmiValue = bmiValue,
+                bmiStatus = bmiStatus,
+                statusColor = bmiStatusColor,
+                currentWeight = user?.weight,
+                onWeightUpdate = { newWeight ->
+                    viewModel.updateUserWeight(newWeight)
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            AddActivityButtons(
+                onAddFood = {
+                    modalType = LogType.FOOD
+                    editData = null
+                    showLogModal = true
+                },
+                onAddWorkout = {
+                    modalType = LogType.WORKOUT
+                    editData = null
+                    showLogModal = true
+                },
+                enabled = hasUserProfile
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Activities:",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        BmiCard(
-            bmiValue = bmiValue,
-            bmiStatus = bmiStatus,
-            statusColor = bmiStatusColor,
-            currentWeight = user?.weight,
-            onWeightUpdate = { newWeight ->
-                viewModel.updateUserWeight(newWeight)
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        AddActivityButtons(
-            onAddFood = {
-                modalType = LogType.FOOD
-                editData = null
-                showLogModal = true
-            },
-            onAddWorkout = {
-                modalType = LogType.WORKOUT
-                editData = null
-                showLogModal = true
-            },
-            enabled = hasUserProfile
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = "Activities:",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         
         if (activities.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -241,7 +349,7 @@ fun OverviewScreen(
         } else {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -377,14 +485,25 @@ fun OverviewScreen(
 }
 
 @Composable
-fun CalorieInfoRow(label: String, value: Int, progressBarColor: Color, target: Int? = null) {
-    Column {
+fun CalorieInfoRow(
+    label: String,
+    value: Int,
+    progressBarColor: Color,
+    target: Int? = null,
+    showTargetInValue: Boolean = true,
+    onClick: (() -> Unit)? = null
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = if (target != null && target > 0) "$value / $target" else "$value",
+                text = if (showTargetInValue && target != null && target > 0) "$value / $target" else "$value",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -393,18 +512,30 @@ fun CalorieInfoRow(label: String, value: Int, progressBarColor: Color, target: I
                 text = label,
                 style = MaterialTheme.typography.bodyLarge
             )
+            if (onClick != null) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Info",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
         LinearProgressIndicator(
             progress = {
                 when {
-                    target != null && target > 0 -> (value.coerceAtLeast(0)).toFloat() / target.toFloat()
+                    target != null && target > 0 -> {
+                        val clampedValue = value.coerceAtLeast(0)
+                        minOf(1.0f, clampedValue.toFloat() / target.toFloat())
+                    }
                     value > 0 -> minOf(1.0f, value.toFloat() / 2000f) // Normalize to 2000 calories max
                     else -> 0.0f // Start from 0 when value is 0 or negative
                 }
             },
             modifier = Modifier.fillMaxWidth().height(8.dp),
             color = progressBarColor,
-            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
         )
     }
 }
@@ -451,7 +582,7 @@ fun BmiCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Body Mass Index (BMI)",
+                    text = "Massa Indeks Tubuh (IMT)",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -466,7 +597,7 @@ fun BmiCard(
 //                    color = MaterialTheme.colorScheme.onSurfaceVariant
 //                )
                 Text(
-                    text = "Click this widget to update your weight.",
+                    text = "Tekan untuk memperbarui berat badan",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -498,6 +629,9 @@ data class ActivityItemData(
     val detailForModal: String? = null
 )
 
+private val WorkoutActivityColor = Color(0xFF7986CB)
+private val FoodActivityColor = Color(0xFF81C784)
+private val ActivityContentColor = Color.White
 
 @Composable
 fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
@@ -526,7 +660,11 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
         modifier = Modifier
             .fillMaxHeight()
             .aspectRatio(3f / 4f)
-            .clickable { onClick(activity) }
+            .clickable { onClick(activity) },
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFood) FoodActivityColor else WorkoutActivityColor,
+            contentColor = ActivityContentColor
+        )
     ) {
         Column(
             modifier = Modifier
@@ -565,19 +703,18 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
                     Icon(
                         imageVector = icon,
                         contentDescription = description,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        modifier = Modifier.size(48.dp)
                     )
                 }
             }
             Text(
                 text = calorieText,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

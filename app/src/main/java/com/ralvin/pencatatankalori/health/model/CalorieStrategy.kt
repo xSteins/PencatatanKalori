@@ -44,7 +44,6 @@ enum class CalorieStrategy(
         val finalTdee = (rmrValue * activityFactorValue + granularityValue).toInt()
         
         val rmrExplanation = "RMR calculated using Mifflin-St Jeor equation based on your personal data"
-        val activityFactorExplanation = "Activity Factor based on your selected activity level"
         val tdeeExplanation = "Final TDEE: $finalTdee calories"
         
         return if (isAdvancedEnabled) {
@@ -64,10 +63,11 @@ enum class CalorieStrategy(
                     }
                 }
             }
-            "$rmrExplanation\n$activityFactorExplanation\n\n$tdeeFormula\n$tdeeExplanation\n\n$advancedFormula"
+            "$rmrExplanation\n\n$tdeeFormula\n$tdeeExplanation\n\n$advancedFormula"
         } else {
             val defaultBehavior = "Default behavior: Subtracts consumption calories with burned calories in 1:1 ratio"
-            "$rmrExplanation\n$activityFactorExplanation\n\n$tdeeFormula\n$tdeeExplanation\n\n$defaultBehavior"
+            "$rmrExplanation\n\n$tdeeFormula\n$tdeeExplanation\n\n$defaultBehavior"
+            "$rmrExplanation\n$\n$tdeeFormula\n$tdeeExplanation\n\n$defaultBehavior"
         }
     }
 }

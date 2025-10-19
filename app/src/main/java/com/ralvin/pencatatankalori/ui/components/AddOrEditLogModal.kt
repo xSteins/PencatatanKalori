@@ -64,9 +64,9 @@ fun AddOrEditLogModal(
     
     fun validateCalories(input: String): String? {
         return when {
-            input.isBlank() -> "Calorie count cannot be empty"
+            input.isBlank() -> "Kalori tidak boleh kosong"
             input.toIntOrNull() == null -> "Please enter a valid number"
-            input.toInt() <= 0 -> "Calorie count must be greater than 0"
+            input.toInt() <= 0 -> "Kalori harus lebih besar dari 0"
             else -> null
         }
     }
@@ -175,7 +175,7 @@ fun AddOrEditLogModal(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = if (isEditMode) "Replace Photo" else "Add Photo",
+                            text = if (isEditMode) "Perbarui Gambar" else "Tambah Foto",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -193,13 +193,13 @@ fun AddOrEditLogModal(
             Text(
                 text = if (isEditMode) {
                     when (type) {
-                        LogType.FOOD -> "Edit Consumption Record"
-                        LogType.WORKOUT -> "Edit Workout Record"
+                        LogType.FOOD -> "Perbarui Data Konsumsi"
+                        LogType.WORKOUT -> "Perbarui Data Aktifitas"
                     }
                 } else {
                     when (type) {
-                        LogType.FOOD -> "Create Consumption Record"
-                        LogType.WORKOUT -> "Create Workout Record"
+                        LogType.FOOD -> "Tambah Data Konsumsi"
+                        LogType.WORKOUT -> "Buat Data Aktifitas"
                     }
                 },
                 style = MaterialTheme.typography.headlineSmall,
@@ -214,8 +214,8 @@ fun AddOrEditLogModal(
                     name = it
                     nameError = null
                 },
-                label = { Text("Name") },
-                placeholder = { Text(if (type == LogType.FOOD) "Food name" else "Activity name") },
+                label = { Text("Nama") },
+                placeholder = { Text(if (type == LogType.FOOD) "Nama Konsumsi" else "Nama Aktivitas") },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                 singleLine = true,
                 isError = nameError != null,
@@ -227,7 +227,7 @@ fun AddOrEditLogModal(
                     calories = it
                     caloriesError = null
                 },
-                label = { Text("Calorie Count") },
+                label = { Text("Jumlah Kalori") },
                 placeholder = { Text("600") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -238,8 +238,8 @@ fun AddOrEditLogModal(
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Notes") },
-                placeholder = { Text("Add additional details...") },
+                label = { Text("Catatan") },
+                placeholder = { Text("Tambahkan Catatan") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)

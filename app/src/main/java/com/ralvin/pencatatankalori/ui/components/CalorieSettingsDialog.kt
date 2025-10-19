@@ -57,7 +57,7 @@ fun CalorieSettingsDialog(
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = "Calorie Settings",
+                    text = "Calorie Strategy Settings",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
@@ -65,14 +65,9 @@ fun CalorieSettingsDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Daily Calorie Adjustment",
+                    text = "Adjust your daily calorie need",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "Adjust calories added to your TDEE (0-500)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -99,12 +94,6 @@ fun CalorieSettingsDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(bottom = 16.dp)
-                )
-                
-                Text(
-                    text = "Formula Explanation:",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
                 )
                 
                 Card(

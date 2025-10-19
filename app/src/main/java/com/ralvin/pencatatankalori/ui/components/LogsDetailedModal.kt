@@ -90,7 +90,7 @@ fun AddActivityButtons(
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add Food")
             Spacer(modifier = Modifier.width(4.dp))
-            Text("Add Consumption Data")
+            Text("Konsumsi")
         }
         Button(
             onClick = onAddWorkout,
@@ -103,7 +103,7 @@ fun AddActivityButtons(
         ) {
             Icon(Icons.Filled.Add, contentDescription = "Add Workout")
             Spacer(modifier = Modifier.width(4.dp))
-            Text("Add Workout Data")
+            Text("Aktivitas")
         }
     }
 }
@@ -166,19 +166,19 @@ fun LogsDetailedModal(
                             //     color = MaterialTheme.colorScheme.primary
                             // )
                             Text(
-                                text = "Target Calorie: ${data.tdee}",
+                                text = "Target Kalori: ${data.tdee}",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                text = "Consumed: ${data.caloriesConsumed} Calorie \nBurned: ${data.caloriesBurned} Calorie",
+                                text = "Asupan Kalori: ${data.caloriesConsumed} \nKalori Dibakar: ${data.caloriesBurned}",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                text = "Meal: ${data.mealCount} | Workouts: ${data.workoutCount}",
+                                text = "Konsumsi: ${data.mealCount} | Aktivitas: ${data.workoutCount}",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                text = "Goal: ${data.goalType.getDisplayName()}",
+                                text = "Tujuan: ${data.goalType.getDisplayName()}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium
@@ -186,6 +186,8 @@ fun LogsDetailedModal(
                         }
                     }
                 }
+
+                val canAddActivities = dayData?.dailyDataId != null
 
                 if (logs.isEmpty()) {
                     Column(
@@ -201,17 +203,12 @@ fun LogsDetailedModal(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
-                        AddActivityButtons(
-                            onAddFood = onAddFood,
-                            onAddWorkout = onAddWorkout,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                     }
                 } else {
                     LazyColumn(
                         modifier = Modifier
-                            .weight(1f, fill = false)
-                            .wrapContentHeight()
+                            .weight(1f)
+                            .fillMaxWidth()
                     ) {
                         items(logs) { item ->
                             LogListItem(item = item, onEdit = {
@@ -222,6 +219,14 @@ fun LogsDetailedModal(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                AddActivityButtons(
+                    onAddFood = onAddFood,
+                    onAddWorkout = onAddWorkout,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = canAddActivities
+                )
 
                 Button(
                     onClick = onDismissRequest,
@@ -388,11 +393,11 @@ fun LogsDetailedModalPreview() {
 fun LogsDetailedModalEmptyPreview() {
     MaterialTheme {
         LogsDetailedModal(
-            onDismissRequest = {/*do nothing*/}, 
-            date = "Sunday, 28 September 2025", 
+            onDismissRequest = {/*do nothing*/ },
+            date = "Sunday, 28 September 2025",
             logs = emptyList(),
-            onAddFood = {/*do nothing*/},
-            onAddWorkout = {/*do nothing*/}
+            onAddFood = {/*do nothing*/ },
+            onAddWorkout = {/*do nothing*/ }
         )
     }
 }
