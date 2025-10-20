@@ -8,35 +8,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.ralvin.pencatatankalori.ui.navigation.BottomNavBar
-import com.ralvin.pencatatankalori.ui.navigation.NavGraph
-import com.ralvin.pencatatankalori.ui.navigation.Screen
-import com.ralvin.pencatatankalori.ui.theme.PencatatanKaloriTheme
+import com.ralvin.pencatatankalori.View.navigation.BottomNavBar
+import com.ralvin.pencatatankalori.View.navigation.NavGraph
+import com.ralvin.pencatatankalori.View.navigation.Screen
+import com.ralvin.pencatatankalori.View.theme.PencatatanKaloriTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            PencatatanKaloriTheme {
-                val navController = rememberNavController()
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		enableEdgeToEdge()
+		setContent {
+			PencatatanKaloriTheme {
+				val navController = rememberNavController()
 
-                val startDestination = Screen.Overview.route
+				val startDestination = Screen.Overview.route
 
-                Scaffold(
-                    bottomBar = {
-                        BottomNavBar(navController = navController)
-                    }
-                ) { paddingValues -> 
-                    NavGraph(
-                        navController = navController,
-                        modifier = Modifier.padding(paddingValues),
-                        startDestination = startDestination
-                    )
-                }
-            }
-        }
-    }
+				Scaffold(
+					bottomBar = {
+						BottomNavBar(navController = navController)
+					}
+				) { paddingValues ->
+					NavGraph(
+						navController = navController,
+						modifier = Modifier.padding(paddingValues),
+						startDestination = startDestination
+					)
+				}
+			}
+		}
+	}
 }
