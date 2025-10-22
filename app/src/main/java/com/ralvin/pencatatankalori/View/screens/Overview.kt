@@ -136,37 +136,34 @@ fun OverviewScreen(
 			return
 		}
 
-		is com.ralvin.pencatatankalori.Viewmodel.OverviewUiState.Error -> {
-			Column(
-				modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-				verticalArrangement = Arrangement.Center,
-				horizontalAlignment = Alignment.CenterHorizontally
-			) {
-				Text(
-					text = "Error: ${currentUiState.message}",
-					color = MaterialTheme.colorScheme.error,
-					style = MaterialTheme.typography.bodyLarge
-				)
-				Button(
-					onClick = { /* TODO: Add retry logic */ },
-					modifier = Modifier.padding(top = 16.dp)
-				) {
-					Text("Retry")
-				}
-			}
-			return
-		}
-
-		else -> {
-		}
+		/* TODO: Add retry logic */
+//		is com.ralvin.pencatatankalori.Viewmodel.OverviewUiState.Error -> {
+//			Column(
+//				modifier = Modifier
+//                    .fillMaxSize()
+//                    .padding(16.dp),
+//				verticalArrangement = Arrangement.Center,
+//				horizontalAlignment = Alignment.CenterHorizontally
+//			) {
+//				Text(
+//					text = "Error: ${currentUiState.message}",
+//					color = MaterialTheme.colorScheme.error,
+//					style = MaterialTheme.typography.bodyLarge
+//				)
+//				Button(
+//					onClick = {  },
+//					modifier = Modifier.padding(top = 16.dp)
+//				) {
+//					Text("Retry")
+//				}
+//			}
+//			return
+//		}
 	}
 
 	Column(
 		modifier = Modifier.fillMaxSize()
 	) {
-		// Content with padding (everything up to Activities section)
 		Column(
 			modifier = Modifier.padding(all = 16.dp)
 		) {
@@ -602,7 +599,7 @@ fun BmiCard(
 
 			Column(modifier = Modifier.weight(1f)) {
 				Text(
-					text = "Massa Indeks Tubuh (IMT)",
+					text = "Indeks Massa Tubuh (IMT)",
 					style = MaterialTheme.typography.titleMedium,
 					fontWeight = FontWeight.Bold
 				)
@@ -781,23 +778,23 @@ fun ActivityItem(item: ActivityItemData, onClick: (ActivityItemData) -> Unit) {
 	}
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun OverviewScreenPreview() {
-	PencatatanKaloriTheme {
-		OverviewScreen()
-	}
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BmiCardPreview() {
-	PencatatanKaloriTheme {
-		BmiCard(
-			bmiValue = 22.5f,
-			bmiStatus = "Normal (55kg, 170cm)",
-			statusColor = Color(0xFF4CAF50),
-			currentWeight = 55f
-		)
-	}
-}
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun OverviewScreenPreview() {
+//	PencatatanKaloriTheme {
+//		OverviewScreen()
+//	}
+//}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun BmiCardPreview() {
+//	PencatatanKaloriTheme {
+//		BmiCard(
+//			bmiValue = 22.5f,
+//			bmiStatus = "Normal (55kg, 170cm)",
+//			statusColor = Color(0xFF4CAF50),
+//			currentWeight = 55f
+//		)
+//	}
+//}

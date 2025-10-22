@@ -529,124 +529,124 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
 		}
 	}
 }
-
-@Preview(showBackground = true)
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HistoryPreview() {
-	PencatatanKaloriTheme {
-		val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
-		val rangeFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-		val calendar = Calendar.getInstance()
-		val days = (0..3).map { offset ->
-			calendar.timeInMillis = System.currentTimeMillis() - offset * 24 * 60 * 60 * 1000L
-			dateFormat.format(calendar.time)
-		}
-		val logsPerDay = days.mapIndexed { idx, date ->
-			date to listOf(
-				LogItem(
-					idx * 10 + 1,
-					LogType.FOOD,
-					600 + idx * 100,
-					"Ribeye Steak",
-					"${600 + idx * 100} Calories | 60.5g Protein | 50.5g Carbs",
-					activityId = "sample-id-${idx * 10 + 1}"
-				),
-				LogItem(
-					idx * 10 + 2,
-					LogType.WORKOUT,
-					400 + idx * 50,
-					"Jogging",
-					"${4.5 + idx} km",
-					activityId = "sample-id-${idx * 10 + 2}"
-				),
-				LogItem(
-					idx * 10 + 3,
-					LogType.FOOD,
-					500 + idx * 80,
-					"Chicken Salad",
-					"${500 + idx * 80} Calories | 30g Protein | 20g Carbs",
-					activityId = "sample-id-${idx * 10 + 3}"
-				)
-			)
-		}
-
-		var showModal by remember { mutableStateOf(false) }
-		var selectedDayIdx by remember { mutableStateOf(0) }
-		val dateRangeText =
-			"${rangeFormat.format(System.currentTimeMillis() - 3 * 24 * 60 * 60 * 1000L)} - ${
-				rangeFormat.format(System.currentTimeMillis())
-			}"
-
-		Scaffold(
-			topBar = {
-				TopAppBar(
-					title = {
-						Column {
-							Text(
-								text = "Riwayat Pencatatan",
-								maxLines = 1,
-								overflow = TextOverflow.Ellipsis,
-								fontWeight = FontWeight.Medium
-							)
-							Text(
-								text = dateRangeText,
-								style = MaterialTheme.typography.bodySmall,
-								color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-							)
-						}
-					},
-					actions = {
-						IconButton(onClick = { }) {
-							Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
-						}
-					},
-					windowInsets = WindowInsets(0)
-				)
-			}
-		) { innerPadding ->
-			Box(modifier = Modifier.padding(innerPadding)) {
-				LazyColumn(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(horizontal = 16.dp),
-					verticalArrangement = Arrangement.spacedBy(12.dp),
-					contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
-				) {
-					items(logsPerDay.size) { idx ->
-						val date = logsPerDay[idx].first
-						val logs = logsPerDay[idx].second
-						val consumed = logs.filter { it.type == LogType.FOOD }.sumOf { it.calories }
-						val target = 2000
-						val difference = consumed - target
-						val absDiff = if (difference < 0) -difference else difference
-						HistoryListItem(
-							item = HistoryItemData(
-								date = date,
-								consumedText = if (difference > 0) "Surplus $absDiff Kalori" else "Defisit $absDiff Kalori",
-								targetText = "${logs.count { it.type == LogType.FOOD }}x Konsumsi, ${logs.count { it.type == LogType.WORKOUT }}x Aktifitas Aktif",
-								goalText = "Cutting",
-								mealWorkoutText = "Cutting",
-								physicalInfoText = "Kebutuhan Kalori Harian: 2000 kalori\n170.0cm, 60.0kg",
-								isGoalMet = idx % 2 == 0
-							),
-							onClick = {
-								selectedDayIdx = idx
-								showModal = true
-							}
-						)
-					}
-				}
-
-				if (showModal) {
-					val (date, logs) = logsPerDay[selectedDayIdx]
-					LogsDetailedModal(
-						onDismissRequest = { showModal = false },
-						date = date,
-						logs = logs
-					)
-				}
-			}
-		}
-	}
-}
+//
+//@Preview(showBackground = true)
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun HistoryPreview() {
+//	PencatatanKaloriTheme {
+//		val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
+//		val rangeFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+//		val calendar = Calendar.getInstance()
+//		val days = (0..3).map { offset ->
+//			calendar.timeInMillis = System.currentTimeMillis() - offset * 24 * 60 * 60 * 1000L
+//			dateFormat.format(calendar.time)
+//		}
+//		val logsPerDay = days.mapIndexed { idx, date ->
+//			date to listOf(
+//				LogItem(
+//					idx * 10 + 1,
+//					LogType.FOOD,
+//					600 + idx * 100,
+//					"Ribeye Steak",
+//					"${600 + idx * 100} Calories | 60.5g Protein | 50.5g Carbs",
+//					activityId = "sample-id-${idx * 10 + 1}"
+//				),
+//				LogItem(
+//					idx * 10 + 2,
+//					LogType.WORKOUT,
+//					400 + idx * 50,
+//					"Jogging",
+//					"${4.5 + idx} km",
+//					activityId = "sample-id-${idx * 10 + 2}"
+//				),
+//				LogItem(
+//					idx * 10 + 3,
+//					LogType.FOOD,
+//					500 + idx * 80,
+//					"Chicken Salad",
+//					"${500 + idx * 80} Calories | 30g Protein | 20g Carbs",
+//					activityId = "sample-id-${idx * 10 + 3}"
+//				)
+//			)
+//		}
+//
+//		var showModal by remember { mutableStateOf(false) }
+//		var selectedDayIdx by remember { mutableStateOf(0) }
+//		val dateRangeText =
+//			"${rangeFormat.format(System.currentTimeMillis() - 3 * 24 * 60 * 60 * 1000L)} - ${
+//				rangeFormat.format(System.currentTimeMillis())
+//			}"
+//
+//		Scaffold(
+//			topBar = {
+//				TopAppBar(
+//					title = {
+//						Column {
+//							Text(
+//								text = "Riwayat Pencatatan",
+//								maxLines = 1,
+//								overflow = TextOverflow.Ellipsis,
+//								fontWeight = FontWeight.Medium
+//							)
+//							Text(
+//								text = dateRangeText,
+//								style = MaterialTheme.typography.bodySmall,
+//								color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+//							)
+//						}
+//					},
+//					actions = {
+//						IconButton(onClick = { }) {
+//							Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
+//						}
+//					},
+//					windowInsets = WindowInsets(0)
+//				)
+//			}
+//		) { innerPadding ->
+//			Box(modifier = Modifier.padding(innerPadding)) {
+//				LazyColumn(
+//					modifier = Modifier
+//						.fillMaxSize()
+//						.padding(horizontal = 16.dp),
+//					verticalArrangement = Arrangement.spacedBy(12.dp),
+//					contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
+//				) {
+//					items(logsPerDay.size) { idx ->
+//						val date = logsPerDay[idx].first
+//						val logs = logsPerDay[idx].second
+//						val consumed = logs.filter { it.type == LogType.FOOD }.sumOf { it.calories }
+//						val target = 2000
+//						val difference = consumed - target
+//						val absDiff = if (difference < 0) -difference else difference
+//						HistoryListItem(
+//							item = HistoryItemData(
+//								date = date,
+//								consumedText = if (difference > 0) "Surplus $absDiff Kalori" else "Defisit $absDiff Kalori",
+//								targetText = "${logs.count { it.type == LogType.FOOD }}x Konsumsi, ${logs.count { it.type == LogType.WORKOUT }}x Aktifitas Aktif",
+//								goalText = "Cutting",
+//								mealWorkoutText = "Cutting",
+//								physicalInfoText = "Kebutuhan Kalori Harian: 2000 kalori\n170.0cm, 60.0kg",
+//								isGoalMet = idx % 2 == 0
+//							),
+//							onClick = {
+//								selectedDayIdx = idx
+//								showModal = true
+//							}
+//						)
+//					}
+//				}
+//
+//				if (showModal) {
+//					val (date, logs) = logsPerDay[selectedDayIdx]
+//					LogsDetailedModal(
+//						onDismissRequest = { showModal = false },
+//						date = date,
+//						logs = logs
+//					)
+//				}
+//			}
+//		}
+//	}
+//}

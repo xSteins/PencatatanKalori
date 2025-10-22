@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="PencatatanKalori">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-10-19T15:45:37.296959300Z">
+        <DropdownSelection timestamp="2025-10-19T15:59:23.539640500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=F6O7HUXKG6INZXPR" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=764e22f4" />
             </handle>
           </Target>
         </DropdownSelection>

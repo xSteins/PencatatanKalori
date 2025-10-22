@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+	<string name="cancel">Batal</string>
+	<string name="save">Simpan</string>
+	<string name="ok">OK</string>
+	<string name="close">Tutup</string>
+	<string name="refresh">Muat Ulang</string>
+	<string name="submit">Kirim</string>
+
+	<string name="nama">Nama</string>
+	<string name="nama_konsumsi">Nama Konsumsi</string>
+	<string name="nama_aktivitas">Nama Aktivitas</string>
+	<string name="jumlah_kalori">Jumlah Kalori</string>
+	<string name="catatan">Catatan</string>
+	<string name="tambahkan_catatan">Tambahkan Catatan</string>
+	<string name="tanggal">Tanggal</string>
+
+	<string name="name_cannot_be_empty">Nama tidak boleh kosong</string>
+	<string name="name_must_be_at_least_3_characters">Nama minimal 3 karakter</string>
+	<string name="please_enter_valid_number">Masukkan angka yang valid</string>
+	<string name="kalori_tidak_boleh_kosong">Kalori tidak boleh kosong</string>
+	<string name="kalori_harus_lebih_besar_dari_0">Kalori harus lebih besar dari 0</string>
+	<string name="kalori_harus_lebih_dari_0">Kalori harus lebih dari 0</string>
+	<string name="nama_tidak_boleh_kosong">Nama tidak boleh kosong</string>
+	<string name="nama_minimal_2_karakter">Nama minimal 2 karakter</string>
+	<string name="masukkan_angka_yang_valid">Masukkan angka yang valid</string>
+
+	<string name="perbarui_gambar">Perbarui Gambar</string>
+	<string name="tambah_foto">Tambah Foto</string>
+	<string name="perbarui_data_konsumsi">Perbarui Data Konsumsi</string>
+	<string name="perbarui_data_aktifitas">Perbarui Data Aktifitas</string>
+	<string name="tambah_data_konsumsi">Tambah Data Konsumsi</string>
+	<string name="buat_data_aktifitas">Buat Data Aktifitas</string>
+	<string name="delete_activity">Hapus Aktivitas</string>
+	<string name="change_photo">Ubah foto</string>
+	<string name="selected_image">Gambar terpilih</string>
+
+	<string name="calorie_strategy_settings">Pengaturan Strategi Kalori</string>
+	<string name="adjust_daily_calorie_need">Sesuaikan kebutuhan kalori harian</string>
+	<string name="current_calories">Saat ini: %d kalori</string>
+	<string name="enable_advanced_exercise">Aktifkan Manajemen Kalori Olahraga Lanjutan</string>
+	<string name="advanced_exercise_strategy">Strategi Kalori Olahraga Lanjutan</string>
+	<string name="eat_back_deficit_description">Anda akan makan kembali %1$d%% kalori olahraga, menciptakan defisit tambahan %2$d%% untuk penurunan lemak konsisten sambil menjaga performa.</string>
+	<string name="eat_back_surplus_description">Anda akan makan kembali %1$d%% kalori olahraga plus %2$d kalori tambahan untuk surplus moderat dan pertumbuhan otot.</string>
+	<string name="eat_back_conservative_description">Anda akan makan kembali %d%% kalori olahraga untuk pertumbuhan otot ramping konservatif.</string>
+
+	<string name="select_date_range">Pilih rentang tanggal</string>
+	<string name="start_date">Tanggal mulai</string>
+	<string name="end_date">Tanggal akhir</string>
+	<string name="select_date">Pilih Tanggal</string>
+
+	<string name="konsumsi">Konsumsi</string>
+	<string name="aktivitas">Aktivitas</string>
+	<string name="tambah_data_manual">Tambah Data Manual</string>
+	<string name="add_food">Tambah Makanan</string>
+	<string name="add_workout">Tambah Olahraga</string>
+	<string name="calories_added_format">%d Kalori Ditambah</string>
+	<string name="calories_burned_format">%d Kalori Dibakar</string>
+	<string name="edit_log">Edit Catatan</string>
+	<string name="calories_added">Kalori Ditambah</string>
+	<string name="calories_burned">Kalori Dibakar</string>
+
+	<string name="tdee_consumption_burn_format">TDEE/Target: %1$d | Konsumsi: %2$d | Pembakaran: %3$d</string>
+	<string name="meal_workout_count_format">%1$d Konsumsi | %2$d Aktivitas</string>
+	<string name="tekan_info_fisik">Tekan teks di atas untuk memperbarui data Anda.</string>
+	<string name="tarik_atas_aktivitas">Tarik ke atas untuk melihat aktivitas lainnya</string>
+	<string name="tidak_ada_aktivitas">Tidak Ada aktivitas yang dicatat pada pilihan rentang tanggal.</string>
+
+	<string name="personalize_your_data">Personalisasi Data Anda</string>
+	<string name="data_customize_calorie_target">Data ini digunakan untuk menyesuaikan target kalori harian Anda.</string>
+	<string name="body_weight">Berat Badan</string>
+	<string name="height">Tinggi Badan</string>
+	<string name="age">Umur</string>
+	<string name="gender">Jenis Kelamin</string>
+	<string name="male">Pria</string>
+	<string name="female">Wanita</string>
+	<string name="pria">Pria</string>
+	<string name="wanita">Wanita</string>
+	<string name="years">tahun</string>
+	<string name="kg">kg</string>
+	<string name="cm">cm</string>
+	<string name="activity_level">Tingkat Aktivitas</string>
+	<string name="select_activity_level">Pilih Tingkat Aktivitas</string>
+	<string name="goal">Tujuan</string>
+
+	<string name="edit_weight">Edit Berat</string>
+	<string name="edit_height">Edit Tinggi</string>
+	<string name="edit_age">Edit Umur</string>
+	<string name="edit_gender">Edit Jenis Kelamin</string>
+	<string name="edit_active_level">Edit Tingkat Aktif</string>
+	<string name="edit_goal">Edit Tujuan</string>
+	<string name="decrease">Turunkan</string>
+	<string name="increase">Naikkan</string>
+	<string name="berat_badan">Berat Badan</string>
+	<string name="tinggi_badan">Tinggi Badan</string>
+	<string name="umur">Umur</string>
+	<string name="tahun">Tahun</string>
+	<string name="jenis_kelamin">Jenis Kelamin</string>
+	<string name="tingkat_keaktifan">Tingkat Keaktifan</string>
+	<string name="tujuan">Tujuan</string>
+	<string name="pengaturan_kalori">Pengaturan Kalori</string>
+	<string name="tb_format">TB: %scm</string>
+	<string name="bb_format">BB: %skg</string>
+
+	<!-- overview -->
+	<string name="kalori_bersih">Kalori Bersih</string>
+	<string name="kelebihan_kalori">Kelebihan Kalori</string>
+	<string name="sisa_kalori">Sisa Kalori</string>
+	<string name="surplus_kalori">Surplus Kalori</string>
+	<string name="kalori_melebihi_target">Kalori yang melebihi target harian Anda — dalam hal ini, %d kalori.</string>
+	<string name="kalori_tersisa_target">Kalori yang tersisa untuk mencapai target harian Anda.</string>
+	<string name="kalori_bersih_description">Total kalori setelah mengurangi kalori yang Anda bakar dari kalori yang Anda konsumsi.\n\nContoh: Kalori Total %1$d - (400 Kalori dibakar) + (200 Konsumsi Kalori) = %2$d).</string>
+	<string name="indeks_massa_tubuh">Indeks Massa Tubuh (IMT)</string>
+	<string name="tekan_perbarui_berat">Tekan untuk memperbarui berat badan</string>
+	<string name="belum_ada_data">Belum ada data</string>
+	<string name="kurus">Kurus</string>
+	<string name="normal">Normal</string>
+	<string name="obesitas">Obesitas</string>
+	<string name="activities">Aktivitas:</string>
+	<string name="havent_logged_anything">Belum ada catatan</string>
+	<string name="food_item">Item Makanan</string>
+	<string name="workout">Olahraga</string>
+
+	<!-- history -->
+	<string name="riwayat_pencatatan">Riwayat Pencatatan</string>
+	<string name="select_date_action">Pilih tanggal</string>
+	<string name="no_activity_data_found">Tidak ada data aktivitas</string>
+	<string name="start_logging_history">Mulai catat makanan dan olahraga untuk lihat riwayat</string>
+	<string name="surplus_kalori_format">Surplus %d Kalori</string>
+	<string name="defisit_kalori_format">Defisit %d Kalori</string>
+	<string name="konsumsi_kalori_format">Konsumsi: %d Kalori</string>
+	<string name="meal_workout_active_format">%1$dx Konsumsi, %2$dx Aktifitas Aktif</string>
+	<string name="kebutuhan_kalori_harian_format">Kebutuhan Kalori Harian: %d kalori</string>
+	<string name="target_tercapai">Target Tercapai</string>
+	<string name="target_tidak_tercapai">Target Tidak Tercapai</string>
+	<!-- profile -->
+	<string name="pengaturan_profil">Pengaturan Profil</string>
+	<string name="advanced_calorie_format">Lanjutan: %1$s (%2$d kal)</string>
+	<string name="basic_calorie_format">Dasar: %d kal penyesuaian</string>
+	<string name="debugging">Debug</string>
+	<string name="onboarding_screen">Layar Pengenalan</string>
+	<string name="rerun_initial_setup">Ulang setup awal</string>
+	<string name="dummy_data_mode">Mode Data Dummy</string>
+	<string name="toggle_demo_data">Aktifkan data demo dengan contoh aktivitas</string>
+	<string name="user_data_debug">Debug Data Pengguna</string>
+	<string name="view_edit_raw_data">Lihat/Edit data mentah pengguna</string>
+	<string name="change_goal">Ubah Tujuan</string>
+	<string name="change_activity_level">Ubah Tingkat Aktivitas</string>
+
+	<!-- debug -->
+	<string name="database_summary">Ringkasan Database</string>
+	<string name="total_activities_format">Total Aktivitas: %d</string>
+	<string name="food_entries_format">Entri Makanan: %d</string>
+	<string name="workout_entries_format">Entri Olahraga: %d</string>
+	<string name="total_calories_consumed_format">Total Kalori Dikonsumsi: %d</string>
+	<string name="total_calories_burned_format">Total Kalori Dibakar: %d</string>
+	<string name="user_table">Tabel Pengguna</string>
+	<string name="no_user_data_found">Data pengguna tidak ditemukan</string>
+	<string name="activity_log_table_format">Tabel Log Aktivitas (%d entri)</string>
+	<string name="no_activity_logs_found">Log aktivitas tidak ditemukan</string>
+	<string name="id_format">ID: %s</string>
+	<string name="name_format">Nama: %s</string>
+	<string name="user_id_format">ID Pengguna: %s</string>
+	<string name="type_format">Tipe: %s</string>
+	<string name="timestamp_format">Waktu: %s</string>
+	<string name="calories_format">Kalori: %d</string>
+	<string name="notes_format">Catatan: %s</string>
+	<string name="picture_id_format">ID Gambar: %s</string>
+
+</resources>

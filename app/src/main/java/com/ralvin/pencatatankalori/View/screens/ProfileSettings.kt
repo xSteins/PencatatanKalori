@@ -728,23 +728,23 @@ fun ProfileSettingItem(
 	}
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ProfileSettingItemPreview() {
-	MaterialTheme {
-		ProfileSettingItem(
-			icon = Icons.Filled.MonitorWeight,
-			label = "Weight",
-			value = "70kg",
-			onClick = {}
-		)
-	}
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ProfileSettingsPreview() {
-	PencatatanKaloriTheme {
-		ProfileSettings()
-	}
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun ProfileSettingItemPreview() {
+//	MaterialTheme {
+//		ProfileSettingItem(
+//			icon = Icons.Filled.MonitorWeight,
+//			label = "Weight",
+//			value = "70kg",
+//			onClick = {}
+//		)
+//	}
+//}
+//
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun ProfileSettingsPreview() {
+//	PencatatanKaloriTheme {
+//		ProfileSettings()
+//	}
+//}
