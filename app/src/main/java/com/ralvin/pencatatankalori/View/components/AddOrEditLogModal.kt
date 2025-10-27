@@ -50,8 +50,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.ralvin.pencatatankalori.R
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -82,19 +84,25 @@ fun AddOrEditLogModal(
 	var caloriesError by remember { mutableStateOf<String?>(null) }
 
 	val context = LocalContext.current
+	val nameCannotBeEmpty = stringResource(R.string.name_cannot_be_empty)
+	val nameMinimumChars = stringResource(R.string.name_must_be_at_least_3_characters)
+	val calorieEmpty = stringResource(R.string.kalori_tidak_boleh_kosong)
+	val pleaseEnterValidNumber = stringResource(R.string.please_enter_valid_number)
+	val calorieGreaterThanZero = stringResource(R.string.kalori_harus_lebih_besar_dari_0)
+
 	fun validateName(input: String): String? {
 		return when {
-			input.isBlank() -> "Name cannot be empty"
-			input.trim().length < 3 -> "Name must be at least 3 characters"
+			input.isBlank() -> nameCannotBeEmpty
+			input.trim().length < 3 -> nameMinimumChars
 			else -> null
 		}
 	}
 
 	fun validateCalories(input: String): String? {
 		return when {
-			input.isBlank() -> "Kalori tidak boleh kosong"
-			input.toIntOrNull() == null -> "Please enter a valid number"
-			input.toInt() <= 0 -> "Kalori harus lebih besar dari 0"
+			input.isBlank() -> calorieEmpty
+			input.toIntOrNull() == null -> pleaseEnterValidNumber
+			input.toInt() <= 0 -> calorieGreaterThanZero
 			else -> null
 		}
 	}
@@ -168,7 +176,7 @@ fun AddOrEditLogModal(
 							.data(imageModel)
 							.crossfade(true)
 							.build(),
-						contentDescription = "Selected image",
+						contentDescription = stringResource(R.string.selected_image),
 						modifier = Modifier
 							.fillMaxSize()
 							.clip(RoundedCornerShape(12.dp)),
@@ -185,7 +193,7 @@ fun AddOrEditLogModal(
 					) {
 						Icon(
 							Icons.Filled.CameraAlt,
-							contentDescription = "Change photo",
+							contentDescription = stringResource(R.string.change_photo),
 							modifier = Modifier.size(16.dp),
 							tint = MaterialTheme.colorScheme.onPrimary
 						)
@@ -203,7 +211,7 @@ fun AddOrEditLogModal(
 						)
 						Spacer(modifier = Modifier.height(4.dp))
 						Text(
-							text = if (isEditMode) "Perbarui Gambar" else "Tambah Foto",
+							text = if (isEditMode) stringResource(R.string.perbarui_gambar) else stringResource(R.string.tambah_foto),
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
 						)
@@ -221,13 +229,13 @@ fun AddOrEditLogModal(
 			Text(
 				text = if (isEditMode) {
 					when (type) {
-						LogType.FOOD -> "Perbarui Data Konsumsi"
-						LogType.WORKOUT -> "Perbarui Data Aktifitas"
+						LogType.FOOD -> stringResource(R.string.perbarui_data_konsumsi)
+						LogType.WORKOUT -> stringResource(R.string.perbarui_data_aktifitas)
 					}
 				} else {
 					when (type) {
-						LogType.FOOD -> "Tambah Data Konsumsi"
-						LogType.WORKOUT -> "Buat Data Aktifitas"
+						LogType.FOOD -> stringResource(R.string.tambah_data_konsumsi)
+						LogType.WORKOUT -> stringResource(R.string.buat_data_aktifitas)
 					}
 				},
 				style = MaterialTheme.typography.headlineSmall,
@@ -242,8 +250,8 @@ fun AddOrEditLogModal(
 					name = it
 					nameError = null
 				},
-				label = { Text("Nama") },
-				placeholder = { Text(if (type == LogType.FOOD) "Nama Konsumsi" else "Nama Aktivitas") },
+				label = { Text(stringResource(R.string.nama)) },
+				placeholder = { Text(if (type == LogType.FOOD) stringResource(R.string.nama_konsumsi) else stringResource(R.string.nama_aktivitas)) },
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(bottom = 16.dp),
@@ -264,7 +272,7 @@ fun AddOrEditLogModal(
 					calories = it
 					caloriesError = null
 				},
-				label = { Text("Jumlah Kalori") },
+				label = { Text(stringResource(R.string.jumlah_kalori)) },
 				placeholder = { Text("600") },
 				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
 				modifier = Modifier
@@ -284,8 +292,8 @@ fun AddOrEditLogModal(
 			OutlinedTextField(
 				value = notes,
 				onValueChange = { notes = it },
-				label = { Text("Catatan") },
-				placeholder = { Text("Tambahkan Catatan") },
+				label = { Text(stringResource(R.string.catatan)) },
+				placeholder = { Text(stringResource(R.string.tambahkan_catatan)) },
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(120.dp)
@@ -303,9 +311,9 @@ fun AddOrEditLogModal(
 					modifier = Modifier.weight(1f),
 					shape = RoundedCornerShape(50)
 				) {
-					Icon(Icons.Filled.Close, contentDescription = "Cancel")
+					Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.cancel))
 					Spacer(modifier = Modifier.width(4.dp))
-					Text("Cancel")
+					Text(stringResource(R.string.cancel))
 				}
 				Button(
 					onClick = {
@@ -321,9 +329,9 @@ fun AddOrEditLogModal(
 					modifier = Modifier.weight(1f),
 					shape = RoundedCornerShape(50)
 				) {
-					Icon(Icons.Filled.Check, contentDescription = "Submit")
+					Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.submit))
 					Spacer(modifier = Modifier.width(4.dp))
-					Text("Save")
+					Text(stringResource(R.string.save))
 				}
 			}
 
@@ -337,11 +345,11 @@ fun AddOrEditLogModal(
 						contentColor = MaterialTheme.colorScheme.error
 					)
 				) {
-					Icon(Icons.Filled.Delete, contentDescription = "Delete")
+					Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete_activity))
 					Spacer(modifier = Modifier.width(4.dp))
-					Text("Delete Activity")
+					Text(stringResource(R.string.delete_activity))
 				}
 			}
 		}
 	}
-} 
+}

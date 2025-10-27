@@ -42,17 +42,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
+import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.Model.formula.GoalType
 
-enum class EditUserDataType(val title: String) {
-	WEIGHT("Edit Weight"),
-	HEIGHT("Edit Height"),
-	AGE("Edit Age"),
-	GENDER("Edit Gender"),
-	ACTIVE_LEVEL("Edit Active Level"),
-	GOAL("Edit Goal")
+enum class EditUserDataType {
+	WEIGHT,
+	HEIGHT,
+	AGE,
+	GENDER,
+	ACTIVE_LEVEL,
+	GOAL
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +65,15 @@ fun EditUserDataDialog(
 	onDismiss: () -> Unit,
 	onSave: (String) -> Unit
 ) {
+	val titleText = when (editType) {
+		EditUserDataType.WEIGHT -> stringResource(R.string.edit_weight)
+		EditUserDataType.HEIGHT -> stringResource(R.string.edit_height)
+		EditUserDataType.AGE -> stringResource(R.string.edit_age)
+		EditUserDataType.GENDER -> stringResource(R.string.edit_gender)
+		EditUserDataType.ACTIVE_LEVEL -> stringResource(R.string.edit_active_level)
+		EditUserDataType.GOAL -> stringResource(R.string.edit_goal)
+	}
+
 	var textFieldValue by remember { mutableStateOf(currentValue) }
 	var selectedGender by remember { mutableStateOf(if (editType == EditUserDataType.GENDER) currentValue else "Male") }
 	var selectedActivityLevel by remember {
@@ -93,7 +104,7 @@ fun EditUserDataDialog(
 					.verticalScroll(rememberScrollState())
 			) {
 				Text(
-					editType.title,
+					titleText,
 					style = MaterialTheme.typography.headlineSmall,
 					modifier = Modifier.padding(bottom = 16.dp)
 				)
@@ -103,7 +114,7 @@ fun EditUserDataDialog(
 						val isDecimalAllowed =
 							editType == EditUserDataType.WEIGHT || editType == EditUserDataType.HEIGHT
 						val unit =
-							if (editType == EditUserDataType.WEIGHT) "kg" else if (editType == EditUserDataType.HEIGHT) "cm" else "years"
+							if (editType == EditUserDataType.WEIGHT) stringResource(R.string.kg) else if (editType == EditUserDataType.HEIGHT) stringResource(R.string.cm) else stringResource(R.string.years)
 						val increment = 1f
 						val minValue = when (editType) {
 							EditUserDataType.WEIGHT -> 1f
@@ -145,7 +156,7 @@ fun EditUserDataDialog(
 								) {
 									Icon(
 										Icons.Filled.Remove,
-										contentDescription = "Decrease",
+										contentDescription = stringResource(R.string.decrease),
 										tint = MaterialTheme.colorScheme.onSurfaceVariant,
 										modifier = Modifier.size(20.dp)
 									)
@@ -195,7 +206,7 @@ fun EditUserDataDialog(
 								) {
 									Icon(
 										Icons.Filled.Add,
-										contentDescription = "Increase",
+										contentDescription = stringResource(R.string.increase),
 										tint = MaterialTheme.colorScheme.onPrimary,
 										modifier = Modifier.size(20.dp)
 									)
@@ -214,7 +225,7 @@ fun EditUserDataDialog(
 								RadioButton(
 									selected = selectedGender == "Male",
 									onClick = { selectedGender = "Male" })
-								Text("Male", style = MaterialTheme.typography.bodyLarge)
+								Text(stringResource(R.string.male), style = MaterialTheme.typography.bodyLarge)
 							}
 							Row(
 								verticalAlignment = Alignment.CenterVertically,
@@ -224,7 +235,7 @@ fun EditUserDataDialog(
 								RadioButton(
 									selected = selectedGender == "Female",
 									onClick = { selectedGender = "Female" })
-								Text("Female", style = MaterialTheme.typography.bodyLarge)
+								Text(stringResource(R.string.female), style = MaterialTheme.typography.bodyLarge)
 							}
 						}
 					}
@@ -242,10 +253,10 @@ fun EditUserDataDialog(
 							) {
 								OutlinedTextField(
 									value = selectedActivityLevel?.getDisplayName()
-										?: "Select Active Level",
+										?: stringResource(R.string.select_activity_level),
 									onValueChange = {},
 									readOnly = true,
-									label = { Text("Active Level") },
+									label = { Text(stringResource(R.string.activity_level)) },
 									trailingIcon = {
 										ExposedDropdownMenuDefaults.TrailingIcon(
 											expanded = expandedActivityLevel
@@ -287,10 +298,10 @@ fun EditUserDataDialog(
 								modifier = Modifier.fillMaxWidth()
 							) {
 								OutlinedTextField(
-									value = selectedGoalType?.getDisplayName() ?: "Select Goal",
+									value = selectedGoalType?.getDisplayName() ?: stringResource(R.string.goal),
 									onValueChange = {},
 									readOnly = true,
-									label = { Text("Goal") },
+									label = { Text(stringResource(R.string.goal)) },
 									trailingIcon = {
 										ExposedDropdownMenuDefaults.TrailingIcon(
 											expanded = expandedGoalType
@@ -329,7 +340,7 @@ fun EditUserDataDialog(
 					modifier = Modifier.fillMaxWidth(),
 					horizontalArrangement = Arrangement.End
 				) {
-					TextButton(onClick = onDismiss) { Text("Cancel") }
+					TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
 					Spacer(modifier = Modifier.width(8.dp))
 					Button(onClick = {
 						val result = when (editType) {
@@ -341,9 +352,9 @@ fun EditUserDataDialog(
 							EditUserDataType.GOAL -> selectedGoalType?.getDisplayName() ?: ""
 						}
 						onSave(result)
-					}) { Text("Save") }
+					}) { Text(stringResource(R.string.save)) }
 				}
 			}
 		}
 	}
-} 
+}

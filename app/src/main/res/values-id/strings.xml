@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
+	<string name="app_name">PencatatanKalori</string>
 	<string name="cancel">Batal</string>
 	<string name="save">Simpan</string>
 	<string name="ok">OK</string>
@@ -147,7 +148,6 @@
 	<string name="change_goal">Ubah Tujuan</string>
 	<string name="change_activity_level">Ubah Tingkat Aktivitas</string>
 
-	<!-- debug -->
 	<string name="database_summary">Ringkasan Database</string>
 	<string name="total_activities_format">Total Aktivitas: %d</string>
 	<string name="food_entries_format">Entri Makanan: %d</string>
@@ -166,5 +166,32 @@
 	<string name="calories_format">Kalori: %d</string>
 	<string name="notes_format">Catatan: %s</string>
 	<string name="picture_id_format">ID Gambar: %s</string>
+
+	<string name="sedentary">Tidak Aktif</string>
+	<string name="lightly_active">Sedikit Aktif</string>
+	<string name="moderately_active">Cukup Aktif</string>
+	<string name="very_active">Sangat Aktif</string>
+	<string name="super_active">Sangat Aktif Sekali</string>
+
+	<string name="lose_weight">Turunkan Berat</string>
+	<string name="gain_weight">Naikkan Berat</string>
+	<string name="maintain_weight">Pertahankan Berat</string>
+
+	<string name="aggressive">Agresif</string>
+	<string name="moderate">Moderat</string>
+	<string name="conservative">Konservatif</string>
+
+	<string name="underweight">Kurus</string>
+	<string name="normal_weight">Berat Normal</string>
+	<string name="overweight">Kelebihan Berat</string>
+	<string name="obese">Obesitas</string>
+
+	<string name="overview">Ringkasan</string>
+	<string name="history">Riwayat</string>
+	<string name="profile">Profil</string>
+
+	<string name="unknown_food">Makanan Tidak Diketahui</string>
+	<string name="unknown_workout">Olahraga Tidak Diketahui</string>
+	<string name="info">Info</string>
 
 </resources>

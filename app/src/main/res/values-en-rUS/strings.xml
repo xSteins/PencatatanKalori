@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
+	<string name="app_name">PencatatanKalori</string>
 	<string name="cancel">Cancel</string>
 	<string name="save">Save</string>
 	<string name="ok">OK</string>
@@ -166,5 +167,32 @@
 	<string name="calories_format">Calories: %d</string>
 	<string name="notes_format">Notes: %s</string>
 	<string name="picture_id_format">Picture ID: %s</string>
+
+	<string name="sedentary">Sedentary</string>
+	<string name="lightly_active">Lightly Active</string>
+	<string name="moderately_active">Moderately Active</string>
+	<string name="very_active">Very Active</string>
+	<string name="super_active">Super Active</string>
+
+	<string name="lose_weight">Lose Weight</string>
+	<string name="gain_weight">Gain Weight</string>
+	<string name="maintain_weight">Maintain Weight</string>
+
+	<string name="aggressive">Aggressive</string>
+	<string name="moderate">Moderate</string>
+	<string name="conservative">Conservative</string>
+
+	<string name="underweight">Underweight</string>
+	<string name="normal_weight">Normal weight</string>
+	<string name="overweight">Overweight</string>
+	<string name="obese">Obese</string>
+
+	<string name="overview">Overview</string>
+	<string name="history">History</string>
+	<string name="profile">Profile</string>
+
+	<string name="unknown_food">Unknown Food</string>
+	<string name="unknown_workout">Unknown Workout</string>
+	<string name="info">Info</string>
 
 </resources>

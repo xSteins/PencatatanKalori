@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,6 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ralvin.pencatatankalori.Model.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.Model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.Model.formula.GoalType
+import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.View.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.View.components.CreateNewActivityDate
 import com.ralvin.pencatatankalori.View.components.ExpandableFAB
@@ -176,7 +178,7 @@ fun History(
 				title = {
 					Column {
 						Text(
-							text = "Riwayat Pencatatan",
+							text = stringResource(R.string.riwayat_pencatatan),
 							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,
 							fontWeight = FontWeight.Medium
@@ -190,7 +192,7 @@ fun History(
 				},
 				actions = {
 					IconButton(onClick = { showDatePicker = true }) {
-						Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
+						Icon(Icons.Filled.CalendarToday, contentDescription = stringResource(R.string.select_date_action))
 					}
 				},
 				windowInsets = WindowInsets(0)
@@ -254,13 +256,13 @@ fun History(
 								verticalArrangement = Arrangement.Center
 							) {
 								Text(
-									text = "No activity data found",
+									text = stringResource(R.string.no_activity_data_found),
 									style = MaterialTheme.typography.titleMedium,
 									color = MaterialTheme.colorScheme.onSurfaceVariant
 								)
 								Spacer(modifier = Modifier.height(8.dp))
 								Text(
-									text = "Start logging your meals and workouts to see your history",
+									text = stringResource(R.string.start_logging_history),
 									style = MaterialTheme.typography.bodyMedium,
 									color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
 								)
@@ -289,38 +291,32 @@ fun History(
 								// New UI formatting
 								val consumedText = when (goalType) {
 									GoalType.LOSE_WEIGHT -> {
-										if (difference > 0) "Surplus $absDifference Kalori"
-										else "Defisit $absDifference Kalori"
+										if (difference > 0) stringResource(R.string.surplus_kalori_format, absDifference)
+										else stringResource(R.string.defisit_kalori_format, absDifference)
 									}
 
 									GoalType.GAIN_WEIGHT -> {
-										if (difference > 0) "Surplus $absDifference Kalori"
-										else "Defisit $absDifference Kalori"
+										if (difference > 0) stringResource(R.string.surplus_kalori_format, absDifference)
+										else stringResource(R.string.defisit_kalori_format, absDifference)
 									}
 
-									else -> "Konsumsi: ${dayData.caloriesConsumed} Kalori"
+									else -> stringResource(R.string.konsumsi_kalori_format, dayData.caloriesConsumed)
 								}
 
+								val heightText = dayData.height?.let { "$it" } ?: "-"
+								val weightText = dayData.weight?.let { "$it" } ?: "-"
 								val goalText = buildString {
 									append(goalType.getShortDisplayName())
-									append(" | ")
-									append("TB: ")
-									dayData.height?.let { height ->
-										append("${height}cm")
-									} ?: append("- cm")
-									append(" | BB: ")
-									dayData.weight?.let { weight ->
-										append("${weight}kg")
-									} ?: append("- kg")
+									append(" | TB: ${heightText}cm | BB: ${weightText}kg")
 								}
 
-								val physicalInfoText = "Kebutuhan Kalori Harian: ${dayData.tdee} kalori"
+								val physicalInfoText = stringResource(R.string.kebutuhan_kalori_harian_format, dayData.tdee)
 
 								HistoryListItem(
 									item = HistoryItemData(
 										date = date,
 										consumedText = consumedText,
-										targetText = "${dayData.mealCount}x Konsumsi, ${dayData.workoutCount}x Aktifitas Aktif",
+										targetText = stringResource(R.string.meal_workout_active_format, dayData.mealCount, dayData.workoutCount),
 										goalText = goalText,
 										mealWorkoutText = goalText,
 										physicalInfoText = physicalInfoText,
@@ -521,7 +517,7 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
 				}
 				Icon(
 					imageVector = statusIcon,
-					contentDescription = if (item.isGoalMet) "Target Tercapai" else "Target Tidak Tercapai",
+					contentDescription = if (item.isGoalMet) stringResource(R.string.target_tercapai) else stringResource(R.string.target_tidak_tercapai),
 					modifier = Modifier.size(40.dp),
 					tint = statusTint
 				)

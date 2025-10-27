@@ -10,8 +10,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.ralvin.pencatatankalori.R
 
 @Composable
 fun BottomNavBar(
@@ -19,17 +21,17 @@ fun BottomNavBar(
 ) {
 	val navItems = listOf(
 		NavItem(
-			name = "Overview",
+			name = stringResource(R.string.overview),
 			route = Screen.Overview.route,
 			icon = Icons.Default.Home
 		),
 		NavItem(
-			name = "History",
+			name = stringResource(R.string.history),
 			route = Screen.History.route,
 			icon = Icons.Default.History
 		),
 		NavItem(
-			name = "Profile",
+			name = stringResource(R.string.profile),
 			route = Screen.ProfileSettings.route,
 			icon = Icons.Default.Person
 		)
@@ -56,4 +58,4 @@ fun BottomNavBar(
 			)
 		}
 	}
-} 
+}

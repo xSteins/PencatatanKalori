@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,6 +61,7 @@ import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.Model.formula.CalorieStrategy
 import com.ralvin.pencatatankalori.Model.formula.GoalType
 import com.ralvin.pencatatankalori.Model.formula.MifflinModel
+import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.View.components.CalorieSettingsDialog
 import com.ralvin.pencatatankalori.View.components.EditUserDataDialog
 import com.ralvin.pencatatankalori.View.components.EditUserDataType
@@ -217,7 +219,7 @@ fun ProfileSettings(
 			TopAppBar(
 				title = {
 					Text(
-						text = "Pengaturan Profil",
+						text = stringResource(R.string.pengaturan_profil),
 						fontWeight = FontWeight.Medium,
 						fontSize = 22.sp
 					)
@@ -257,7 +259,7 @@ fun ProfileSettings(
 							) {
 								ProfileSettingItem(
 									icon = Icons.Filled.FitnessCenter,
-									label = "Tingkat Keaktifan",
+									label = stringResource(R.string.tingkat_keaktifan),
 									value = currentUserProfile?.activityLevel?.getDisplayName()
 										?: "Sedentary",
 									onClick = if (hasUserData) {
@@ -270,7 +272,7 @@ fun ProfileSettings(
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.Flag,
-									label = "Tujuan",
+									label = stringResource(R.string.tujuan),
 									value = currentUserProfile?.goalType?.getDisplayName()
 										?: "Gain Weight",
 									onClick = if (hasUserData) {
@@ -283,7 +285,7 @@ fun ProfileSettings(
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.MonitorWeight,
-									label = "Berat Badan",
+									label = stringResource(R.string.berat_badan),
 									value = currentUserProfile?.let { "${it.weight}kg" } ?: "50kg",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.WEIGHT) }
@@ -295,7 +297,7 @@ fun ProfileSettings(
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.Height,
-									label = "Tinggi Badan",
+									label = stringResource(R.string.tinggi_badan),
 									value = currentUserProfile?.let { "${it.height}cm" } ?: "170cm",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.HEIGHT) }
@@ -307,9 +309,9 @@ fun ProfileSettings(
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.Cake,
-									label = "Umur",
-									value = currentUserProfile?.let { "${it.age} Tahun" }
-										?: "25 Tahun",
+									label = stringResource(R.string.umur),
+									value = currentUserProfile?.let { "${it.age} ${stringResource(R.string.tahun)}" }
+										?: "25 ${stringResource(R.string.tahun)}",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.AGE) }
 									} else {
@@ -320,9 +322,9 @@ fun ProfileSettings(
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.People,
-									label = "Jenis Kelamin",
-									value = currentUserProfile?.let { if (it.gender == "Male") "Pria" else "Wanita" }
-										?: "Pria",
+									label = stringResource(R.string.jenis_kelamin),
+									value = currentUserProfile?.let { if (it.gender == "Male") stringResource(R.string.pria) else stringResource(R.string.wanita) }
+										?: stringResource(R.string.pria),
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.GENDER) }
 									} else {
@@ -333,11 +335,11 @@ fun ProfileSettings(
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.Tune,
-									label = "Pengaturan Kalori",
+									label = stringResource(R.string.pengaturan_kalori),
 									value = if (MifflinModel.isAdvancedEnabled()) {
-										"Advanced: ${MifflinModel.getCalorieStrategy().displayName} (${MifflinModel.getGranularityValue()} cal)"
+										stringResource(R.string.advanced_calorie_format, MifflinModel.getCalorieStrategy().displayName, MifflinModel.getGranularityValue())
 									} else {
-										"Basic: ${MifflinModel.getGranularityValue()} cal adjustment"
+										stringResource(R.string.basic_calorie_format, MifflinModel.getGranularityValue())
 									},
 									onClick = if (hasUserData) {
 										{ showCalorieSettingsDialog = true }
@@ -352,7 +354,7 @@ fun ProfileSettings(
 						item {
 							Column {
 								Text(
-									text = "Debugging",
+									text = stringResource(R.string.debugging),
 									style = MaterialTheme.typography.titleMedium,
 									fontWeight = FontWeight.Bold,
 									modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
@@ -374,11 +376,11 @@ fun ProfileSettings(
 									) {
 										Column(modifier = Modifier.weight(1f)) {
 											Text(
-												"Onboarding Screen",
+												stringResource(R.string.onboarding_screen),
 												fontWeight = FontWeight.Medium
 											)
 											Text(
-												"Re-run initial setup",
+												stringResource(R.string.rerun_initial_setup),
 												style = MaterialTheme.typography.bodySmall,
 												color = Color.Gray
 											)
@@ -398,9 +400,9 @@ fun ProfileSettings(
 										verticalAlignment = Alignment.CenterVertically
 									) {
 										Column(modifier = Modifier.weight(1f)) {
-											Text("Dummy Data Mode", fontWeight = FontWeight.Medium)
+											Text(stringResource(R.string.dummy_data_mode), fontWeight = FontWeight.Medium)
 											Text(
-												"Toggle demo data with sample activities",
+												stringResource(R.string.toggle_demo_data),
 												style = MaterialTheme.typography.bodySmall,
 												color = Color.Gray
 											)
@@ -419,9 +421,9 @@ fun ProfileSettings(
 										verticalAlignment = Alignment.CenterVertically
 									) {
 										Column(modifier = Modifier.weight(1f)) {
-											Text("User Data Debug", fontWeight = FontWeight.Medium)
+											Text(stringResource(R.string.user_data_debug), fontWeight = FontWeight.Medium)
 											Text(
-												"View/Edit raw user data",
+												stringResource(R.string.view_edit_raw_data),
 												style = MaterialTheme.typography.bodySmall,
 												color = Color.Gray
 											)
@@ -566,7 +568,7 @@ fun EditGoalDialog(
 				modifier = Modifier.padding(24.dp)
 			) {
 				Text(
-					text = "Change Goal",
+					text = stringResource(R.string.change_goal),
 					style = MaterialTheme.typography.headlineSmall,
 					fontWeight = FontWeight.Medium,
 					modifier = Modifier.padding(bottom = 24.dp)
@@ -599,11 +601,11 @@ fun EditGoalDialog(
 					horizontalArrangement = Arrangement.End
 				) {
 					TextButton(onClick = onDismiss) {
-						Text("Cancel")
+						Text(stringResource(R.string.cancel))
 					}
 					Spacer(modifier = Modifier.width(8.dp))
 					Button(onClick = { onSave(selectedGoal) }) {
-						Text("Save")
+						Text(stringResource(R.string.save))
 					}
 				}
 			}
@@ -631,7 +633,7 @@ fun EditActivityLevelDialog(
 				modifier = Modifier.padding(24.dp)
 			) {
 				Text(
-					text = "Change Activity Level",
+					text = stringResource(R.string.change_activity_level),
 					style = MaterialTheme.typography.headlineSmall,
 					fontWeight = FontWeight.Medium,
 					modifier = Modifier.padding(bottom = 24.dp)
@@ -665,11 +667,11 @@ fun EditActivityLevelDialog(
 					horizontalArrangement = Arrangement.End
 				) {
 					TextButton(onClick = onDismiss) {
-						Text("Cancel")
+						Text(stringResource(R.string.cancel))
 					}
 					Spacer(modifier = Modifier.width(8.dp))
 					Button(onClick = { onSave(selectedLevel) }) {
-						Text("Save")
+						Text(stringResource(R.string.save))
 					}
 				}
 			}

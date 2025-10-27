@@ -30,8 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.Model.formula.CalorieStrategy
 import com.ralvin.pencatatankalori.Model.formula.GoalType
@@ -79,7 +81,7 @@ fun CalorieSettingsDialog(
 				horizontalAlignment = Alignment.Start
 			) {
 				Text(
-					text = "Calorie Strategy Settings",
+					text = stringResource(R.string.calorie_strategy_settings),
 					style = MaterialTheme.typography.headlineSmall,
 					fontWeight = FontWeight.Bold,
 				)
@@ -87,7 +89,7 @@ fun CalorieSettingsDialog(
 				Spacer(modifier = Modifier.height(12.dp))
 
 				Text(
-					text = "Adjust your daily calorie need",
+					text = stringResource(R.string.adjust_daily_calorie_need),
 					style = MaterialTheme.typography.bodyLarge,
 					fontWeight = FontWeight.Medium
 				)
@@ -112,7 +114,7 @@ fun CalorieSettingsDialog(
 				}
 
 				Text(
-					text = "Current: $granularityValue calories",
+					text = stringResource(R.string.current_calories, granularityValue),
 					style = MaterialTheme.typography.bodyMedium,
 					fontWeight = FontWeight.Medium,
 					modifier = Modifier.padding(bottom = 12.dp)
@@ -151,7 +153,7 @@ fun CalorieSettingsDialog(
 						onCheckedChange = { advancedEnabled = it }
 					)
 					Text(
-						text = "Enable Advanced Exercise Calorie Management",
+						text = stringResource(R.string.enable_advanced_exercise),
 						style = MaterialTheme.typography.bodyLarge,
 						modifier = Modifier.padding(start = 8.dp)
 					)
@@ -173,7 +175,7 @@ fun CalorieSettingsDialog(
 						modifier = Modifier.padding(12.dp)
 					) {
 						Text(
-							text = "Advanced Exercise Calorie Strategy",
+							text = stringResource(R.string.advanced_exercise_strategy),
 							style = MaterialTheme.typography.bodyLarge,
 							fontWeight = FontWeight.Medium,
 							color = if (advancedEnabled)
@@ -224,16 +226,16 @@ fun CalorieSettingsDialog(
 										GoalType.LOSE_WEIGHT -> {
 											val lossPercentage =
 												((1.0 - strategy.weightLossExercisePercentage) * 100).toInt()
-											"You'll eat back ${(strategy.weightLossExercisePercentage * 100).toInt()}% of exercise calories, creating an additional ${lossPercentage}% deficit for consistent fat loss while maintaining performance."
+											stringResource(R.string.eat_back_deficit_description, (strategy.weightLossExercisePercentage * 100).toInt(), lossPercentage)
 										}
 
 										GoalType.GAIN_WEIGHT -> {
 											val eatBackPercentage =
 												(strategy.weightGainExercisePercentage * 100).toInt()
 											if (strategy.weightGainAdditionalCalories > 0) {
-												"You'll eat back ${eatBackPercentage}% of exercise calories plus ${strategy.weightGainAdditionalCalories} additional calories for moderate surplus and muscle growth."
+												stringResource(R.string.eat_back_surplus_description, eatBackPercentage, strategy.weightGainAdditionalCalories)
 											} else {
-												"You'll eat back ${eatBackPercentage}% of exercise calories for conservative, lean muscle growth."
+												stringResource(R.string.eat_back_conservative_description, eatBackPercentage)
 											}
 										}
 									}
@@ -259,7 +261,7 @@ fun CalorieSettingsDialog(
 					horizontalArrangement = Arrangement.End
 				) {
 					TextButton(onClick = onDismiss) {
-						Text("Cancel")
+						Text(stringResource(R.string.cancel))
 					}
 					Spacer(modifier = Modifier.width(8.dp))
 					Button(
@@ -271,7 +273,7 @@ fun CalorieSettingsDialog(
 							)
 						}
 					) {
-						Text("Save")
+						Text(stringResource(R.string.save))
 					}
 				}
 			}
