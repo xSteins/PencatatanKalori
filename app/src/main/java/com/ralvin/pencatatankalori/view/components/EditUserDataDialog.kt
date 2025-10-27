@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.View.components
+package com.ralvin.pencatatankalori.view.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,13 +41,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
-import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.Model.formula.GoalType
+import com.ralvin.pencatatankalori.R
 
 enum class EditUserDataType {
 	WEIGHT,
@@ -269,20 +271,33 @@ fun EditUserDataDialog(
 								)
 								ExposedDropdownMenu(
 									expanded = expandedActivityLevel,
-									onDismissRequest = { expandedActivityLevel = false }
+									onDismissRequest = { expandedActivityLevel = false },
+									modifier = Modifier
+										.fillMaxWidth()
+										.heightIn(max = 300.dp)
 								) {
 									ActivityLevel.values().forEach { level ->
 										DropdownMenuItem(
 											text = {
-												Text(
-													level.getDisplayName(),
-													style = MaterialTheme.typography.bodyLarge
-												)
+												Column(modifier = Modifier.fillMaxWidth()) {
+													Text(
+														level.getDisplayName(),
+														style = MaterialTheme.typography.bodyLarge,
+														fontWeight = FontWeight.Medium
+													)
+													Text(
+														level.getDescription(),
+														style = MaterialTheme.typography.bodySmall,
+														color = MaterialTheme.colorScheme.onSurfaceVariant,
+														modifier = Modifier.padding(top = 2.dp)
+													)
+												}
 											},
 											onClick = {
 												selectedActivityLevel = level
 												expandedActivityLevel = false
-											}
+											},
+											modifier = Modifier.fillMaxWidth()
 										)
 									}
 								}
@@ -314,20 +329,33 @@ fun EditUserDataDialog(
 								)
 								ExposedDropdownMenu(
 									expanded = expandedGoalType,
-									onDismissRequest = { expandedGoalType = false }
+									onDismissRequest = { expandedGoalType = false },
+									modifier = Modifier
+										.fillMaxWidth()
+										.heightIn(max = 200.dp)
 								) {
 									GoalType.values().forEach { goal ->
 										DropdownMenuItem(
 											text = {
-												Text(
-													goal.getDisplayName(),
-													style = MaterialTheme.typography.bodyLarge
-												)
+												Column(modifier = Modifier.fillMaxWidth()) {
+													Text(
+														goal.getDisplayName(),
+														style = MaterialTheme.typography.bodyLarge,
+														fontWeight = FontWeight.Medium
+													)
+													Text(
+														goal.getDescription(),
+														style = MaterialTheme.typography.bodySmall,
+														color = MaterialTheme.colorScheme.onSurfaceVariant,
+														modifier = Modifier.padding(top = 2.dp)
+													)
+												}
 											},
 											onClick = {
 												selectedGoalType = goal
 												expandedGoalType = false
-											}
+											},
+											modifier = Modifier.fillMaxWidth()
 										)
 									}
 								}

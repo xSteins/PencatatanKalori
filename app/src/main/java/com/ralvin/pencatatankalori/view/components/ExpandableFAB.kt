@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.View.components
+package com.ralvin.pencatatankalori.view.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween

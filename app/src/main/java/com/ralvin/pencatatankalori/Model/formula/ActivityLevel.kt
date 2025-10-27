@@ -18,10 +18,10 @@ enum class ActivityLevel(val multiplier: Double) {
 
 	fun getDescription(): String {
 		return when (this) {
-			SEDENTARY -> "Jarang bergerak / Tidak ada aktivitas"
-			LIGHTLY_ACTIVE -> "Cukup Aktif, Sesekali berolah-raga (Cth: Pelajar / Pekerja)"
-			MODERATELY_ACTIVE -> "Lumayan aktif, sering berolah-raga"
-			VERY_ACTIVE -> "Sangat Aktif, Sering berolah-raga"
+			SEDENTARY -> "Minim aktivitas bergerak"
+			LIGHTLY_ACTIVE -> "Aktivitas normal (Pelajar / Pekerja)"
+			MODERATELY_ACTIVE -> "Rutin olahraga teratur (1-2x per minggu)"
+			VERY_ACTIVE -> "Sangat aktif olahraga (>3x per minggu)"
 		}
 	}
 }

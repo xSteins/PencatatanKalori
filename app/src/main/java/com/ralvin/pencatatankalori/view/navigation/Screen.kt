@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.View.navigation
+package com.ralvin.pencatatankalori.view.navigation
 
 sealed class Screen(val route: String) {
 	object Onboarding : Screen("onboarding")

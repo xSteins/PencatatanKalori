@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.View.navigation
+package com.ralvin.pencatatankalori.view.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History

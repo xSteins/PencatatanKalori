@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.View.navigation
+package com.ralvin.pencatatankalori.view.navigation
 
 import androidx.compose.ui.graphics.vector.ImageVector
 

@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.View.screens
+package com.ralvin.pencatatankalori.view.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,11 +31,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,10 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
@@ -62,12 +56,11 @@ import com.ralvin.pencatatankalori.Model.formula.CalorieStrategy
 import com.ralvin.pencatatankalori.Model.formula.GoalType
 import com.ralvin.pencatatankalori.Model.formula.MifflinModel
 import com.ralvin.pencatatankalori.R
-import com.ralvin.pencatatankalori.View.components.CalorieSettingsDialog
-import com.ralvin.pencatatankalori.View.components.EditUserDataDialog
-import com.ralvin.pencatatankalori.View.components.EditUserDataType
-import com.ralvin.pencatatankalori.View.components.OnboardingDialog
-import com.ralvin.pencatatankalori.View.components.UserDataDebugDialog
-import com.ralvin.pencatatankalori.View.theme.PencatatanKaloriTheme
+import com.ralvin.pencatatankalori.view.components.CalorieSettingsDialog
+import com.ralvin.pencatatankalori.view.components.EditUserDataDialog
+import com.ralvin.pencatatankalori.view.components.EditUserDataType
+import com.ralvin.pencatatankalori.view.components.OnboardingDialog
+import com.ralvin.pencatatankalori.view.components.UserDataDebugDialog
 import com.ralvin.pencatatankalori.Viewmodel.OnboardingViewModel
 import com.ralvin.pencatatankalori.Viewmodel.ProfileViewModel
 
@@ -82,8 +75,6 @@ fun ProfileSettings(
 	var showCalorieSettingsDialog by remember { mutableStateOf(false) }
 
 	var showEditDataDialog by remember { mutableStateOf(false) }
-	var showEditGoalDialog by remember { mutableStateOf(false) }
-	var showEditActivityDialog by remember { mutableStateOf(false) }
 	var showEditDialog by remember { mutableStateOf(false) }
 	var currentEditType by remember { mutableStateOf(EditUserDataType.WEIGHT) }
 	var currentEditValue by remember { mutableStateOf("") }
@@ -115,16 +106,8 @@ fun ProfileSettings(
 		profile?.let {
 			currentEditType = type
 			when (type) {
-				EditUserDataType.WEIGHT, EditUserDataType.HEIGHT, EditUserDataType.AGE -> {
+				EditUserDataType.WEIGHT, EditUserDataType.HEIGHT, EditUserDataType.AGE, EditUserDataType.GOAL, EditUserDataType.ACTIVE_LEVEL -> {
 					showEditDataDialog = true
-				}
-
-				EditUserDataType.GOAL -> {
-					showEditGoalDialog = true
-				}
-
-				EditUserDataType.ACTIVE_LEVEL -> {
-					showEditActivityDialog = true
 				}
 
 				EditUserDataType.GENDER -> {
@@ -204,14 +187,20 @@ fun ProfileSettings(
 		showEditDataDialog = false
 	}
 
-	fun handleGoalUpdate(goalType: GoalType) {
-		profileViewModel.updateGoalType(goalType)
-		showEditGoalDialog = false
+	fun handleGoalUpdate(value: String) {
+		val goalType = GoalType.values().find { it.getDisplayName() == value }
+		goalType?.let {
+			profileViewModel.updateGoalType(it)
+		}
+		showEditDataDialog = false
 	}
 
-	fun handleActivityLevelUpdate(activityLevel: ActivityLevel) {
-		profileViewModel.updateActivityLevel(activityLevel)
-		showEditActivityDialog = false
+	fun handleActivityLevelUpdate(value: String) {
+		val activityLevel = ActivityLevel.values().find { it.getDisplayName() == value }
+		activityLevel?.let {
+			profileViewModel.updateActivityLevel(it)
+		}
+		showEditDataDialog = false
 	}
 
 	Scaffold(
@@ -495,28 +484,26 @@ fun ProfileSettings(
 						)
 					}
 
+					EditUserDataType.GOAL -> {
+						EditUserDataDialog(
+							editType = EditUserDataType.GOAL,
+							currentValue = profile.goalType.getDisplayName(),
+							onDismiss = { showEditDataDialog = false },
+							onSave = { handleGoalUpdate(it) }
+						)
+					}
+
+					EditUserDataType.ACTIVE_LEVEL -> {
+						EditUserDataDialog(
+							editType = EditUserDataType.ACTIVE_LEVEL,
+							currentValue = profile.activityLevel.getDisplayName(),
+							onDismiss = { showEditDataDialog = false },
+							onSave = { handleActivityLevelUpdate(it) }
+						)
+					}
+
 					else -> {}
 				}
-			}
-		}
-
-		if (showEditGoalDialog) {
-			userProfile?.let { profile ->
-				EditGoalDialog(
-					currentGoal = profile.goalType,
-					onDismiss = { showEditGoalDialog = false },
-					onSave = { handleGoalUpdate(it) }
-				)
-			}
-		}
-
-		if (showEditActivityDialog) {
-			userProfile?.let { profile ->
-				EditActivityLevelDialog(
-					currentActivityLevel = profile.activityLevel,
-					onDismiss = { showEditActivityDialog = false },
-					onSave = { handleActivityLevelUpdate(it) }
-				)
 			}
 		}
 
@@ -543,137 +530,6 @@ fun ProfileSettings(
 						?: CalorieStrategy.MODERATE,
 					initialAdvancedEnabled = todayDailyData?.advancedEnabled == true
 				)
-			}
-		}
-	}
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EditGoalDialog(
-	currentGoal: GoalType,
-	onDismiss: () -> Unit,
-	onSave: (GoalType) -> Unit
-) {
-	var selectedGoal by remember { mutableStateOf(currentGoal) }
-
-	Dialog(onDismissRequest = onDismiss) {
-		Card(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp),
-			shape = MaterialTheme.shapes.large
-		) {
-			Column(
-				modifier = Modifier.padding(24.dp)
-			) {
-				Text(
-					text = stringResource(R.string.change_goal),
-					style = MaterialTheme.typography.headlineSmall,
-					fontWeight = FontWeight.Medium,
-					modifier = Modifier.padding(bottom = 24.dp)
-				)
-
-				GoalType.values().forEach { goal ->
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.clickable { selectedGoal = goal }
-							.padding(vertical = 8.dp),
-						verticalAlignment = Alignment.CenterVertically
-					) {
-						RadioButton(
-							selected = selectedGoal == goal,
-							onClick = { selectedGoal = goal }
-						)
-						Spacer(modifier = Modifier.width(12.dp))
-						Text(
-							text = goal.getDisplayName(),
-							style = MaterialTheme.typography.bodyLarge
-						)
-					}
-				}
-
-				Spacer(modifier = Modifier.height(24.dp))
-
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.End
-				) {
-					TextButton(onClick = onDismiss) {
-						Text(stringResource(R.string.cancel))
-					}
-					Spacer(modifier = Modifier.width(8.dp))
-					Button(onClick = { onSave(selectedGoal) }) {
-						Text(stringResource(R.string.save))
-					}
-				}
-			}
-		}
-	}
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EditActivityLevelDialog(
-	currentActivityLevel: ActivityLevel,
-	onDismiss: () -> Unit,
-	onSave: (ActivityLevel) -> Unit
-) {
-	var selectedLevel by remember { mutableStateOf(currentActivityLevel) }
-
-	Dialog(onDismissRequest = onDismiss) {
-		Card(
-			modifier = Modifier
-				.fillMaxWidth()
-				.padding(16.dp),
-			shape = MaterialTheme.shapes.large
-		) {
-			Column(
-				modifier = Modifier.padding(24.dp)
-			) {
-				Text(
-					text = stringResource(R.string.change_activity_level),
-					style = MaterialTheme.typography.headlineSmall,
-					fontWeight = FontWeight.Medium,
-					modifier = Modifier.padding(bottom = 24.dp)
-				)
-
-				ActivityLevel.values().forEach { level ->
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.clickable { selectedLevel = level }
-							.padding(vertical = 4.dp),
-						verticalAlignment = Alignment.CenterVertically
-					) {
-						RadioButton(
-							selected = selectedLevel == level,
-							onClick = { selectedLevel = level },
-							modifier = Modifier.size(20.dp)
-						)
-						Spacer(modifier = Modifier.width(12.dp))
-						Text(
-							text = level.getDisplayName(),
-							style = MaterialTheme.typography.bodyMedium
-						)
-					}
-				}
-
-				Spacer(modifier = Modifier.height(24.dp))
-
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.End
-				) {
-					TextButton(onClick = onDismiss) {
-						Text(stringResource(R.string.cancel))
-					}
-					Spacer(modifier = Modifier.width(8.dp))
-					Button(onClick = { onSave(selectedLevel) }) {
-						Text(stringResource(R.string.save))
-					}
-				}
 			}
 		}
 	}

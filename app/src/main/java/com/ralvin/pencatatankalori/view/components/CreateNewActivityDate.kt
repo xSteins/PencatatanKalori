@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.View.components
+package com.ralvin.pencatatankalori.view.components
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,18 +25,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,71 +56,63 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.ralvin.pencatatankalori.R
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddOrEditLogModal(
+fun CreateNewActivityDate(
 	type: LogType,
-	initialName: String = "",
-	initialCalories: String = "",
-	initialNotes: String = "",
-	initialImagePath: String? = null,
-	isEditMode: Boolean = false,
 	onSubmit: (
 		name: String,
 		calories: String,
 		notes: String,
-		imagePath: String?
+		imagePath: String?,
+		selectedDate: Date
 	) -> Unit,
-	onCancel: () -> Unit,
-	onDelete: (() -> Unit)? = null
+	onCancel: () -> Unit
 ) {
-	var name by remember { mutableStateOf(initialName) }
-	var calories by remember { mutableStateOf(initialCalories) }
-	var notes by remember { mutableStateOf(initialNotes) }
-	var selectedImagePath by remember { mutableStateOf(initialImagePath) }
+	var name by remember { mutableStateOf("") }
+	var calories by remember { mutableStateOf("") }
+	var notes by remember { mutableStateOf("") }
+	var selectedImagePath by remember { mutableStateOf<String?>(null) }
+	var selectedDate by remember { mutableStateOf(Date()) }
+	var showDatePicker by remember { mutableStateOf(false) }
 
 	var nameError by remember { mutableStateOf<String?>(null) }
 	var caloriesError by remember { mutableStateOf<String?>(null) }
 
 	val context = LocalContext.current
-	val nameCannotBeEmpty = stringResource(R.string.name_cannot_be_empty)
-	val nameMinimumChars = stringResource(R.string.name_must_be_at_least_3_characters)
-	val calorieEmpty = stringResource(R.string.kalori_tidak_boleh_kosong)
-	val pleaseEnterValidNumber = stringResource(R.string.please_enter_valid_number)
-	val calorieGreaterThanZero = stringResource(R.string.kalori_harus_lebih_besar_dari_0)
+	val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
 	fun validateName(input: String): String? {
 		return when {
-			input.isBlank() -> nameCannotBeEmpty
-			input.trim().length < 3 -> nameMinimumChars
+			input.isBlank() -> "Nama tidak boleh kosong"
+			input.length < 2 -> "Nama minimal 2 karakter"
 			else -> null
 		}
 	}
 
 	fun validateCalories(input: String): String? {
 		return when {
-			input.isBlank() -> calorieEmpty
-			input.toIntOrNull() == null -> pleaseEnterValidNumber
-			input.toInt() <= 0 -> calorieGreaterThanZero
+			input.isBlank() -> "Kalori tidak boleh kosong"
+			input.toIntOrNull() == null -> "Masukkan angka yang valid"
+			input.toIntOrNull()!! <= 0 -> "Kalori harus lebih dari 0"
 			else -> null
 		}
 	}
 
 	fun isFormValid(): Boolean {
-		val nameValidation = validateName(name)
-		val caloriesValidation = validateCalories(calories)
-
-		nameError = nameValidation
-		caloriesError = caloriesValidation
-
-		return nameValidation == null && caloriesValidation == null
+		nameError = validateName(name)
+		caloriesError = validateCalories(calories)
+		return nameError == null && caloriesError == null
 	}
 
 	val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -176,7 +174,7 @@ fun AddOrEditLogModal(
 							.data(imageModel)
 							.crossfade(true)
 							.build(),
-						contentDescription = stringResource(R.string.selected_image),
+						contentDescription = "Selected image",
 						modifier = Modifier
 							.fillMaxSize()
 							.clip(RoundedCornerShape(12.dp)),
@@ -193,7 +191,7 @@ fun AddOrEditLogModal(
 					) {
 						Icon(
 							Icons.Filled.CameraAlt,
-							contentDescription = stringResource(R.string.change_photo),
+							contentDescription = "Change photo",
 							modifier = Modifier.size(16.dp),
 							tint = MaterialTheme.colorScheme.onPrimary
 						)
@@ -211,7 +209,7 @@ fun AddOrEditLogModal(
 						)
 						Spacer(modifier = Modifier.height(4.dp))
 						Text(
-							text = if (isEditMode) stringResource(R.string.perbarui_gambar) else stringResource(R.string.tambah_foto),
+							text = "Tambah Foto",
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
 						)
@@ -227,16 +225,9 @@ fun AddOrEditLogModal(
 			Spacer(modifier = Modifier.height(16.dp))
 
 			Text(
-				text = if (isEditMode) {
-					when (type) {
-						LogType.FOOD -> stringResource(R.string.perbarui_data_konsumsi)
-						LogType.WORKOUT -> stringResource(R.string.perbarui_data_aktifitas)
-					}
-				} else {
-					when (type) {
-						LogType.FOOD -> stringResource(R.string.tambah_data_konsumsi)
-						LogType.WORKOUT -> stringResource(R.string.buat_data_aktifitas)
-					}
+				text = when (type) {
+					LogType.FOOD -> "Tambah Data Konsumsi"
+					LogType.WORKOUT -> "Buat Data Aktifitas"
 				},
 				style = MaterialTheme.typography.headlineSmall,
 				fontWeight = FontWeight.Bold,
@@ -250,8 +241,8 @@ fun AddOrEditLogModal(
 					name = it
 					nameError = null
 				},
-				label = { Text(stringResource(R.string.nama)) },
-				placeholder = { Text(if (type == LogType.FOOD) stringResource(R.string.nama_konsumsi) else stringResource(R.string.nama_aktivitas)) },
+				label = { Text("Nama") },
+				placeholder = { Text(if (type == LogType.FOOD) "Nama Konsumsi" else "Nama Aktivitas") },
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(bottom = 16.dp),
@@ -272,7 +263,7 @@ fun AddOrEditLogModal(
 					calories = it
 					caloriesError = null
 				},
-				label = { Text(stringResource(R.string.jumlah_kalori)) },
+				label = { Text("Jumlah Kalori") },
 				placeholder = { Text("600") },
 				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
 				modifier = Modifier
@@ -292,8 +283,8 @@ fun AddOrEditLogModal(
 			OutlinedTextField(
 				value = notes,
 				onValueChange = { notes = it },
-				label = { Text(stringResource(R.string.catatan)) },
-				placeholder = { Text(stringResource(R.string.tambahkan_catatan)) },
+				label = { Text("Catatan") },
+				placeholder = { Text("Tambahkan Catatan") },
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(120.dp)
@@ -301,6 +292,23 @@ fun AddOrEditLogModal(
 				singleLine = false,
 				maxLines = 5
 			)
+
+			OutlinedTextField(
+				value = dateFormat.format(selectedDate),
+				onValueChange = { },
+				label = { Text("Tanggal") },
+				readOnly = true,
+				modifier = Modifier
+					.fillMaxWidth()
+					.clickable { showDatePicker = true }
+					.padding(bottom = 16.dp),
+				trailingIcon = {
+					IconButton(onClick = { showDatePicker = true }) {
+						Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+					}
+				}
+			)
+
 			Spacer(modifier = Modifier.height(16.dp))
 			Row(
 				modifier = Modifier.fillMaxWidth(),
@@ -311,9 +319,9 @@ fun AddOrEditLogModal(
 					modifier = Modifier.weight(1f),
 					shape = RoundedCornerShape(50)
 				) {
-					Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.cancel))
+					Icon(Icons.Filled.Close, contentDescription = "Cancel")
 					Spacer(modifier = Modifier.width(4.dp))
-					Text(stringResource(R.string.cancel))
+					Text("Cancel")
 				}
 				Button(
 					onClick = {
@@ -322,34 +330,60 @@ fun AddOrEditLogModal(
 								name,
 								calories,
 								notes,
-								selectedImagePath
+								selectedImagePath,
+								selectedDate
 							)
 						}
 					},
 					modifier = Modifier.weight(1f),
 					shape = RoundedCornerShape(50)
 				) {
-					Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.submit))
+					Icon(Icons.Filled.Check, contentDescription = "Submit")
 					Spacer(modifier = Modifier.width(4.dp))
-					Text(stringResource(R.string.save))
+					Text("Save")
 				}
 			}
+		}
+	}
 
-			if (isEditMode && onDelete != null) {
-				Spacer(modifier = Modifier.height(12.dp))
-				OutlinedButton(
-					onClick = onDelete,
-					modifier = Modifier.fillMaxWidth(),
-					shape = RoundedCornerShape(50),
-					colors = ButtonDefaults.outlinedButtonColors(
-						contentColor = MaterialTheme.colorScheme.error
-					)
-				) {
-					Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete_activity))
-					Spacer(modifier = Modifier.width(4.dp))
-					Text(stringResource(R.string.delete_activity))
+	if (showDatePicker) {
+		val today = Calendar.getInstance()
+		today.set(Calendar.HOUR_OF_DAY, 23)
+		today.set(Calendar.MINUTE, 59)
+		today.set(Calendar.SECOND, 59)
+		today.set(Calendar.MILLISECOND, 999)
+
+		val datePickerState = rememberDatePickerState(
+			initialSelectedDateMillis = selectedDate.time,
+			selectableDates = object : SelectableDates {
+				override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+					return utcTimeMillis <= today.timeInMillis
 				}
 			}
+		)
+		DatePickerDialog(
+			onDismissRequest = { showDatePicker = false },
+			confirmButton = {
+				TextButton(
+					onClick = {
+						datePickerState.selectedDateMillis?.let { millis ->
+							selectedDate = Date(millis)
+						}
+						showDatePicker = false
+					}
+				) {
+					Text("OK")
+				}
+			},
+			dismissButton = {
+				TextButton(
+					onClick = { showDatePicker = false }
+				) {
+					Text("Cancel")
+				}
+			}
+		) {
+			DatePicker(state = datePickerState)
 		}
 	}
 }

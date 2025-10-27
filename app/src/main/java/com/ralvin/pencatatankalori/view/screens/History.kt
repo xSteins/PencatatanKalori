@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.View.screens
+package com.ralvin.pencatatankalori.view.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,14 +47,13 @@ import com.ralvin.pencatatankalori.Model.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.Model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.Model.formula.GoalType
 import com.ralvin.pencatatankalori.R
-import com.ralvin.pencatatankalori.View.components.AddOrEditLogModal
-import com.ralvin.pencatatankalori.View.components.CreateNewActivityDate
-import com.ralvin.pencatatankalori.View.components.ExpandableFAB
-import com.ralvin.pencatatankalori.View.components.HistoryDatePicker
-import com.ralvin.pencatatankalori.View.components.LogItem
-import com.ralvin.pencatatankalori.View.components.LogType
-import com.ralvin.pencatatankalori.View.components.LogsDetailedModal
-import com.ralvin.pencatatankalori.View.theme.PencatatanKaloriTheme
+import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
+import com.ralvin.pencatatankalori.view.components.CreateNewActivityDate
+import com.ralvin.pencatatankalori.view.components.ExpandableFAB
+import com.ralvin.pencatatankalori.view.components.HistoryDatePicker
+import com.ralvin.pencatatankalori.view.components.LogItem
+import com.ralvin.pencatatankalori.view.components.LogType
+import com.ralvin.pencatatankalori.view.components.LogsDetailedModal
 import com.ralvin.pencatatankalori.Viewmodel.HistoryUiState
 import com.ralvin.pencatatankalori.Viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat

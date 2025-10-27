@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.ralvin.pencatatankalori.View.navigation.BottomNavBar
-import com.ralvin.pencatatankalori.View.navigation.NavGraph
-import com.ralvin.pencatatankalori.View.navigation.Screen
-import com.ralvin.pencatatankalori.View.theme.PencatatanKaloriTheme
+import com.ralvin.pencatatankalori.view.navigation.BottomNavBar
+import com.ralvin.pencatatankalori.view.navigation.NavGraph
+import com.ralvin.pencatatankalori.view.navigation.Screen
+import com.ralvin.pencatatankalori.view.theme.PencatatanKaloriTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
