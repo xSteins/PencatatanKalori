@@ -6,7 +6,6 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ralvin.pencatatankalori.model.database.AppDatabase
 import com.ralvin.pencatatankalori.model.database.dao.ActivityLogDao
-import com.ralvin.pencatatankalori.model.database.dao.ActivityPicturesDao
 import com.ralvin.pencatatankalori.model.database.dao.DailyDataDao
 import com.ralvin.pencatatankalori.model.database.dao.UserDataDao
 import dagger.Module
@@ -45,6 +44,69 @@ object DatabaseModule {
 		}
 	}
 
+	private val MIGRATION_11_12 = object : Migration(11, 12) {
+		override fun migrate(database: SupportSQLiteDatabase) {
+			database.execSQL("DROP TABLE IF EXISTS activity_picture")
+		}
+	}
+
+	private val MIGRATION_12_13 = object : Migration(12, 13) {
+		override fun migrate(database: SupportSQLiteDatabase) {
+			database.execSQL(
+				"""
+				CREATE TABLE activity_log_new (
+					calories INTEGER NOT NULL,
+					daily_data_id TEXT NOT NULL,
+					id TEXT NOT NULL PRIMARY KEY,
+					name TEXT NOT NULL,
+					notes TEXT,
+					picture_id TEXT,
+					timestamp INTEGER NOT NULL,
+					type TEXT NOT NULL,
+					user_id TEXT NOT NULL,
+					FOREIGN KEY(daily_data_id) REFERENCES daily_data(id) ON DELETE CASCADE
+				)
+				""".trimIndent()
+			)
+
+			database.execSQL(
+				"""
+				INSERT INTO activity_log_new (calories, daily_data_id, id, name, notes, picture_id, timestamp, type, user_id)
+				SELECT
+					CASE WHEN calories IS NULL THEN 0 ELSE calories END,
+					daily_data_id,
+					id,
+					CASE WHEN name IS NULL OR name = '' THEN 'Activity' ELSE name END,
+					notes,
+					picture_id,
+					timestamp,
+					type,
+					user_id
+				FROM activity_log
+				WHERE id IS NOT NULL
+				""".trimIndent()
+			)
+
+			database.execSQL("DROP TABLE activity_log")
+
+			database.execSQL("ALTER TABLE activity_log_new RENAME TO activity_log")
+
+			// Create index AFTER table is renamed to final name
+			database.execSQL(
+				"CREATE INDEX IF NOT EXISTS index_activity_log_daily_data_id ON activity_log (daily_data_id)"
+			)
+		}
+	}
+
+	private val MIGRATION_13_14 = object : Migration(13, 14) {
+		override fun migrate(database: SupportSQLiteDatabase) {
+			// This migration ensures the index exists after the 12->13 migration fix
+			database.execSQL(
+				"CREATE INDEX IF NOT EXISTS index_activity_log_daily_data_id ON activity_log (daily_data_id)"
+			)
+		}
+	}
+
 	@Provides
 	@Singleton
 	fun provideAppDatabase(
@@ -55,7 +117,7 @@ object DatabaseModule {
 			AppDatabase::class.java,
 			"pencatatan_kalori_database"
 		)
-			.addMigrations(MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+			.addMigrations(MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
 			.fallbackToDestructiveMigration()
 			.build()
 	}
@@ -68,11 +130,6 @@ object DatabaseModule {
 	@Provides
 	fun provideActivityLogDao(database: AppDatabase): ActivityLogDao {
 		return database.activityLogDao()
-	}
-
-	@Provides
-	fun provideActivityPicturesDao(database: AppDatabase): ActivityPicturesDao {
-		return database.activityPicturesDao()
 	}
 
 	@Provides

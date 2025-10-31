@@ -167,8 +167,8 @@ class OverviewViewModel @Inject constructor(
 	fun getPicture(pictureId: String, onSuccess: (String?) -> Unit) {
 		viewModelScope.launch {
 			try {
-				val picture = repository.getPicture(pictureId)
-				onSuccess(picture?.imagePath)
+				val pictureUri = repository.getPicture(pictureId)
+				onSuccess(pictureUri)
 			} catch (e: Exception) {
 				onSuccess(null)
 			}

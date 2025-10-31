@@ -1,11 +1,9 @@
 package com.ralvin.pencatatankalori.model.repository
 
 import com.ralvin.pencatatankalori.model.database.dao.ActivityLogDao
-import com.ralvin.pencatatankalori.model.database.dao.ActivityPicturesDao
 import com.ralvin.pencatatankalori.model.database.dao.DailyDataDao
 import com.ralvin.pencatatankalori.model.database.dao.UserDataDao
 import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
-import com.ralvin.pencatatankalori.model.database.entities.ActivityPicture
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.model.database.entities.DailyData
 import com.ralvin.pencatatankalori.model.database.entities.UserData
@@ -27,7 +25,6 @@ import javax.inject.Singleton
 class CalorieRepository @Inject constructor(
 	private val userDataDao: UserDataDao,
 	private val activityLogDao: ActivityLogDao,
-	private val activityPicturesDao: ActivityPicturesDao,
 	private val dailyDataDao: DailyDataDao
 ) {
 
@@ -184,26 +181,18 @@ class CalorieRepository @Inject constructor(
 		if (_isDummyDataEnabled.value) {
 			return "dummy_picture_id"
 		}
-		val picture = ActivityPicture(imagePath = imagePath)
-		activityPicturesDao.insertPicture(picture)
-		return picture.id
+		return imagePath
 	}
 
-	suspend fun getPicture(pictureId: String): ActivityPicture? {
+	suspend fun getPicture(pictureId: String): String? {
 		if (_isDummyDataEnabled.value || pictureId.endsWith("_placeholder")) {
 			val imageName = pictureId.replace("_placeholder", "")
-			return ActivityPicture(
-				id = pictureId,
-				imagePath = "android.resource://com.ralvin.pencatatankalori/assets/PlaceholderImage/$imageName.jpg"
-			)
+			return "android.resource://com.ralvin.pencatatankalori/assets/PlaceholderImage/$imageName.jpg"
 		}
-		return activityPicturesDao.getPictureById(pictureId)
+		return pictureId
 	}
 
 	suspend fun deletePicture(pictureId: String) {
-		if (!_isDummyDataEnabled.value) {
-			activityPicturesDao.deletePictureById(pictureId)
-		}
 	}
 
 
@@ -630,11 +619,6 @@ class CalorieRepository @Inject constructor(
 
 		val user = getUserProfileOnce() ?: return
 
-		// Delete user data (will cascade to DailyData and ActivityLog due to foreign keys)
 		userDataDao.deleteUserData(user)
-
-		// Clear remaining activity pictures
-		// Note: We can't easily get all pictures, so this is a limitation
-		// ActivityPictures is not directly linked to users
 	}
 }

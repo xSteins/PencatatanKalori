@@ -26,8 +26,8 @@ data class ActivityLog(
 	@ColumnInfo(name = "daily_data_id") val dailyDataId: String,
 	@ColumnInfo(name = "type") val type: ActivityType,
 	@ColumnInfo(name = "timestamp") val timestamp: Date,
-	@ColumnInfo(name = "name") val name: String? = null,
-	@ColumnInfo(name = "calories") val calories: Int? = null,
+	@ColumnInfo(name = "name") val name: String,
+	@ColumnInfo(name = "calories") val calories: Int,
 	@ColumnInfo(name = "notes") val notes: String? = null,
 	@ColumnInfo(name = "picture_id") val pictureId: String? = null
 )
