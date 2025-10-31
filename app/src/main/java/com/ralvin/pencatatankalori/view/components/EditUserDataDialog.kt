@@ -46,8 +46,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.Model.formula.GoalType
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.R
 
 enum class EditUserDataType {

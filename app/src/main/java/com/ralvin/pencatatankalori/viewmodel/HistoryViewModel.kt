@@ -1,11 +1,11 @@
-package com.ralvin.pencatatankalori.Viewmodel
+package com.ralvin.pencatatankalori.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityType
-import com.ralvin.pencatatankalori.Model.formula.GoalType
-import com.ralvin.pencatatankalori.Model.formula.MifflinModel
-import com.ralvin.pencatatankalori.Model.repository.CalorieRepository
+import com.ralvin.pencatatankalori.model.database.entities.ActivityType
+import com.ralvin.pencatatankalori.model.formula.GoalType
+import com.ralvin.pencatatankalori.model.formula.MifflinModel
+import com.ralvin.pencatatankalori.model.repository.CalorieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,10 +28,10 @@ class HistoryViewModel @Inject constructor(
 	val dateRange: StateFlow<Pair<Date, Date>> = _dateRange
 
 	private val _dailyDataList =
-		MutableStateFlow<List<com.ralvin.pencatatankalori.Model.database.entities.DailyData>>(
+		MutableStateFlow<List<com.ralvin.pencatatankalori.model.database.entities.DailyData>>(
 			emptyList()
 		)
-	val dailyDataList: StateFlow<List<com.ralvin.pencatatankalori.Model.database.entities.DailyData>> =
+	val dailyDataList: StateFlow<List<com.ralvin.pencatatankalori.model.database.entities.DailyData>> =
 		_dailyDataList
 
 	val allActivities = repository.getAllUserActivities()

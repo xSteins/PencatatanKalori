@@ -20,8 +20,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -29,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ralvin.pencatatankalori.Viewmodel.UserDataDebugUiState
-import com.ralvin.pencatatankalori.Viewmodel.UserDataDebugViewModel
+import com.ralvin.pencatatankalori.viewmodel.UserDataDebugUiState
+import com.ralvin.pencatatankalori.viewmodel.UserDataDebugViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -40,10 +44,13 @@ fun UserDataDebugDialog(
 	viewModel: UserDataDebugViewModel = hiltViewModel()
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+	var showClearConfirmation by remember { mutableStateOf(false) }
 
 	Dialog(onDismissRequest = onDismiss) {
 		Surface(
-			modifier = Modifier.fillMaxSize(),
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(8.dp),
 			color = MaterialTheme.colorScheme.surface
 		) {
 			Column(
@@ -57,7 +64,7 @@ fun UserDataDebugDialog(
 					verticalAlignment = Alignment.CenterVertically
 				) {
 					Text(
-						text = "User Data Debug",
+						text = "Table",
 						style = MaterialTheme.typography.titleMedium,
 						fontWeight = FontWeight.Bold
 					)
@@ -65,6 +72,15 @@ fun UserDataDebugDialog(
 					Row(
 						horizontalArrangement = Arrangement.spacedBy(8.dp)
 					) {
+						TextButton(
+							onClick = { showClearConfirmation = true },
+							modifier = Modifier.widthIn(min = 80.dp)
+						) {
+							Text(
+								"Clear all data",
+								color = MaterialTheme.colorScheme.error
+							)
+						}
 						TextButton(
 							onClick = { viewModel.refreshData() },
 							modifier = Modifier.widthIn(min = 80.dp)
@@ -110,12 +126,45 @@ fun UserDataDebugDialog(
 				}
 			}
 		}
+
+		// Confirmation dialog for clearing all data
+		if (showClearConfirmation) {
+			AlertDialog(
+				onDismissRequest = { showClearConfirmation = false },
+				title = {
+					Text("Clear All Data")
+				},
+				text = {
+					Text("Are you sure you want to clear all app data? This action cannot be undone.")
+				},
+				confirmButton = {
+					TextButton(
+						onClick = {
+							viewModel.clearAllData()
+							showClearConfirmation = false
+						}
+					) {
+						Text(
+							"Clear",
+							color = MaterialTheme.colorScheme.error
+						)
+					}
+				},
+				dismissButton = {
+					TextButton(
+						onClick = { showClearConfirmation = false }
+					) {
+						Text("Cancel")
+					}
+				}
+			)
+		}
 	}
 }
 
 @Composable
 private fun DebugDataContent(
-	debugData: com.ralvin.pencatatankalori.Viewmodel.DebugData
+	debugData: com.ralvin.pencatatankalori.viewmodel.DebugData
 ) {
 	LazyColumn(
 		verticalArrangement = Arrangement.spacedBy(8.dp)

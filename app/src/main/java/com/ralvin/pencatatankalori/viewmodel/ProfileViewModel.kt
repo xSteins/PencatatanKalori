@@ -1,12 +1,12 @@
-package com.ralvin.pencatatankalori.Viewmodel
+package com.ralvin.pencatatankalori.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ralvin.pencatatankalori.Model.database.entities.UserData
-import com.ralvin.pencatatankalori.Model.repository.CalorieRepository
-import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.Model.formula.CalorieStrategy
-import com.ralvin.pencatatankalori.Model.formula.GoalType
+import com.ralvin.pencatatankalori.model.database.entities.UserData
+import com.ralvin.pencatatankalori.model.repository.CalorieRepository
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
+import com.ralvin.pencatatankalori.model.formula.GoalType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

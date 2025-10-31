@@ -1,11 +1,11 @@
-package com.ralvin.pencatatankalori.Model.database.dao
+package com.ralvin.pencatatankalori.model.database.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityPicture
+import com.ralvin.pencatatankalori.model.database.entities.ActivityPicture
 
 @Dao
 interface ActivityPicturesDao {

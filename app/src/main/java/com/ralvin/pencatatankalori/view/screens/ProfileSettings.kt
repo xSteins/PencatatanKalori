@@ -51,18 +51,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.Model.formula.CalorieStrategy
-import com.ralvin.pencatatankalori.Model.formula.GoalType
-import com.ralvin.pencatatankalori.Model.formula.MifflinModel
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
+import com.ralvin.pencatatankalori.model.formula.GoalType
+import com.ralvin.pencatatankalori.model.formula.MifflinModel
 import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.view.components.CalorieSettingsDialog
 import com.ralvin.pencatatankalori.view.components.EditUserDataDialog
 import com.ralvin.pencatatankalori.view.components.EditUserDataType
 import com.ralvin.pencatatankalori.view.components.OnboardingDialog
 import com.ralvin.pencatatankalori.view.components.UserDataDebugDialog
-import com.ralvin.pencatatankalori.Viewmodel.OnboardingViewModel
-import com.ralvin.pencatatankalori.Viewmodel.ProfileViewModel
+import com.ralvin.pencatatankalori.viewmodel.OnboardingViewModel
+import com.ralvin.pencatatankalori.viewmodel.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +95,7 @@ fun ProfileSettings(
 	LaunchedEffect(onboardingUiState, userProfile) {
 		val currentOnboardingState = onboardingUiState
 		val currentUserProfile = userProfile
-		if (currentOnboardingState is com.ralvin.pencatatankalori.Viewmodel.OnboardingUiState.Success && currentUserProfile != null) {
+		if (currentOnboardingState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Success && currentUserProfile != null) {
 			showOnboardingDialog = false
 			onboardingViewModel.resetUiState()
 		}
@@ -220,7 +220,7 @@ fun ProfileSettings(
 		Box(modifier = Modifier.padding(innerPadding)) {
 			val currentProfileUiState = profileUiState
 			when {
-				currentProfileUiState is com.ralvin.pencatatankalori.Viewmodel.ProfileUiState.Loading -> {
+				currentProfileUiState is com.ralvin.pencatatankalori.viewmodel.ProfileUiState.Loading -> {
 					Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 						CircularProgressIndicator()
 					}

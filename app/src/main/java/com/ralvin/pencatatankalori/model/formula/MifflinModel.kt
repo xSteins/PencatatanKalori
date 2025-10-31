@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.Model.formula
+package com.ralvin.pencatatankalori.model.formula
 
 class MifflinModel {
 	companion object {

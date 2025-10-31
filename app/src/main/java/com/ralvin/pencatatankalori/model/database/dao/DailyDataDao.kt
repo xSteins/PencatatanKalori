@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.Model.database.dao
+package com.ralvin.pencatatankalori.model.database.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.ralvin.pencatatankalori.Model.database.entities.DailyData
+import com.ralvin.pencatatankalori.model.database.entities.DailyData
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
 

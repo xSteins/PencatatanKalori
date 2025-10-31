@@ -1,12 +1,12 @@
-package com.ralvin.pencatatankalori.Viewmodel
+package com.ralvin.pencatatankalori.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ralvin.pencatatankalori.Model.database.dao.ActivityLogDao
-import com.ralvin.pencatatankalori.Model.database.dao.UserDataDao
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityLog
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityType
-import com.ralvin.pencatatankalori.Model.database.entities.UserData
+import com.ralvin.pencatatankalori.model.database.dao.ActivityLogDao
+import com.ralvin.pencatatankalori.model.database.dao.UserDataDao
+import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
+import com.ralvin.pencatatankalori.model.database.entities.ActivityType
+import com.ralvin.pencatatankalori.model.database.entities.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -88,5 +88,22 @@ class UserDataDebugViewModel @Inject constructor(
 
 	fun refreshData() {
 		loadDebugData()
+	}
+
+	fun clearAllData() {
+		viewModelScope.launch {
+			try {
+				_uiState.value = UserDataDebugUiState.Loading
+				// Access repository through the DAOs for now since we don't inject repository
+				val userData = userDataDao.getUserData().first()
+				if (userData != null) {
+					userDataDao.deleteUserData(userData)
+				}
+				// Refresh data to show empty state
+				loadDebugData()
+			} catch (e: Exception) {
+				_uiState.value = UserDataDebugUiState.Error("Failed to clear data: ${e.message}")
+			}
+		}
 	}
 }

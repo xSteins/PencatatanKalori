@@ -45,8 +45,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.ralvin.pencatatankalori.Viewmodel.HistoryViewModel
-import com.ralvin.pencatatankalori.Viewmodel.OverviewViewModel
+import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
+import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
 
 data class LogItem(
 	val id: Int,
@@ -110,10 +110,10 @@ fun LogsDetailedModal(
 	logs: List<LogItem>,
 	onAddFood: () -> Unit = {},
 	onAddWorkout: () -> Unit = {},
-	dayData: com.ralvin.pencatatankalori.Viewmodel.DayData? = null,
+	dayData: com.ralvin.pencatatankalori.viewmodel.DayData? = null,
 	overviewViewModel: OverviewViewModel = hiltViewModel(),
 	historyViewModel: HistoryViewModel = hiltViewModel(),
-	profileViewModel: com.ralvin.pencatatankalori.Viewmodel.ProfileViewModel = hiltViewModel()
+	profileViewModel: com.ralvin.pencatatankalori.viewmodel.ProfileViewModel = hiltViewModel()
 ) {
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
@@ -360,7 +360,7 @@ fun LogsDetailedModal(
 						}
 						EditUserDataType.GOAL -> {
 							// Parse goal type from display name
-							val goalType = com.ralvin.pencatatankalori.Model.formula.GoalType.values()
+							val goalType = com.ralvin.pencatatankalori.model.formula.GoalType.values()
 								.find { it.getDisplayName() == newValue }
 							goalType?.let { profileViewModel.updateGoalType(it) }
 						}

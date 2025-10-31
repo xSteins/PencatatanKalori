@@ -59,16 +59,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityLog
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityType
+import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
+import com.ralvin.pencatatankalori.model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.view.components.AddActivityButtons
 import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.view.components.EditUserDataDialog
 import com.ralvin.pencatatankalori.view.components.EditUserDataType
 import com.ralvin.pencatatankalori.view.components.LogType
-import com.ralvin.pencatatankalori.Viewmodel.OverviewViewModel
-import com.ralvin.pencatatankalori.Model.formula.GoalType
+import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
+import com.ralvin.pencatatankalori.model.formula.GoalType
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -129,7 +129,7 @@ fun OverviewScreen(
 	}
 	val currentUiState = uiState
 	when (currentUiState) {
-		is com.ralvin.pencatatankalori.Viewmodel.OverviewUiState.Loading -> {
+		is com.ralvin.pencatatankalori.viewmodel.OverviewUiState.Loading -> {
 			Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 				CircularProgressIndicator()
 			}
@@ -137,7 +137,7 @@ fun OverviewScreen(
 		}
 
 		/* TODO: Add retry logic */
-		is com.ralvin.pencatatankalori.Viewmodel.OverviewUiState.Error -> {
+		is com.ralvin.pencatatankalori.viewmodel.OverviewUiState.Error -> {
 			Column(
 				modifier = Modifier
                     .fillMaxSize()

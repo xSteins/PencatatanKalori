@@ -34,10 +34,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ralvin.pencatatankalori.R
-import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.Model.formula.CalorieStrategy
-import com.ralvin.pencatatankalori.Model.formula.GoalType
-import com.ralvin.pencatatankalori.Model.formula.MifflinModel
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
+import com.ralvin.pencatatankalori.model.formula.GoalType
+import com.ralvin.pencatatankalori.model.formula.MifflinModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

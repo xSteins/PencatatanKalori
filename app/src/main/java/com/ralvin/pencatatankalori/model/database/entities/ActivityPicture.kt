@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.Model.database.entities
+package com.ralvin.pencatatankalori.model.database.entities
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

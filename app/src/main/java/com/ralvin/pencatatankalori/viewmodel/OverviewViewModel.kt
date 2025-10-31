@@ -1,11 +1,11 @@
-package com.ralvin.pencatatankalori.Viewmodel
+package com.ralvin.pencatatankalori.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityLog
-import com.ralvin.pencatatankalori.Model.database.entities.UserData
-import com.ralvin.pencatatankalori.Model.formula.MifflinModel
-import com.ralvin.pencatatankalori.Model.repository.CalorieRepository
+import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
+import com.ralvin.pencatatankalori.model.database.entities.UserData
+import com.ralvin.pencatatankalori.model.formula.MifflinModel
+import com.ralvin.pencatatankalori.model.repository.CalorieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,10 +44,10 @@ class OverviewViewModel @Inject constructor(
 	) { user, activities, dailyData ->
 		user?.let { userData ->
 			val consumed =
-				activities.filter { it.type == com.ralvin.pencatatankalori.Model.database.entities.ActivityType.CONSUMPTION }
+				activities.filter { it.type == com.ralvin.pencatatankalori.model.database.entities.ActivityType.CONSUMPTION }
 					.sumOf { it.calories ?: 0 }
 			val burned =
-				activities.filter { it.type == com.ralvin.pencatatankalori.Model.database.entities.ActivityType.WORKOUT }
+				activities.filter { it.type == com.ralvin.pencatatankalori.model.database.entities.ActivityType.WORKOUT }
 					.sumOf { it.calories ?: 0 }
 
 			val remainingCalories = if (dailyData != null) {
@@ -120,7 +120,7 @@ class OverviewViewModel @Inject constructor(
 	fun logActivity(
 		name: String,
 		calories: Int,
-		type: com.ralvin.pencatatankalori.Model.database.entities.ActivityType,
+		type: com.ralvin.pencatatankalori.model.database.entities.ActivityType,
 		pictureId: String? = null,
 		notes: String? = null
 	) {
@@ -183,7 +183,7 @@ data class OverviewData(
 	val remainingCalories: Int,
 	val netCalories: Int,
 	val todayActivities: List<ActivityLog>,
-	val dailyData: com.ralvin.pencatatankalori.Model.database.entities.DailyData? = null
+	val dailyData: com.ralvin.pencatatankalori.model.database.entities.DailyData? = null
 )
 
 sealed class OverviewUiState {

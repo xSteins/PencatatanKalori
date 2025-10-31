@@ -1,10 +1,10 @@
-package com.ralvin.pencatatankalori.Model.database.entities
+package com.ralvin.pencatatankalori.model.database.entities
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.Model.formula.GoalType
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.GoalType
 import java.util.UUID
 
 @Entity(tableName = "user")

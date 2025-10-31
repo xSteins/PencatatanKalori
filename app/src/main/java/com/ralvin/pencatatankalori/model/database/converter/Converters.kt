@@ -1,10 +1,10 @@
-package com.ralvin.pencatatankalori.Model.database.converter
+package com.ralvin.pencatatankalori.model.database.converter
 
 import androidx.room.TypeConverter
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityType
-import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.Model.formula.CalorieStrategy
-import com.ralvin.pencatatankalori.Model.formula.GoalType
+import com.ralvin.pencatatankalori.model.database.entities.ActivityType
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
+import com.ralvin.pencatatankalori.model.formula.GoalType
 import java.util.Date
 
 class Converters {

@@ -43,9 +43,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityLog
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityType
-import com.ralvin.pencatatankalori.Model.formula.GoalType
+import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
+import com.ralvin.pencatatankalori.model.database.entities.ActivityType
+import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.view.components.CreateNewActivityDate
@@ -54,8 +54,8 @@ import com.ralvin.pencatatankalori.view.components.HistoryDatePicker
 import com.ralvin.pencatatankalori.view.components.LogItem
 import com.ralvin.pencatatankalori.view.components.LogType
 import com.ralvin.pencatatankalori.view.components.LogsDetailedModal
-import com.ralvin.pencatatankalori.Viewmodel.HistoryUiState
-import com.ralvin.pencatatankalori.Viewmodel.HistoryViewModel
+import com.ralvin.pencatatankalori.viewmodel.HistoryUiState
+import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale

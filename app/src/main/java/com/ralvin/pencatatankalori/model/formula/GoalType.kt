@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.Model.formula
+package com.ralvin.pencatatankalori.model.formula
 
 enum class GoalType {
 	LOSE_WEIGHT,

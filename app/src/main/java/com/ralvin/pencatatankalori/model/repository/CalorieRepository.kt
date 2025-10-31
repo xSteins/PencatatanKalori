@@ -1,18 +1,18 @@
-package com.ralvin.pencatatankalori.Model.repository
+package com.ralvin.pencatatankalori.model.repository
 
-import com.ralvin.pencatatankalori.Model.database.dao.ActivityLogDao
-import com.ralvin.pencatatankalori.Model.database.dao.ActivityPicturesDao
-import com.ralvin.pencatatankalori.Model.database.dao.DailyDataDao
-import com.ralvin.pencatatankalori.Model.database.dao.UserDataDao
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityLog
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityPicture
-import com.ralvin.pencatatankalori.Model.database.entities.ActivityType
-import com.ralvin.pencatatankalori.Model.database.entities.DailyData
-import com.ralvin.pencatatankalori.Model.database.entities.UserData
-import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.Model.formula.CalorieStrategy
-import com.ralvin.pencatatankalori.Model.formula.GoalType
-import com.ralvin.pencatatankalori.Model.formula.MifflinModel
+import com.ralvin.pencatatankalori.model.database.dao.ActivityLogDao
+import com.ralvin.pencatatankalori.model.database.dao.ActivityPicturesDao
+import com.ralvin.pencatatankalori.model.database.dao.DailyDataDao
+import com.ralvin.pencatatankalori.model.database.dao.UserDataDao
+import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
+import com.ralvin.pencatatankalori.model.database.entities.ActivityPicture
+import com.ralvin.pencatatankalori.model.database.entities.ActivityType
+import com.ralvin.pencatatankalori.model.database.entities.DailyData
+import com.ralvin.pencatatankalori.model.database.entities.UserData
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
+import com.ralvin.pencatatankalori.model.formula.GoalType
+import com.ralvin.pencatatankalori.model.formula.MifflinModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -624,4 +624,17 @@ class CalorieRepository @Inject constructor(
 		// Always return user profile weight (single source of truth)
 		return user.weight
 	}
-} 
+
+	suspend fun clearAllData() {
+		if (_isDummyDataEnabled.value) return
+
+		val user = getUserProfileOnce() ?: return
+
+		// Delete user data (will cascade to DailyData and ActivityLog due to foreign keys)
+		userDataDao.deleteUserData(user)
+
+		// Clear remaining activity pictures
+		// Note: We can't easily get all pictures, so this is a limitation
+		// ActivityPictures is not directly linked to users
+	}
+}

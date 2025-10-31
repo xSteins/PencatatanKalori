@@ -1,14 +1,14 @@
-package com.ralvin.pencatatankalori.Model.injection
+package com.ralvin.pencatatankalori.model.injection
 
 import android.content.Context
 import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.ralvin.pencatatankalori.Model.database.AppDatabase
-import com.ralvin.pencatatankalori.Model.database.dao.ActivityLogDao
-import com.ralvin.pencatatankalori.Model.database.dao.ActivityPicturesDao
-import com.ralvin.pencatatankalori.Model.database.dao.DailyDataDao
-import com.ralvin.pencatatankalori.Model.database.dao.UserDataDao
+import com.ralvin.pencatatankalori.model.database.AppDatabase
+import com.ralvin.pencatatankalori.model.database.dao.ActivityLogDao
+import com.ralvin.pencatatankalori.model.database.dao.ActivityPicturesDao
+import com.ralvin.pencatatankalori.model.database.dao.DailyDataDao
+import com.ralvin.pencatatankalori.model.database.dao.UserDataDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

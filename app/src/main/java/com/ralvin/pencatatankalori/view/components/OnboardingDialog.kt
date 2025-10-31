@@ -35,10 +35,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ralvin.pencatatankalori.Model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.Model.formula.GoalType
-import com.ralvin.pencatatankalori.Model.formula.MifflinModel
-import com.ralvin.pencatatankalori.Viewmodel.OnboardingViewModel
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.GoalType
+import com.ralvin.pencatatankalori.model.formula.MifflinModel
+import com.ralvin.pencatatankalori.viewmodel.OnboardingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -259,7 +259,7 @@ fun OnboardingScreenContent(
 		}
 
 		val currentUiState = uiState
-		if (currentUiState is com.ralvin.pencatatankalori.Viewmodel.OnboardingUiState.Error) {
+		if (currentUiState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Error) {
 			Spacer(modifier = Modifier.height(8.dp))
 			Text(
 				text = currentUiState.message,
@@ -280,9 +280,9 @@ fun OnboardingScreenContent(
 			Spacer(modifier = Modifier.width(8.dp))
 			Button(
 				onClick = { handleSave() },
-				enabled = isValid && currentUiState !is com.ralvin.pencatatankalori.Viewmodel.OnboardingUiState.Loading
+				enabled = isValid && currentUiState !is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Loading
 			) {
-				if (currentUiState is com.ralvin.pencatatankalori.Viewmodel.OnboardingUiState.Loading) {
+				if (currentUiState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Loading) {
 					CircularProgressIndicator(modifier = Modifier.size(16.dp))
 				} else {
 					Text("Save")
