@@ -1,13 +1,7 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches/
-/.idea/libraries/
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-/.idea/deploymentTargetSelector.xml
-/.idea/modules/
+/.idea/*
 .DS_Store
 /build
 /captures
@@ -16,3 +10,4 @@
 local.properties
 app/src/main/java/com/ralvin/pencatatankalori/folder-tree.puml
 .idea/deploymentTargetSelector.xml
+.kotlin/sessions/kotlin-compiler-11582613898478042256.salive
