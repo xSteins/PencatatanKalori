@@ -17,7 +17,7 @@ import com.ralvin.pencatatankalori.model.database.entities.UserData
 		ActivityLog::class,
 		DailyData::class
 	],
-	version = 14,
+	version = 15,
 	exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -25,5 +25,4 @@ abstract class AppDatabase : RoomDatabase() {
 	abstract fun userDataDao(): UserDataDao
 	abstract fun activityLogDao(): ActivityLogDao
 	abstract fun dailyDataDao(): DailyDataDao
-
 }

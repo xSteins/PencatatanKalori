@@ -22,7 +22,6 @@ class OnboardingViewModel @Inject constructor(
 
 
 	fun createUserData(
-		name: String,
 		age: Int,
 		gender: String,
 		weight: Float,
@@ -36,7 +35,6 @@ class OnboardingViewModel @Inject constructor(
 				_uiState.value = OnboardingUiState.Loading
 
 				val userData = UserData(
-					name = name,
 					age = age,
 					gender = gender,
 					weight = weight,

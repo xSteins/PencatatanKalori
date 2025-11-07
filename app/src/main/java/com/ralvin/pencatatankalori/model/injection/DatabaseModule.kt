@@ -107,6 +107,13 @@ object DatabaseModule {
 		}
 	}
 
+	private val MIGRATION_14_15 = object : Migration(14, 15) {
+		override fun migrate(database: SupportSQLiteDatabase) {
+			// Drop the name column from user table since it's no longer used
+			database.execSQL("ALTER TABLE user DROP COLUMN name")
+		}
+	}
+
 	@Provides
 	@Singleton
 	fun provideAppDatabase(
@@ -117,7 +124,7 @@ object DatabaseModule {
 			AppDatabase::class.java,
 			"pencatatan_kalori_database"
 		)
-			.addMigrations(MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
+			.addMigrations(MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
 			.fallbackToDestructiveMigration()
 			.build()
 	}

@@ -9,19 +9,19 @@ enum class ActivityLevel(val multiplier: Double) {
 	// untuk onboarding menu
 	fun getDisplayName(): String {
 		return when (this) {
-			SEDENTARY -> "Tidak Aktif"
-			LIGHTLY_ACTIVE -> "Cukup Aktif"
-			MODERATELY_ACTIVE -> "Lumayan Aktif"
-			VERY_ACTIVE -> "Sangat Aktif"
+			SEDENTARY -> "Sedentary"
+			LIGHTLY_ACTIVE -> "Lightly Active"
+			MODERATELY_ACTIVE -> "Moderately Active"
+			VERY_ACTIVE -> "Very Active"
 		}
 	}
 
 	fun getDescription(): String {
 		return when (this) {
-			SEDENTARY -> "Minim aktivitas bergerak"
-			LIGHTLY_ACTIVE -> "Aktivitas normal (Pelajar / Pekerja)"
-			MODERATELY_ACTIVE -> "Rutin olahraga teratur (1-2x per minggu)"
-			VERY_ACTIVE -> "Sangat aktif olahraga (>3x per minggu)"
+			SEDENTARY -> "Not doing anything / stay at home person"
+			LIGHTLY_ACTIVE -> "Normal Activity Level (Student/Worker)"
+			MODERATELY_ACTIVE -> "Actively exercise (1-2x per week)"
+			VERY_ACTIVE -> "Intense exercise (>3x per week)"
 		}
 	}
 }

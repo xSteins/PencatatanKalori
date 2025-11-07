@@ -124,7 +124,6 @@ fun ProfileSettings(
 			when (type) {
 				EditUserDataType.GENDER -> {
 					profileViewModel.updateUserProfile(
-						name = it.name,
 						age = it.age,
 						gender = newValue,
 						weight = it.weight,
@@ -154,7 +153,6 @@ fun ProfileSettings(
 				EditUserDataType.HEIGHT -> {
 					value.toFloatOrNull()?.let { floatValue ->
 						profileViewModel.updateUserProfile(
-							name = it.name,
 							age = it.age,
 							gender = it.gender,
 							weight = it.weight,
@@ -169,7 +167,6 @@ fun ProfileSettings(
 				EditUserDataType.AGE -> {
 					value.toIntOrNull()?.let { intValue ->
 						profileViewModel.updateUserProfile(
-							name = it.name,
 							age = intValue,
 							gender = it.gender,
 							weight = it.weight,

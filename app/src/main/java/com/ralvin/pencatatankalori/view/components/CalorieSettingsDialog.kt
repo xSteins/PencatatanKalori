@@ -30,7 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
+
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ralvin.pencatatankalori.R
@@ -43,25 +43,17 @@ import com.ralvin.pencatatankalori.model.formula.MifflinModel
 @Composable
 fun CalorieSettingsDialog(
 	onDismiss: () -> Unit,
-	onSave: (granularityValue: Int, strategy: CalorieStrategy?, advancedEnabled: Boolean) -> Unit,
+	onSave: (granularityValue: Int) -> Unit,
 	goalType: GoalType,
 	userWeight: Double = 70.0,
 	userHeight: Double = 170.0,
 	userAge: Int = 25,
 	isMale: Boolean = true,
 	activityLevel: ActivityLevel = ActivityLevel.MODERATELY_ACTIVE,
-	initialGranularityValue: Int = 250,
-	initialCalorieStrategy: CalorieStrategy = CalorieStrategy.MODERATE,
-	initialAdvancedEnabled: Boolean = false
+	initialGranularityValue: Int = 250
 ) {
 	// Setting 1: Granularity Value Slider (0-500), initialized with database value
 	var granularityValue by remember { mutableStateOf(initialGranularityValue) }
-
-	// Setting 3: Enable Advanced checkbox/toggle, initialized with database value
-	var advancedEnabled by remember { mutableStateOf(initialAdvancedEnabled) }
-
-	// Setting 2: Advanced Strategy options, initialized with database value
-	var selectedStrategy by remember { mutableStateOf(initialCalorieStrategy) }
 
 	Dialog(
 		onDismissRequest = onDismiss,
@@ -81,7 +73,7 @@ fun CalorieSettingsDialog(
 				horizontalAlignment = Alignment.Start
 			) {
 				Text(
-					text = stringResource(R.string.calorie_strategy_settings),
+					text = "Calorie Strategy Settings",
 					style = MaterialTheme.typography.headlineSmall,
 					fontWeight = FontWeight.Bold,
 				)
@@ -89,7 +81,7 @@ fun CalorieSettingsDialog(
 				Spacer(modifier = Modifier.height(12.dp))
 
 				Text(
-					text = stringResource(R.string.adjust_daily_calorie_need),
+					text = "Adjust your daily calorie need",
 					style = MaterialTheme.typography.bodyLarge,
 					fontWeight = FontWeight.Medium
 				)
@@ -114,7 +106,7 @@ fun CalorieSettingsDialog(
 				}
 
 				Text(
-					text = stringResource(R.string.current_calories, granularityValue),
+					text = "Current: $granularityValue calories",
 					style = MaterialTheme.typography.bodyMedium,
 					fontWeight = FontWeight.Medium,
 					modifier = Modifier.padding(bottom = 12.dp)
@@ -135,122 +127,12 @@ fun CalorieSettingsDialog(
 							isMale = isMale,
 							activityLevel = activityLevel,
 							granularityValue = granularityValue,
-							strategy = selectedStrategy,
-							advancedEnabled = advancedEnabled
+							strategy = CalorieStrategy.MODERATE,
+							advancedEnabled = false
 						),
 						style = MaterialTheme.typography.bodySmall,
 						modifier = Modifier.padding(10.dp)
 					)
-				}
-
-				Spacer(modifier = Modifier.height(12.dp))
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					verticalAlignment = Alignment.CenterVertically
-				) {
-					Checkbox(
-						checked = advancedEnabled,
-						onCheckedChange = { advancedEnabled = it }
-					)
-					Text(
-						text = stringResource(R.string.enable_advanced_exercise),
-						style = MaterialTheme.typography.bodyLarge,
-						modifier = Modifier.padding(start = 8.dp)
-					)
-				}
-
-				Spacer(modifier = Modifier.height(12.dp))
-
-				// Setting 2: Advanced Options (disabled when advanced is off)
-				Card(
-					modifier = Modifier.fillMaxWidth(),
-					colors = CardDefaults.cardColors(
-						containerColor = if (advancedEnabled)
-							MaterialTheme.colorScheme.surface
-						else
-							MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-					)
-				) {
-					Column(
-						modifier = Modifier.padding(12.dp)
-					) {
-						Text(
-							text = stringResource(R.string.advanced_exercise_strategy),
-							style = MaterialTheme.typography.bodyLarge,
-							fontWeight = FontWeight.Medium,
-							color = if (advancedEnabled)
-								MaterialTheme.colorScheme.onSurface
-							else
-								MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-						)
-
-						Spacer(modifier = Modifier.height(8.dp))
-
-						CalorieStrategy.values().forEach { strategy ->
-							Row(
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(vertical = 2.dp),
-								verticalAlignment = Alignment.CenterVertically
-							) {
-								RadioButton(
-									selected = selectedStrategy == strategy,
-									onClick = {
-										if (advancedEnabled) {
-											selectedStrategy = strategy
-										}
-									},
-									enabled = advancedEnabled
-								)
-								Column(
-									modifier = Modifier.padding(start = 8.dp)
-								) {
-									Text(
-										text = strategy.displayName,
-										style = MaterialTheme.typography.bodyMedium,
-										fontWeight = FontWeight.Medium,
-										color = if (advancedEnabled)
-											MaterialTheme.colorScheme.onSurface
-										else
-											MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-									)
-									Text(
-										text = strategy.description,
-										style = MaterialTheme.typography.bodySmall,
-										color = if (advancedEnabled)
-											MaterialTheme.colorScheme.onSurfaceVariant
-										else
-											MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-									)
-									val goalSpecificText = when (goalType) {
-										GoalType.LOSE_WEIGHT -> {
-											val lossPercentage =
-												((1.0 - strategy.weightLossExercisePercentage) * 100).toInt()
-											stringResource(R.string.eat_back_deficit_description, (strategy.weightLossExercisePercentage * 100).toInt(), lossPercentage)
-										}
-
-										GoalType.GAIN_WEIGHT -> {
-											val eatBackPercentage =
-												(strategy.weightGainExercisePercentage * 100).toInt()
-											if (strategy.weightGainAdditionalCalories > 0) {
-												stringResource(R.string.eat_back_surplus_description, eatBackPercentage, strategy.weightGainAdditionalCalories)
-											} else {
-												stringResource(R.string.eat_back_conservative_description, eatBackPercentage)
-											}
-										}
-									}
-									Text(
-										text = goalSpecificText,
-										style = MaterialTheme.typography.labelSmall,
-										color = if (advancedEnabled)
-											MaterialTheme.colorScheme.onSurfaceVariant
-										else
-											MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-									)
-								}
-							}
-						}
-					}
 				}
 
 				Spacer(modifier = Modifier.height(16.dp))
@@ -261,19 +143,15 @@ fun CalorieSettingsDialog(
 					horizontalArrangement = Arrangement.End
 				) {
 					TextButton(onClick = onDismiss) {
-						Text(stringResource(R.string.cancel))
+						Text("Cancel")
 					}
 					Spacer(modifier = Modifier.width(8.dp))
 					Button(
 						onClick = {
-							onSave(
-								granularityValue,
-								if (advancedEnabled) selectedStrategy else null,
-								advancedEnabled
-							)
+							onSave(granularityValue)
 						}
 					) {
-						Text(stringResource(R.string.save))
+						Text("Save")
 					}
 				}
 			}

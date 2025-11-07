@@ -46,7 +46,6 @@ class ProfileViewModel @Inject constructor(
 	}
 
 	fun updateUserProfile(
-		name: String,
 		age: Int,
 		gender: String,
 		weight: Float,
@@ -62,7 +61,6 @@ class ProfileViewModel @Inject constructor(
 
 				val updatedUser = if (currentUser != null) {
 					currentUser.copy(
-						name = name,
 						age = age,
 						gender = gender,
 						weight = weight,
@@ -73,7 +71,6 @@ class ProfileViewModel @Inject constructor(
 					)
 				} else {
 					UserData(
-						name = name,
 						age = age,
 						gender = gender,
 						weight = weight,

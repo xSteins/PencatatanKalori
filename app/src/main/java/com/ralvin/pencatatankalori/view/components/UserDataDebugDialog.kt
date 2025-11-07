@@ -201,7 +201,6 @@ private fun DebugDataContent(
 			val userData = debugData.userData
 			if (userData != null) {
 				Text("ID: ${userData.id}")
-				Text("Name: ${userData.name}")
 				Text("Age: ${userData.age}")
 				Text("Gender: ${userData.gender}")
 				Text("Weight: ${userData.weight}")

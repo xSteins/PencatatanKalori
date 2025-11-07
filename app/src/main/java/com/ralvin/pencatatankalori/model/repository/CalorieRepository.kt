@@ -463,7 +463,6 @@ class CalorieRepository @Inject constructor(
 	private fun createDummyUser(): UserData {
 		return UserData(
 			id = "1000",
-			name = "Demo User",
 			age = 28,
 			gender = "Male",
 			weight = 70.0f,

@@ -10,7 +10,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.res.stringResource
+
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ralvin.pencatatankalori.R
@@ -21,17 +21,17 @@ fun BottomNavBar(
 ) {
 	val navItems = listOf(
 		NavItem(
-			name = stringResource(R.string.overview),
+			name = "Overview",
 			route = Screen.Overview.route,
 			icon = Icons.Default.Home
 		),
 		NavItem(
-			name = stringResource(R.string.history),
+			name = "History",
 			route = Screen.History.route,
 			icon = Icons.Default.History
 		),
 		NavItem(
-			name = stringResource(R.string.profile),
+			name = "Profile",
 			route = Screen.ProfileSettings.route,
 			icon = Icons.Default.Person
 		)

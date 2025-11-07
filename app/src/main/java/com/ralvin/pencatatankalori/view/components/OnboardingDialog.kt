@@ -101,7 +101,6 @@ fun OnboardingScreenContent(
 			)
 
 			onboardingViewModel.createUserData(
-				name = "User",
 				age = ageInt,
 				gender = gender,
 				weight = weightFloat,
@@ -136,7 +135,7 @@ fun OnboardingScreenContent(
 		OutlinedTextField(
 			value = weight,
 			onValueChange = { if (it.isEmpty() || it.toFloatOrNull() != null) weight = it },
-			label = { Text("Body Weight") },
+			label = { Text("Weight") },
 			suffix = { Text("kg") },
 			modifier = Modifier.fillMaxWidth(),
 			singleLine = true,

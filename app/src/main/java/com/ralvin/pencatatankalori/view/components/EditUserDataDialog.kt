@@ -68,12 +68,12 @@ fun EditUserDataDialog(
 	onSave: (String) -> Unit
 ) {
 	val titleText = when (editType) {
-		EditUserDataType.WEIGHT -> stringResource(R.string.edit_weight)
-		EditUserDataType.HEIGHT -> stringResource(R.string.edit_height)
-		EditUserDataType.AGE -> stringResource(R.string.edit_age)
-		EditUserDataType.GENDER -> stringResource(R.string.edit_gender)
-		EditUserDataType.ACTIVE_LEVEL -> stringResource(R.string.edit_active_level)
-		EditUserDataType.GOAL -> stringResource(R.string.edit_goal)
+		EditUserDataType.WEIGHT -> "Edit Weight"
+		EditUserDataType.HEIGHT -> "Edit Height"
+		EditUserDataType.AGE -> "Edit Age"
+		EditUserDataType.GENDER -> "Edit Gender"
+		EditUserDataType.ACTIVE_LEVEL -> "Edit Active Level"
+		EditUserDataType.GOAL -> "Edit Goal"
 	}
 
 	var textFieldValue by remember { mutableStateOf(currentValue) }
@@ -116,7 +116,7 @@ fun EditUserDataDialog(
 						val isDecimalAllowed =
 							editType == EditUserDataType.WEIGHT || editType == EditUserDataType.HEIGHT
 						val unit =
-							if (editType == EditUserDataType.WEIGHT) stringResource(R.string.kg) else if (editType == EditUserDataType.HEIGHT) stringResource(R.string.cm) else stringResource(R.string.years)
+							if (editType == EditUserDataType.WEIGHT) "kg" else if (editType == EditUserDataType.HEIGHT) "cm" else "years"
 						val increment = 1f
 						val minValue = when (editType) {
 							EditUserDataType.WEIGHT -> 1f
@@ -158,7 +158,7 @@ fun EditUserDataDialog(
 								) {
 									Icon(
 										Icons.Filled.Remove,
-										contentDescription = stringResource(R.string.decrease),
+										contentDescription = "Decrease",
 										tint = MaterialTheme.colorScheme.onSurfaceVariant,
 										modifier = Modifier.size(20.dp)
 									)
@@ -208,7 +208,7 @@ fun EditUserDataDialog(
 								) {
 									Icon(
 										Icons.Filled.Add,
-										contentDescription = stringResource(R.string.increase),
+										contentDescription = "Increase",
 										tint = MaterialTheme.colorScheme.onPrimary,
 										modifier = Modifier.size(20.dp)
 									)
