@@ -75,7 +75,10 @@ class MainActivity : ComponentActivity() {
 
 				if (showOnboardingDialog) {
 					OnboardingDialog(
-						onDismiss = { showOnboardingDialog = false },
+						onDismiss = {
+							showOnboardingDialog = false
+							profileViewModel.dismissInitialBottomSheet()
+						},
 						onboardingViewModel = hiltViewModel()
 					)
 				}
