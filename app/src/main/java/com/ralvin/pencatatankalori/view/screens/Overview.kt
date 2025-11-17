@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,7 +48,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -61,20 +58,18 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
-import com.ralvin.pencatatankalori.R
+import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.view.components.AddActivityButtons
 import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.view.components.EditUserDataDialog
 import com.ralvin.pencatatankalori.view.components.EditUserDataType
 import com.ralvin.pencatatankalori.view.components.LogType
+import com.ralvin.pencatatankalori.view.components.Tooltip
 import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
-import com.ralvin.pencatatankalori.model.formula.GoalType
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-data class Tuple4<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 @Composable
 fun OverviewScreen(
@@ -93,7 +88,6 @@ fun OverviewScreen(
 	overviewData?.caloriesBurned ?: 0
 	val hasUserProfile = overviewData?.user != null
 	val dailyCalorieTarget = if (hasUserProfile) {
-		// Use TDEE from DailyData if available, otherwise fallback to user profile
 		overviewData?.dailyData?.tdee ?: overviewData?.user?.dailyCalorieTarget ?: 0
 	} else 0
 	val remainingCalories = if (hasUserProfile) (overviewData?.remainingCalories ?: 0) else 0
@@ -110,14 +104,14 @@ fun OverviewScreen(
 
 	val bmiStatus = user?.let { userData ->
 		val statusText = when {
-			bmiValue == 0f -> stringResource(R.string.belum_ada_data)
-			bmiValue < 18.5 -> stringResource(R.string.kurus)
-			bmiValue < 25 -> stringResource(R.string.normal)
-			bmiValue < 30 -> stringResource(R.string.obesitas)
-			else -> stringResource(R.string.obesitas)
+			bmiValue == 0f -> "Belum ada data"
+			bmiValue < 18.5 -> "Kurus"
+			bmiValue < 25 -> "Normal"
+			bmiValue < 30 -> "Obesitas"
+			else -> "Obesitas"
 		}
 		"$statusText".format(userData.weight, userData.height)
-	} ?: stringResource(R.string.belum_ada_data)
+	} ?: "Belum ada data"
 
 	"18.5 - 24.9"
 	val bmiStatusColor = when {
@@ -186,8 +180,8 @@ fun OverviewScreen(
 						fontWeight = FontWeight.Bold,
 						modifier = Modifier.padding(bottom = 16.dp)
 					)
-					var showNetCaloriesInfo by remember { mutableStateOf(false) }
-					var showSecondaryCaloriesInfo by remember { mutableStateOf(false) }
+					var showNetCaloriesTooltip by remember { mutableStateOf(false) }
+					var showSecondaryCaloriesTooltip by remember { mutableStateOf(false) }
 
 					val netCaloriesColor = when (goalType) {
 						GoalType.LOSE_WEIGHT -> {
@@ -204,99 +198,86 @@ fun OverviewScreen(
 
 						else -> Color(0xFF9FA8DA)
 					}
+
+					val netCaloriesTooltipText = if (dailyCalorieTarget > 0) {
+						"Kalori bersih yang dikonsumsi setelah dikurangi aktivitas olahraga.\n\nContoh: \n$dailyCalorieTarget (Target Harian) - 500 (Kalori Olahraga) + 1000 (Kalori Konsumsi) = ${dailyCalorieTarget + 500} (Kalori Bersih)."
+					} else {
+						"Kalori bersih yang dikonsumsi setelah dikurangi aktivitas olahraga.\n\nContoh: \n2000 (Target Harian) - 500 (Kalori Olahraga) + 1000 (Kalori Konsumsi) = 2500 (Kalori Bersih)."
+					}
+
 					CalorieInfoRow(
-						label = stringResource(R.string.kalori_bersih),
+						label = "Kalori Bersih",
 						value = netCalories,
 						progressBarColor = netCaloriesColor,
 						target = dailyCalorieTarget,
 						showTargetInValue = false,
-						onClick = { showNetCaloriesInfo = true }
+						onClick = { showNetCaloriesTooltip = true }
 					)
 
 					Spacer(modifier = Modifier.height(8.dp))
 
-					val (calorieLabel, displayValue, progressColor, tooltipText) = when (goalType) {
+					val secondaryCalorieLabel: String
+					val secondaryCalorieValue: Int
+					val secondaryCalorieColor: Color
+					val secondaryCaloriesTooltipText: String
+
+					when (goalType) {
 						GoalType.LOSE_WEIGHT -> {
 							if (remainingCalories < 0) {
-								Tuple4(
-									stringResource(R.string.kelebihan_kalori),
-									-remainingCalories,
-									Color(0xFFFFAB91),
-									stringResource(R.string.kalori_melebihi_target, -remainingCalories)
-								)
+								secondaryCalorieLabel = "Kelebihan Kalori"
+								secondaryCalorieValue = -remainingCalories
+								secondaryCalorieColor = Color(0xFFFFAB91)
+								secondaryCaloriesTooltipText = "Kalori yang melebihi target harian anda yaitu ${-remainingCalories} kalori."
 							} else {
-								Tuple4(
-									stringResource(R.string.sisa_kalori),
-									remainingCalories,
-									Color(0xFF81C784),
-									stringResource(R.string.kalori_tersisa_target)
-								)
+								secondaryCalorieLabel = "Sisa Kalori"
+								secondaryCalorieValue = remainingCalories
+								secondaryCalorieColor = Color(0xFF81C784)
+								secondaryCaloriesTooltipText = "Sisa kalori yang dapat dikonsumsi untuk mencapai target harian anda."
 							}
 						}
 
 						GoalType.GAIN_WEIGHT -> {
 							if (remainingCalories < 0) {
 								val excessCalories = -remainingCalories
-								Tuple4(
-									stringResource(R.string.surplus_kalori),
-									excessCalories,
-									Color(0xFFFFAB91),
-									stringResource(R.string.kalori_melebihi_target, excessCalories)
-								)
+								secondaryCalorieLabel = "Surplus Kalori"
+								secondaryCalorieValue = excessCalories
+								secondaryCalorieColor = Color(0xFFFFAB91)
+								secondaryCaloriesTooltipText = "Kalori surplus yang telah anda konsumsi melebihi target yaitu $excessCalories kalori."
 							} else {
-								Tuple4(
-									stringResource(R.string.sisa_kalori),
-									remainingCalories,
-									Color(0xFF9FA8DA),
-									stringResource(R.string.kalori_tersisa_target)
-								)
+								secondaryCalorieLabel = "Sisa Kalori"
+								secondaryCalorieValue = remainingCalories
+								secondaryCalorieColor = Color(0xFF9FA8DA)
+								secondaryCaloriesTooltipText = "Sisa kalori yang perlu anda konsumsi untuk hari ini."
 							}
 						}
 
 						else -> {
-							Tuple4(
-								stringResource(R.string.sisa_kalori),
-								remainingCalories.coerceAtLeast(0),
-								Color(0xFF9FA8DA),
-								stringResource(R.string.kalori_tersisa_target)
-							)
+							secondaryCalorieLabel = "Sisa Kalori"
+							secondaryCalorieValue = remainingCalories.coerceAtLeast(0)
+							secondaryCalorieColor = Color(0xFF9FA8DA)
+							secondaryCaloriesTooltipText = "Sisa kalori yang perlu anda konsumsi untuk hari ini."
 						}
 					}
+
 					CalorieInfoRow(
-						label = calorieLabel,
-						value = displayValue,
-						progressBarColor = progressColor,
+						label = secondaryCalorieLabel,
+						value = secondaryCalorieValue,
+						progressBarColor = secondaryCalorieColor,
 						target = dailyCalorieTarget,
-						onClick = { showSecondaryCaloriesInfo = true }
+						onClick = { showSecondaryCaloriesTooltip = true }
 					)
 
-					if (showNetCaloriesInfo) {
-						AlertDialog(
-							onDismissRequest = { showNetCaloriesInfo = false },
-							title = { Text(stringResource(R.string.kalori_bersih)) },
-							text = {
-								Text(
-									stringResource(R.string.kalori_bersih_description, dailyCalorieTarget, dailyCalorieTarget - 600)
-								)
-							},
-							confirmButton = {
-								TextButton(onClick = { showNetCaloriesInfo = false }) {
-									Text(stringResource(R.string.ok))
-								}
-							}
+					if (showNetCaloriesTooltip) {
+						Tooltip(
+							message = netCaloriesTooltipText,
+							onDismiss = { showNetCaloriesTooltip = false }
 						)
 					}
 
-					if (showSecondaryCaloriesInfo) {
-						AlertDialog(
-							onDismissRequest = { showSecondaryCaloriesInfo = false },
-							title = { Text(calorieLabel) },
-							text = { Text(tooltipText) },
-							confirmButton = {
-								TextButton(onClick = { showSecondaryCaloriesInfo = false }) {
-									Text(stringResource(R.string.ok))
-								}
-							}
+					if (showSecondaryCaloriesTooltip) {
+						Tooltip(
+							message = secondaryCaloriesTooltipText,
+							onDismiss = { showSecondaryCaloriesTooltip = false }
 						)
 					}
 				}
@@ -311,7 +292,11 @@ fun OverviewScreen(
 				currentWeight = user?.weight,
 				onWeightUpdate = { newWeight ->
 					viewModel.updateUserWeight(newWeight)
-				}
+				},
+				enabled = hasUserProfile,
+				tooltipMessage = if (!hasUserProfile) {
+					"Mohon lakukan proses onboarding dengan pindah ke menu \"Profile\" -> Onboarding Screen"
+				} else null
 			)
 
 			Spacer(modifier = Modifier.height(16.dp))
@@ -327,12 +312,15 @@ fun OverviewScreen(
 					editData = null
 					showLogModal = true
 				},
-				enabled = hasUserProfile
+				enabled = hasUserProfile,
+				tooltipMessage = if (!hasUserProfile) {
+					"Mohon lakukan proses onboarding dengan pindah ke menu \"Profile\" -> Onboarding Screen"
+				} else null
 			)
 			Spacer(modifier = Modifier.height(8.dp))
 
 			Text(
-				text = stringResource(R.string.activities),
+				text = "Aktivitas anda:",
 				style = MaterialTheme.typography.titleMedium,
 				fontWeight = FontWeight.Bold
 			)
@@ -348,7 +336,7 @@ fun OverviewScreen(
 				contentAlignment = Alignment.Center
 			) {
 				Text(
-					text = stringResource(R.string.havent_logged_anything),
+					text = "Mulai catat kalori anda.",
 					style = MaterialTheme.typography.headlineMedium
 				)
 			}
@@ -528,7 +516,7 @@ fun CalorieInfoRow(
 				Spacer(modifier = Modifier.width(4.dp))
 				Icon(
 					imageVector = Icons.Default.Info,
-					contentDescription = stringResource(R.string.info),
+					contentDescription = "Info",
 					modifier = Modifier.size(20.dp),
 					tint = MaterialTheme.colorScheme.primary
 				)
@@ -544,9 +532,9 @@ fun CalorieInfoRow(
 
 					value > 0 -> minOf(
 						1.0f,
-						value.toFloat() / 2000f
-					) // Normalize to 2000 calories max
-					else -> 0.0f // Start from 0 when value is 0 or negative
+						value.toFloat() / 2000f // set 2000 karena weird behavior kalau pakai dynamic value
+					)
+					else -> 0.0f
 				}
 			},
 			modifier = Modifier
@@ -564,13 +552,23 @@ fun BmiCard(
 	bmiStatus: String,
 	statusColor: Color,
 	onWeightUpdate: (Float) -> Unit = {},
-	currentWeight: Float? = null
+	currentWeight: Float? = null,
+	enabled: Boolean = true,
+	tooltipMessage: String? = null
 ) {
 	var showWeightDialog by remember { mutableStateOf(false) }
+	var showTooltip by remember { mutableStateOf(false) }
+
 	Card(
 		modifier = Modifier
             .fillMaxWidth()
-            .clickable { showWeightDialog = true }
+            .clickable {
+				if (enabled) {
+					showWeightDialog = true
+				} else if (tooltipMessage != null) {
+					showTooltip = true
+				}
+			}
 	) {
 		Row(
 			modifier = Modifier
@@ -600,7 +598,7 @@ fun BmiCard(
 
 			Column(modifier = Modifier.weight(1f)) {
 				Text(
-					text = stringResource(R.string.indeks_massa_tubuh),
+					text = "Indeks Massa Tubuh",
 					style = MaterialTheme.typography.titleMedium,
 					fontWeight = FontWeight.Bold
 				)
@@ -613,7 +611,7 @@ fun BmiCard(
 				)
 				Spacer(modifier = Modifier.height(1.dp))
 				Text(
-					text = stringResource(R.string.tekan_perbarui_berat),
+					text = "Klik untuk update berat badan",
 					style = MaterialTheme.typography.labelLarge,
 					color = MaterialTheme.colorScheme.primary,
 				)
@@ -632,6 +630,13 @@ fun BmiCard(
 				}
 				showWeightDialog = false
 			}
+		)
+	}
+
+	if (showTooltip && tooltipMessage != null) {
+		Tooltip(
+			message = tooltipMessage,
+			onDismiss = { showTooltip = false }
 		)
 	}
 }
@@ -654,10 +659,10 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
 	val isFood = activity.type == ActivityType.CONSUMPTION
 	val icon = if (isFood) Icons.Default.Restaurant else Icons.Default.FitnessCenter
 	val calories = activity.calories ?: 0
-	val calorieText = "$calories Calories"
+	val calorieText = "$calories Kalori"
 	val description = activity.name ?: when {
-		isFood -> stringResource(R.string.food_item)
-		else -> stringResource(R.string.workout)
+		isFood -> "Makanan"
+		else -> "Olahraga"
 	}
 
 	val viewModel: OverviewViewModel = hiltViewModel()

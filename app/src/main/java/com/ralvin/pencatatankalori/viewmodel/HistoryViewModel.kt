@@ -3,6 +3,7 @@ package com.ralvin.pencatatankalori.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.model.formula.MifflinModel
 import com.ralvin.pencatatankalori.model.repository.CalorieRepository
@@ -133,6 +134,7 @@ class HistoryViewModel @Inject constructor(
 			?: GoalType.LOSE_WEIGHT
 			val weight = dailyData?.weight ?: profile?.weight
 			val height = dailyData?.height ?: profile?.height
+			val activityLevel = dailyData?.activityLevel ?: profile?.activityLevel
 
 			// Check if this date is today
 			val todayCalendar = Calendar.getInstance()
@@ -145,8 +147,7 @@ class HistoryViewModel @Inject constructor(
 			val netCalories =
 				MifflinModel.calculateNetCalories(
 					caloriesConsumed = consumed,
-					caloriesBurned = burned,
-					goalType = goalType
+					caloriesBurned = burned
 				)
 
 			dayDataList.add(
@@ -162,6 +163,7 @@ class HistoryViewModel @Inject constructor(
 					workoutCount = workoutCount,
 					weight = weight,
 					height = height,
+					activityLevel = activityLevel,
 					isToday = isToday
 				)
 			)
@@ -193,8 +195,7 @@ class HistoryViewModel @Inject constructor(
 			val netCalories =
 				MifflinModel.calculateNetCalories(
 					caloriesConsumed = consumed,
-					caloriesBurned = burned,
-					goalType = dailyDataItem.goalType
+					caloriesBurned = burned
 				)
 
 			// Check if this date is today
@@ -215,6 +216,7 @@ class HistoryViewModel @Inject constructor(
 				workoutCount = workoutCount,
 				weight = dailyDataItem.weight,
 				height = dailyDataItem.height,
+				activityLevel = dailyDataItem.activityLevel,
 				isToday = isToday
 			)
 		}
@@ -360,7 +362,8 @@ data class DayData(
 	val mealCount: Int = 0,
 	val workoutCount: Int = 0,
 	val weight: Float? = null,
-	val height: Float? = null,
+		val height: Float? = null,
+		val activityLevel: ActivityLevel? = null,
 	val isToday: Boolean = false
 )
 

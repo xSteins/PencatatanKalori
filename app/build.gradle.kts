@@ -51,41 +51,41 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
+	implementation(libs.androidx.core.ktx)
+	implementation(libs.androidx.lifecycle.runtime.ktx)
+	implementation(libs.androidx.activity.compose)
 
-    // compose ui
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-    implementation("androidx.compose.material:material-icons-extended-android:1.7.0")
+	// compose ui
+	implementation(platform(libs.androidx.compose.bom))
+	implementation(libs.androidx.ui)
+	implementation(libs.androidx.ui.graphics)
+	implementation(libs.androidx.ui.tooling.preview)
+	implementation(libs.androidx.material3)
+	implementation(libs.androidx.navigation.compose)
+	implementation(libs.androidx.lifecycle.viewmodel.compose)
+	implementation(libs.androidx.material.icons.extended)
 
-    // room db
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
+	// room db
+	implementation(libs.androidx.room.runtime)
+	implementation(libs.androidx.room.ktx)
+	ksp(libs.androidx.room.compiler)
 
-    // datetime: untuk history
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+	// datetime: untuk history
+	implementation(libs.kotlinx.datetime)
 
-    // hilt
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
-    implementation(libs.hilt.navigation.compose)
+	// hilt
+	implementation(libs.hilt.android)
+	ksp(libs.hilt.android.compiler)
+	implementation(libs.hilt.navigation.compose)
 
-    // image loading
-    implementation(libs.coil.compose)
+	// image loading
+	implementation(libs.coil.compose)
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+	testImplementation(libs.junit)
+	androidTestImplementation(libs.androidx.junit)
+	androidTestImplementation(libs.androidx.espresso.core)
+	androidTestImplementation(platform(libs.androidx.compose.bom))
+	androidTestImplementation(libs.androidx.ui.test.junit4)
+	debugImplementation(libs.androidx.ui.tooling)
+	debugImplementation(libs.androidx.ui.test.manifest)
 }

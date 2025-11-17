@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,14 +40,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
-import com.ralvin.pencatatankalori.R
 
 enum class EditUserDataType {
 	WEIGHT,
@@ -90,6 +87,8 @@ fun EditUserDataDialog(
 				.find { it.getDisplayName() == currentValue } else null)
 	}
 	var expandedGoalType by remember { mutableStateOf(false) }
+	var showError by remember { mutableStateOf(false) }
+	var errorMessage by remember { mutableStateOf("") }
 
 
 	Dialog(onDismissRequest = onDismiss) {
@@ -164,31 +163,43 @@ fun EditUserDataDialog(
 									)
 								}
 
-								OutlinedTextField(
-									value = textFieldValue,
-									onValueChange = { newValue ->
-										if (isDecimalAllowed) {
-											if (newValue.isEmpty() || newValue.toFloatOrNull() != null) {
-												textFieldValue = newValue
+								Column(horizontalAlignment = Alignment.CenterHorizontally) {
+									OutlinedTextField(
+										value = textFieldValue,
+										onValueChange = { newValue ->
+											showError = false
+											if (isDecimalAllowed) {
+												if (newValue.isEmpty() || newValue.toFloatOrNull() != null) {
+													textFieldValue = newValue
+												}
+											} else {
+												if (newValue.isEmpty() || newValue.all { c -> c.isDigit() }) {
+													textFieldValue = newValue
+												}
 											}
-										} else {
-											if (newValue.isEmpty() || newValue.all { c -> c.isDigit() }) {
-												textFieldValue = newValue
-											}
-										}
-									},
-									label = {
+										},
+										label = {
+											Text(
+												editType.name.lowercase()
+													.replaceFirstChar { it.titlecase() })
+										},
+										suffix = { Text(unit) },
+										modifier = Modifier
+											.width(120.dp)
+											.padding(horizontal = 8.dp),
+										singleLine = true,
+										keyboardOptions = KeyboardOptions(keyboardType = if (isDecimalAllowed) KeyboardType.Decimal else KeyboardType.Number),
+										isError = showError
+									)
+									if (showError) {
 										Text(
-											editType.name.lowercase()
-												.replaceFirstChar { it.titlecase() })
-									},
-									suffix = { Text(unit) },
-									modifier = Modifier
-										.width(120.dp)
-										.padding(horizontal = 8.dp),
-									singleLine = true,
-									keyboardOptions = KeyboardOptions(keyboardType = if (isDecimalAllowed) KeyboardType.Decimal else KeyboardType.Number)
-								)
+											errorMessage,
+											color = MaterialTheme.colorScheme.error,
+											style = MaterialTheme.typography.bodySmall,
+											modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+										)
+									}
+								}
 
 								IconButton(
 									onClick = {
@@ -227,7 +238,7 @@ fun EditUserDataDialog(
 								RadioButton(
 									selected = selectedGender == "Male",
 									onClick = { selectedGender = "Male" })
-								Text(stringResource(R.string.male), style = MaterialTheme.typography.bodyLarge)
+								Text("Pria", style = MaterialTheme.typography.bodyLarge)
 							}
 							Row(
 								verticalAlignment = Alignment.CenterVertically,
@@ -237,7 +248,7 @@ fun EditUserDataDialog(
 								RadioButton(
 									selected = selectedGender == "Female",
 									onClick = { selectedGender = "Female" })
-								Text(stringResource(R.string.female), style = MaterialTheme.typography.bodyLarge)
+								Text("Wanita", style = MaterialTheme.typography.bodyLarge)
 							}
 						}
 					}
@@ -255,26 +266,22 @@ fun EditUserDataDialog(
 							) {
 								OutlinedTextField(
 									value = selectedActivityLevel?.getDisplayName()
-										?: stringResource(R.string.select_activity_level),
+										?: "Select Activity Level",
 									onValueChange = {},
 									readOnly = true,
-									label = { Text(stringResource(R.string.activity_level)) },
+									label = { Text("Activity Level") },
 									trailingIcon = {
 										ExposedDropdownMenuDefaults.TrailingIcon(
 											expanded = expandedActivityLevel
 										)
 									},
-									modifier = Modifier
-										.menuAnchor()
-										.fillMaxWidth(),
-									singleLine = true
+									modifier = Modifier.menuAnchor(),
+									singleLine = true,
+									isError = showError && selectedActivityLevel == null
 								)
 								ExposedDropdownMenu(
 									expanded = expandedActivityLevel,
-									onDismissRequest = { expandedActivityLevel = false },
-									modifier = Modifier
-										.fillMaxWidth()
-										.heightIn(max = 300.dp)
+									onDismissRequest = { expandedActivityLevel = false }
 								) {
 									ActivityLevel.values().forEach { level ->
 										DropdownMenuItem(
@@ -296,11 +303,20 @@ fun EditUserDataDialog(
 											onClick = {
 												selectedActivityLevel = level
 												expandedActivityLevel = false
+												showError = false
 											},
 											modifier = Modifier.fillMaxWidth()
 										)
 									}
 								}
+							}
+							if (showError && selectedActivityLevel == null) {
+								Text(
+									errorMessage,
+									color = MaterialTheme.colorScheme.error,
+									style = MaterialTheme.typography.bodySmall,
+									modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+								)
 							}
 						}
 					}
@@ -313,26 +329,22 @@ fun EditUserDataDialog(
 								modifier = Modifier.fillMaxWidth()
 							) {
 								OutlinedTextField(
-									value = selectedGoalType?.getDisplayName() ?: stringResource(R.string.goal),
+									value = selectedGoalType?.getDisplayName() ?: "Goal",
 									onValueChange = {},
 									readOnly = true,
-									label = { Text(stringResource(R.string.goal)) },
+									label = { Text("Goal") },
 									trailingIcon = {
 										ExposedDropdownMenuDefaults.TrailingIcon(
 											expanded = expandedGoalType
 										)
 									},
-									modifier = Modifier
-										.menuAnchor()
-										.fillMaxWidth(),
-									singleLine = true
+									modifier = Modifier.menuAnchor(),
+									singleLine = true,
+									isError = showError && selectedGoalType == null
 								)
 								ExposedDropdownMenu(
 									expanded = expandedGoalType,
 									onDismissRequest = { expandedGoalType = false },
-									modifier = Modifier
-										.fillMaxWidth()
-										.heightIn(max = 200.dp)
 								) {
 									GoalType.values().forEach { goal ->
 										DropdownMenuItem(
@@ -354,11 +366,20 @@ fun EditUserDataDialog(
 											onClick = {
 												selectedGoalType = goal
 												expandedGoalType = false
+												showError = false
 											},
 											modifier = Modifier.fillMaxWidth()
 										)
 									}
 								}
+							}
+							if (showError && selectedGoalType == null) {
+								Text(
+									errorMessage,
+									color = MaterialTheme.colorScheme.error,
+									style = MaterialTheme.typography.bodySmall,
+									modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+								)
 							}
 						}
 					}
@@ -368,19 +389,60 @@ fun EditUserDataDialog(
 					modifier = Modifier.fillMaxWidth(),
 					horizontalArrangement = Arrangement.End
 				) {
-					TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+					TextButton(onClick = onDismiss) { Text("Cancel") }
 					Spacer(modifier = Modifier.width(8.dp))
 					Button(onClick = {
+						when (editType) {
+							EditUserDataType.WEIGHT, EditUserDataType.HEIGHT, EditUserDataType.AGE -> {
+								val newValue = textFieldValue.toFloatOrNull()
+								val oldValue = currentValue.toFloatOrNull()
+
+								if (textFieldValue.isEmpty() || newValue == null) {
+									showError = true
+									errorMessage = "Data tidak boleh dikosongkan"
+									return@Button
+								}
+
+								if (newValue == 0f) {
+									showError = true
+									errorMessage = "Nilai tidak boleh 0"
+									return@Button
+								}
+
+								if (oldValue != null) {
+									val delta = kotlin.math.abs(newValue - oldValue)
+									if (delta >= 50) {
+										showError = true
+										errorMessage = "Perubahan data terlalu drastis, masukan nilai yang wajar"
+										return@Button
+									}
+								}
+							}
+							EditUserDataType.ACTIVE_LEVEL -> {
+								if (selectedActivityLevel == null) {
+									showError = true
+									errorMessage = "Data tidak boleh dikosongkan"
+									return@Button
+								}
+							}
+							EditUserDataType.GOAL -> {
+								if (selectedGoalType == null) {
+									showError = true
+									errorMessage = "Data tidak boleh dikosongkan"
+									return@Button
+								}
+							}
+							else -> {}
+						}
+
 						val result = when (editType) {
 							EditUserDataType.WEIGHT, EditUserDataType.HEIGHT, EditUserDataType.AGE -> textFieldValue
 							EditUserDataType.GENDER -> selectedGender
-							EditUserDataType.ACTIVE_LEVEL -> selectedActivityLevel?.getDisplayName()
-								?: ""
-
+							EditUserDataType.ACTIVE_LEVEL -> selectedActivityLevel?.getDisplayName() ?: ""
 							EditUserDataType.GOAL -> selectedGoalType?.getDisplayName() ?: ""
 						}
 						onSave(result)
-					}) { Text(stringResource(R.string.save)) }
+					}) { Text("Save") }
 				}
 			}
 		}

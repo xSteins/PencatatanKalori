@@ -55,16 +55,12 @@ class OverviewViewModel @Inject constructor(
 					dailyCalorieTarget = dailyData.tdee,
 					caloriesConsumed = consumed,
 					caloriesBurned = burned,
-					goalType = userData.goalType,
-					advancedEnabled = dailyData.advancedEnabled,
-					calorieStrategy = dailyData.calorieStrategy
 				)
 			} else {
 				MifflinModel.calculateRemainingCalories(
 					dailyCalorieTarget = userData.dailyCalorieTarget,
 					caloriesConsumed = consumed,
 					caloriesBurned = burned,
-					goalType = userData.goalType
 				)
 			}
 
@@ -72,15 +68,11 @@ class OverviewViewModel @Inject constructor(
 				MifflinModel.calculateNetCalories(
 					caloriesConsumed = consumed,
 					caloriesBurned = burned,
-					goalType = userData.goalType,
-					advancedEnabled = dailyData.advancedEnabled,
-					calorieStrategy = dailyData.calorieStrategy
 				)
 			} else {
 				MifflinModel.calculateNetCalories(
 					caloriesConsumed = consumed,
 					caloriesBurned = burned,
-					goalType = userData.goalType
 				)
 			}
 

@@ -5,8 +5,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
-import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
 import java.util.Date
 import java.util.UUID
 
@@ -28,10 +28,9 @@ data class DailyData(
 	@ColumnInfo(name = "date") val date: Date,
 	@ColumnInfo(name = "tdee") val tdee: Int,
 	@ColumnInfo(name = "granularity_value") val granularityValue: Int,
-	@ColumnInfo(name = "calorie_strategy") val calorieStrategy: CalorieStrategy,
-	@ColumnInfo(name = "advanced_enabled") val advancedEnabled: Boolean = false,
 	@ColumnInfo(name = "total_calories_consumption") val totalCaloriesConsumption: Int = 0,
 	@ColumnInfo(name = "goal_type") val goalType: GoalType,
 	@ColumnInfo(name = "weight") val weight: Float? = null,
-	@ColumnInfo(name = "height") val height: Float? = null
+	@ColumnInfo(name = "height") val height: Float? = null,
+	@ColumnInfo(name = "activity_level") val activityLevel: ActivityLevel? = null
 )

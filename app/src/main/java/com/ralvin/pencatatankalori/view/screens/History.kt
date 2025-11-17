@@ -37,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,7 +45,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.model.formula.GoalType
-import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.view.components.CreateNewActivityDate
 import com.ralvin.pencatatankalori.view.components.ExpandableFAB
@@ -176,7 +174,7 @@ fun History(
 				title = {
 					Column {
 						Text(
-							text = stringResource(R.string.riwayat_pencatatan),
+							text = "Riwayat Pencatatan",
 							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,
 							fontWeight = FontWeight.Medium
@@ -190,13 +188,14 @@ fun History(
 				},
 				actions = {
 					IconButton(onClick = { showDatePicker = true }) {
-						Icon(Icons.Filled.CalendarToday, contentDescription = stringResource(R.string.select_date_action))
+						Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
 					}
 				},
 				windowInsets = WindowInsets(0)
 			)
 		},
 		floatingActionButton = {
+			val hasUserProfile = userProfile != null
 			ExpandableFAB(
 				onFoodClick = {
 					createModalType = LogType.FOOD
@@ -205,7 +204,11 @@ fun History(
 				onWorkoutClick = {
 					createModalType = LogType.WORKOUT
 					showCreateModal = true
-				}
+				},
+				enabled = hasUserProfile,
+				tooltipMessage = if (!hasUserProfile) {
+					"Mohon lakukan proses onboarding dengan pindah ke menu \"Profile\" -> Onboarding Screen"
+				} else null
 			)
 		}
 	) { innerPadding ->
@@ -254,13 +257,14 @@ fun History(
 								verticalArrangement = Arrangement.Center
 							) {
 								Text(
-									text = stringResource(R.string.no_activity_data_found),
+									text = "Belum ada riwayat pencatatan.\nTambahkan catatan kalori anda. ",
 									style = MaterialTheme.typography.titleMedium,
 									color = MaterialTheme.colorScheme.onSurfaceVariant
 								)
 								Spacer(modifier = Modifier.height(8.dp))
 								Text(
-									text = stringResource(R.string.start_logging_history),
+									text = "Anda bisa menambahkan data secara manual untuk tanggal tertentu melalui menu 'Tambah Data Manual' \n" +
+											"\n Secara otomatis data yang ditampilkan adalah hari ini hingga 6 hari yang lalu.",
 									style = MaterialTheme.typography.bodyMedium,
 									color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
 								)
@@ -289,16 +293,16 @@ fun History(
 								// New UI formatting
 								val consumedText = when (goalType) {
 									GoalType.LOSE_WEIGHT -> {
-										if (difference > 0) stringResource(R.string.surplus_kalori_format, absDifference)
-										else stringResource(R.string.defisit_kalori_format, absDifference)
+										if (difference > 0) "Surplus ${absDifference} kalori"
+										else "Defisit ${absDifference} kalori"
 									}
 
 									GoalType.GAIN_WEIGHT -> {
-										if (difference > 0) stringResource(R.string.surplus_kalori_format, absDifference)
-										else stringResource(R.string.defisit_kalori_format, absDifference)
+										if (difference > 0) "Surplus ${absDifference} kalori"
+										else "Defisit ${absDifference} kalori"
 									}
 
-									else -> stringResource(R.string.konsumsi_kalori_format, dayData.caloriesConsumed)
+									else -> "Kalori Dikonsumsi: ${dayData.caloriesConsumed}"
 								}
 
 								val heightText = dayData.height?.let { "$it" } ?: "-"
@@ -308,13 +312,13 @@ fun History(
 									append(" | TB: ${heightText}cm | BB: ${weightText}kg")
 								}
 
-								val physicalInfoText = stringResource(R.string.kebutuhan_kalori_harian_format, dayData.tdee)
+								val physicalInfoText = "Target Kalori: ${dayData.tdee} kalori"
 
 								HistoryListItem(
 									item = HistoryItemData(
 										date = date,
 										consumedText = consumedText,
-										targetText = stringResource(R.string.meal_workout_active_format, dayData.mealCount, dayData.workoutCount),
+										targetText = "${dayData.mealCount} Konsumsi, ${dayData.workoutCount} Kegiatan",
 										goalText = goalText,
 										mealWorkoutText = goalText,
 										physicalInfoText = physicalInfoText,
@@ -515,7 +519,7 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
 				}
 				Icon(
 					imageVector = statusIcon,
-					contentDescription = if (item.isGoalMet) stringResource(R.string.target_tercapai) else stringResource(R.string.target_tidak_tercapai),
+					contentDescription = if (item.isGoalMet) "Target Achieved" else "Target Not Achieved",
 					modifier = Modifier.size(40.dp),
 					tint = statusTint
 				)

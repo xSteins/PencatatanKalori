@@ -3,7 +3,6 @@ package com.ralvin.pencatatankalori.model.database.converter
 import androidx.room.TypeConverter
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
 import com.ralvin.pencatatankalori.model.formula.GoalType
 import java.util.Date
 
@@ -46,15 +45,5 @@ class Converters {
 	@TypeConverter
 	fun toActivityType(value: String): ActivityType {
 		return ActivityType.valueOf(value)
-	}
-
-	@TypeConverter
-	fun fromCalorieStrategy(value: CalorieStrategy): String {
-		return value.name
-	}
-
-	@TypeConverter
-	fun toCalorieStrategy(value: String): CalorieStrategy {
-		return CalorieStrategy.valueOf(value)
 	}
 }

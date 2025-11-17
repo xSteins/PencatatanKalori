@@ -50,10 +50,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.ralvin.pencatatankalori.R
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -84,11 +82,11 @@ fun AddOrEditLogModal(
 	var caloriesError by remember { mutableStateOf<String?>(null) }
 
 	val context = LocalContext.current
-	val nameCannotBeEmpty = "Name cannot be empty"
-	val nameMinimumChars = "Name must be at least 3 characters"
-	val calorieEmpty = "Calories cannot be empty"
-	val pleaseEnterValidNumber = "Please enter a valid number"
-	val calorieGreaterThanZero = "Calories must be greater than 0"
+	val nameCannotBeEmpty = "Nama tidak boleh kosong"
+	val nameMinimumChars = "Name minimal 3 karakter"
+	val calorieEmpty = "Masukkan nilai kalori"
+	val pleaseEnterValidNumber = "Masukkan angka saja"
+	val calorieGreaterThanZero = "Kalori harus lebih besar dari 0"
 
 	fun validateName(input: String): String? {
 		return when {
@@ -211,7 +209,7 @@ fun AddOrEditLogModal(
 						)
 						Spacer(modifier = Modifier.height(4.dp))
 						Text(
-							text = if (isEditMode) "Update Image" else "Add Photo",
+							text = "Tambah / Update Foto",
 							style = MaterialTheme.typography.bodySmall,
 							color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
 						)
@@ -229,13 +227,13 @@ fun AddOrEditLogModal(
 			Text(
 				text = if (isEditMode) {
 					when (type) {
-						LogType.FOOD -> "Update Food Data"
-						LogType.WORKOUT -> "Update Activity Data"
+						LogType.FOOD -> "Update Data Konsumsi"
+						LogType.WORKOUT -> "Update Data Aktivitas"
 					}
 				} else {
 					when (type) {
-						LogType.FOOD -> "Add Food Data"
-						LogType.WORKOUT -> "Create Activity Data"
+						LogType.FOOD -> "Catat Data Konsumsi"
+						LogType.WORKOUT -> "Catat Data Aktivitas"
 					}
 				},
 				style = MaterialTheme.typography.headlineSmall,
@@ -250,8 +248,8 @@ fun AddOrEditLogModal(
 					name = it
 					nameError = null
 				},
-				label = { Text("Name") },
-				placeholder = { Text(if (type == LogType.FOOD) "Food Name" else "Activity Name") },
+				label = { Text("Nama") },
+				placeholder = { Text(if (type == LogType.FOOD) "Nama Makanan/Konsumsi" else "Nama Aktivitas") },
 				modifier = Modifier
 					.fillMaxWidth()
 					.padding(bottom = 16.dp),
@@ -272,8 +270,8 @@ fun AddOrEditLogModal(
 					calories = it
 					caloriesError = null
 				},
-				label = { Text("Calorie Amount") },
-				placeholder = { Text("600") },
+				label = { Text("Nilai Kalori") },
+				placeholder = { Text("Contoh: 500") },
 				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
 				modifier = Modifier
 					.fillMaxWidth()
@@ -292,8 +290,8 @@ fun AddOrEditLogModal(
 			OutlinedTextField(
 				value = notes,
 				onValueChange = { notes = it },
-				label = { Text("Notes") },
-				placeholder = { Text("Add Notes") },
+				label = { Text("Catatan") },
+				placeholder = { Text("Tambah Catatan") },
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(120.dp)
@@ -345,9 +343,9 @@ fun AddOrEditLogModal(
 						contentColor = MaterialTheme.colorScheme.error
 					)
 				) {
-					Icon(Icons.Filled.Delete, contentDescription = "Delete Activity")
+					Icon(Icons.Filled.Delete, contentDescription = "Hapus Aktivitas")
 					Spacer(modifier = Modifier.width(4.dp))
-					Text("Delete Activity")
+					Text("Hapus Aktivitas")
 				}
 			}
 		}

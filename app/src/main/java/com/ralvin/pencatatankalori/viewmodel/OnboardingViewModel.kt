@@ -45,6 +45,7 @@ class OnboardingViewModel @Inject constructor(
 				)
 
 				repository.createUser(userData)
+				repository.markOnboardingComplete()
 				_uiState.value = OnboardingUiState.Success
 			} catch (e: Exception) {
 				_uiState.value = OnboardingUiState.Error(e.message ?: "Unknown error occurred")

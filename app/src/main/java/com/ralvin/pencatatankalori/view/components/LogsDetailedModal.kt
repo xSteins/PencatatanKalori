@@ -1,10 +1,13 @@
 package com.ralvin.pencatatankalori.view.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -68,38 +71,75 @@ fun AddActivityButtons(
 	onAddFood: () -> Unit,
 	onAddWorkout: () -> Unit,
 	modifier: Modifier = Modifier,
-	enabled: Boolean = true
+	enabled: Boolean = true,
+	tooltipMessage: String? = null
 ) {
+	var showTooltip by remember { mutableStateOf(false) }
+
 	Row(
 		modifier = modifier.fillMaxWidth(),
 		horizontalArrangement = Arrangement.spacedBy(16.dp)
 	) {
-		Button(
-			onClick = onAddFood,
+		Box(
 			modifier = Modifier
 				.weight(1f)
-				.height(56.dp),
-			shape = MaterialTheme.shapes.medium,
-			colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-			enabled = enabled
+				.height(56.dp)
 		) {
-			Icon(Icons.Filled.Add, contentDescription = "Add Food")
-			Spacer(modifier = Modifier.width(4.dp))
-			Text("Konsumsi")
+			Button(
+				onClick = if (enabled) onAddFood else {
+					{}
+				},
+				modifier = Modifier.fillMaxSize(),
+				shape = MaterialTheme.shapes.medium,
+				colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+				enabled = enabled
+			) {
+				Icon(Icons.Filled.Add, contentDescription = "Add Food")
+				Spacer(modifier = Modifier.width(4.dp))
+				Text("Konsumsi")
+			}
+			if (!enabled && tooltipMessage != null) {
+				Box(
+					modifier = Modifier
+						.fillMaxSize()
+						.clickable { showTooltip = true }
+				)
+			}
 		}
-		Button(
-			onClick = onAddWorkout,
+
+		Box(
 			modifier = Modifier
 				.weight(1f)
-				.height(56.dp),
-			shape = MaterialTheme.shapes.medium,
-			colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-			enabled = enabled
+				.height(56.dp)
 		) {
-			Icon(Icons.Filled.Add, contentDescription = "Add Workout")
-			Spacer(modifier = Modifier.width(4.dp))
-			Text("Aktivitas")
+			Button(
+				onClick = if (enabled) onAddWorkout else {
+					{}
+				},
+				modifier = Modifier.fillMaxSize(),
+				shape = MaterialTheme.shapes.medium,
+				colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+				enabled = enabled
+			) {
+				Icon(Icons.Filled.Add, contentDescription = "Add Workout")
+				Spacer(modifier = Modifier.width(4.dp))
+				Text("Aktivitas")
+			}
+			if (!enabled && tooltipMessage != null) {
+				Box(
+					modifier = Modifier
+						.fillMaxSize()
+						.clickable { showTooltip = true }
+				)
+			}
 		}
+	}
+
+	if (showTooltip && tooltipMessage != null) {
+		Tooltip(
+			message = tooltipMessage,
+			onDismiss = { showTooltip = false }
+		)
 	}
 }
 
@@ -161,11 +201,11 @@ fun LogsDetailedModal(
 							verticalArrangement = Arrangement.spacedBy(4.dp)
 						) {
 							Text(
-								text = "TDEE/Target: ${data.tdee} | Konsumsi: ${data.caloriesConsumed} | Pembakaran: ${data.caloriesBurned}",
+								text = "${data.tdee} kalori (Kebutuhan Konsumsi Kalori Harian)",
 								style = MaterialTheme.typography.bodyLarge
 							)
 							Text(
-								text = "${data.mealCount} Konsumsi | ${data.workoutCount} Aktivitas",
+								text = "${data.mealCount} Konsumsi, ${data.caloriesConsumed} kalori | ${data.workoutCount} Aktivitas, ${data.caloriesBurned} kalori",
 								style = MaterialTheme.typography.bodyMedium
 							)
 
@@ -175,27 +215,34 @@ fun LogsDetailedModal(
 							) {
 								PhysicalInfoText(
 									weight = data.weight,
-									height = data.height,
+									activityLevel = data.activityLevel,
 									goalType = data.goalType,
+									enabled = data.isToday,
 									onEditWeight = {
-										currentEditType = EditUserDataType.WEIGHT
-										currentEditValue = data.weight?.toString() ?: ""
-										showEditUserDataDialog = true
+										if (data.isToday) {
+											currentEditType = EditUserDataType.WEIGHT
+											currentEditValue = data.weight?.toString() ?: ""
+											showEditUserDataDialog = true
+										}
 									},
-									onEditHeight = {
-										currentEditType = EditUserDataType.HEIGHT
-										currentEditValue = data.height?.toString() ?: ""
-										showEditUserDataDialog = true
+									onEditActiveLevel = {
+										if (data.isToday) {
+											currentEditType = EditUserDataType.ACTIVE_LEVEL
+											currentEditValue = data.activityLevel?.getDisplayName() ?: ""
+											showEditUserDataDialog = true
+										}
 									},
 									onEditGoal = {
-										currentEditType = EditUserDataType.GOAL
-										currentEditValue = data.goalType.getDisplayName()
-										showEditUserDataDialog = true
+										if (data.isToday) {
+											currentEditType = EditUserDataType.GOAL
+											currentEditValue = data.goalType.getDisplayName()
+											showEditUserDataDialog = true
+										}
 									}
 								)
 							}
 							Text(
-								text = "Tekan informasi di atas  data fisik Anda.",
+								text = "Tekan salah satu teks diatas untuk update data.\nHanya data diri hari ini yang dapat diupdate",
 								style = MaterialTheme.typography.bodySmall,
 								color = MaterialTheme.colorScheme.onSurfaceVariant,
 								fontWeight = FontWeight.Light,
@@ -204,7 +251,7 @@ fun LogsDetailedModal(
 
 							if (logs.size > 4) {
 								Text(
-									text = "Tarik ke atas untuk melihat aktivitas lainnya",
+									text = "Tarik keatas untuk lihat aktivitas lainnya",
 									style = MaterialTheme.typography.bodySmall,
 									color = MaterialTheme.colorScheme.onSurfaceVariant,
 									fontWeight = FontWeight.Light,
@@ -225,8 +272,7 @@ fun LogsDetailedModal(
 						horizontalAlignment = Alignment.CenterHorizontally
 					) {
 						Text(
-							//text = "No activities recorded on this date.",
-							text = "Tidak Ada aktivitas yang dicatat pada pilihan rentang tanggal.",
+							text = "Belum ada aktivitas.",
 							style = MaterialTheme.typography.bodyLarge,
 							textAlign = TextAlign.Center,
 							color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -353,10 +399,10 @@ fun LogsDetailedModal(
 								profileViewModel.updateWeight(newWeight)
 							}
 						}
-						EditUserDataType.HEIGHT -> {
-							newValue.toFloatOrNull()?.let { newHeight ->
-								profileViewModel.updateHeight(newHeight)
-							}
+						EditUserDataType.ACTIVE_LEVEL -> {
+							val activityLevel = com.ralvin.pencatatankalori.model.formula.ActivityLevel.values()
+								.find { it.getDisplayName() == newValue }
+							activityLevel?.let { profileViewModel.updateActivityLevel(it) }
 						}
 						EditUserDataType.GOAL -> {
 							// Parse goal type from display name
@@ -418,7 +464,7 @@ fun LogListItem(item: LogItem, onEdit: () -> Unit, viewModel: OverviewViewModel 
 
 		Column(modifier = Modifier.weight(1f)) {
 			Text(
-				text = if (item.type == LogType.FOOD) "${item.calories} Calories Added" else "${item.calories} Calories Burned",
+				text = if (item.type == LogType.FOOD) "Konsumsi ${item.calories} kalori" else "${item.calories} kalori dibakar",
 				fontSize = 12.sp,
 				color = Color.Gray
 			)

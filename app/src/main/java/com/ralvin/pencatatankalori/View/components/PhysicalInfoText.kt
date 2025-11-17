@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
 
 /**
@@ -16,40 +17,49 @@ import com.ralvin.pencatatankalori.model.formula.GoalType
  * with clickable items that trigger callbacks for editing.
  *
  * @param weight Current weight in kg (nullable)
- * @param height Current height in cm (nullable)
+ * @param activityLevel Current activity level (nullable)
  * @param goalType Current goal type
  * @param onEditWeight Callback when weight is clicked
- * @param onEditHeight Callback when height is clicked
+ * @param onEditActiveLevel Callback when activity level is clicked
  * @param onEditGoal Callback when goal is clicked
+ * @param enabled Whether the items are editable (affects color and underline)
  * @param modifier Modifier for styling
  */
 @Composable
 fun PhysicalInfoText(
 	weight: Float?,
-	height: Float?,
+	activityLevel: ActivityLevel?,
 	goalType: GoalType,
 	onEditWeight: () -> Unit = {},
-	onEditHeight: () -> Unit = {},
+	onEditActiveLevel: () -> Unit = {},
 	onEditGoal: () -> Unit = {},
+	enabled: Boolean = true,
 	modifier: Modifier = Modifier
 ) {
+	val textColor = if (enabled) {
+		MaterialTheme.colorScheme.primary
+	} else {
+		MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+	}
+	val textDecoration = if (enabled) TextDecoration.Underline else TextDecoration.None
+
 	Row(
 		modifier = modifier,
 		horizontalArrangement = Arrangement.spacedBy(4.dp)
 	) {
-		height?.let {
+		activityLevel?.let {
 			Text(
-				text = "TB: ${it}cm",
+				text = it.getDisplayName(),
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.primary,
-				textDecoration = TextDecoration.Underline,
+				color = textColor,
+				textDecoration = textDecoration,
 				fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-				modifier = Modifier.clickable { onEditHeight() }
+				modifier = if (enabled) Modifier.clickable { onEditActiveLevel() } else Modifier
 			)
 			Text(
 				text = "|",
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.primary,
+				color = textColor,
 				fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
 			)
 		}
@@ -58,15 +68,15 @@ fun PhysicalInfoText(
 			Text(
 				text = "BB: ${it}kg",
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.primary,
-				textDecoration = TextDecoration.Underline,
+				color = textColor,
+				textDecoration = textDecoration,
 				fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-				modifier = Modifier.clickable { onEditWeight() }
+				modifier = if (enabled) Modifier.clickable { onEditWeight() } else Modifier
 			)
 			Text(
 				text = "|",
 				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.primary,
+				color = textColor,
 				fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
 			)
 		}
@@ -74,10 +84,10 @@ fun PhysicalInfoText(
 		Text(
 			text = goalType.getShortDisplayName(),
 			style = MaterialTheme.typography.bodyMedium,
-			color = MaterialTheme.colorScheme.primary,
-			textDecoration = TextDecoration.Underline,
+			color = textColor,
+			textDecoration = textDecoration,
 			fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-			modifier = Modifier.clickable { onEditGoal() }
+			modifier = if (enabled) Modifier.clickable { onEditGoal() } else Modifier
 		)
 	}
 }

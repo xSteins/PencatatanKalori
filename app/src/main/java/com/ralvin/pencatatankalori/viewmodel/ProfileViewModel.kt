@@ -3,10 +3,9 @@ package com.ralvin.pencatatankalori.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ralvin.pencatatankalori.model.database.entities.UserData
-import com.ralvin.pencatatankalori.model.repository.CalorieRepository
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
 import com.ralvin.pencatatankalori.model.formula.GoalType
+import com.ralvin.pencatatankalori.model.repository.CalorieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,7 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-	private val repository: CalorieRepository
+	val repository: CalorieRepository
 ) : ViewModel() {
 
 	private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -59,8 +58,16 @@ class ProfileViewModel @Inject constructor(
 				_uiState.value = ProfileUiState.Loading
 				val currentUser = repository.getUserProfileOnce()
 
-				val updatedUser = if (currentUser != null) {
-					currentUser.copy(
+				val updatedUser = currentUser?.copy(
+					age = age,
+					gender = gender,
+					weight = weight,
+					height = height,
+					activityLevel = activityLevel,
+					goalType = goalType,
+					dailyCalorieTarget = dailyCalorieTarget
+				)
+					?: UserData(
 						age = age,
 						gender = gender,
 						weight = weight,
@@ -69,17 +76,6 @@ class ProfileViewModel @Inject constructor(
 						goalType = goalType,
 						dailyCalorieTarget = dailyCalorieTarget
 					)
-				} else {
-					UserData(
-						age = age,
-						gender = gender,
-						weight = weight,
-						height = height,
-						activityLevel = activityLevel,
-						goalType = goalType,
-						dailyCalorieTarget = dailyCalorieTarget
-					)
-				}
 
 				if (currentUser != null) {
 					repository.updateUserDataAndTodayTdee(updatedUser)
@@ -97,11 +93,7 @@ class ProfileViewModel @Inject constructor(
 	fun updateWeight(newWeight: Float) {
 		viewModelScope.launch {
 			try {
-				val currentUser = repository.getUserProfileOnce()
-				currentUser?.let { user ->
-					val updatedUser = user.copy(weight = newWeight)
-					repository.updateUserDataAndTodayTdee(updatedUser)
-				}
+				repository.updateWeight(newWeight)
 			} catch (e: Exception) {
 				_uiState.value = ProfileUiState.Error(e.message ?: "Failed to update weight")
 			}
@@ -125,11 +117,7 @@ class ProfileViewModel @Inject constructor(
 	fun updateActivityLevel(activityLevel: ActivityLevel) {
 		viewModelScope.launch {
 			try {
-				val currentUser = repository.getUserProfileOnce()
-				currentUser?.let { user ->
-					val updatedUser = user.copy(activityLevel = activityLevel)
-					repository.updateUserDataAndTodayTdee(updatedUser)
-				}
+				repository.updateActivityLevel(activityLevel)
 			} catch (e: Exception) {
 				_uiState.value =
 					ProfileUiState.Error(e.message ?: "Failed to update activity level")
@@ -140,11 +128,7 @@ class ProfileViewModel @Inject constructor(
 	fun updateGoalType(goalType: GoalType) {
 		viewModelScope.launch {
 			try {
-				val currentUser = repository.getUserProfileOnce()
-				currentUser?.let { user ->
-					val updatedUser = user.copy(goalType = goalType)
-					repository.updateUserDataAndTodayTdee(updatedUser)
-				}
+				repository.updateGoalType(goalType)
 			} catch (e: Exception) {
 				_uiState.value = ProfileUiState.Error(e.message ?: "Failed to update goal type")
 			}
@@ -193,14 +177,10 @@ class ProfileViewModel @Inject constructor(
 		}
 	}
 
-	fun updateCalorieSettings(
-		granularityValue: Int,
-		strategy: CalorieStrategy?,
-		advancedEnabled: Boolean
-	) {
+	fun updateCalorieSettings(granularityValue: Int) {
 		viewModelScope.launch {
 			try {
-				repository.updateCalorieSettings(granularityValue, strategy, advancedEnabled)
+				repository.updateCalorieSettings(granularityValue)
 			} catch (e: Exception) {
 				_uiState.value =
 					ProfileUiState.Error(e.message ?: "Failed to update calorie settings")
@@ -217,6 +197,20 @@ class ProfileViewModel @Inject constructor(
 
 	fun toggleDummyData() {
 		repository.toggleDummyData()
+	}
+
+	fun markOnboardingComplete() {
+		viewModelScope.launch {
+			repository.markOnboardingComplete()
+		}
+	}
+
+	suspend fun initializeOnboardingState() {
+		repository.checkAndInitializeOnboardingState()
+	}
+
+	fun dismissInitialBottomSheet() {
+		repository.dismissInitialBottomSheet()
 	}
 }
 

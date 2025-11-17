@@ -17,7 +17,7 @@ import com.ralvin.pencatatankalori.model.database.entities.UserData
 		ActivityLog::class,
 		DailyData::class
 	],
-	version = 15,
+	version = 17,
 	exportSchema = false
 )
 @TypeConverters(Converters::class)

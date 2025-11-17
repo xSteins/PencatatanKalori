@@ -35,9 +35,12 @@ import androidx.compose.ui.unit.dp
 fun ExpandableFAB(
 	onFoodClick: () -> Unit,
 	onWorkoutClick: () -> Unit,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	enabled: Boolean = true,
+	tooltipMessage: String? = null
 ) {
 	var isExpanded by remember { mutableStateOf(false) }
+	var showTooltip by remember { mutableStateOf(false) }
 
 	val rotation by animateFloatAsState(
 		targetValue = if (isExpanded) 45f else 0f,
@@ -54,26 +57,48 @@ fun ExpandableFAB(
 			ExpandedFABItem(
 				icon = Icons.Filled.FitnessCenter,
 				label = "Aktivitas",
-				onClick = {
-					onWorkoutClick()
-					isExpanded = false
+				onClick = if (enabled) {
+					{
+						onWorkoutClick()
+						isExpanded = false
+					}
+				} else {
+					{
+						if (tooltipMessage != null) showTooltip = true
+						isExpanded = false
+					}
 				},
-				backgroundColor = MaterialTheme.colorScheme.secondary
+				backgroundColor = MaterialTheme.colorScheme.secondary,
+				enabled = enabled
 			)
 
 			ExpandedFABItem(
 				icon = Icons.Filled.Restaurant,
 				label = "Konsumsi",
-				onClick = {
-					onFoodClick()
-					isExpanded = false
+				onClick = if (enabled) {
+					{
+						onFoodClick()
+						isExpanded = false
+					}
+				} else {
+					{
+						if (tooltipMessage != null) showTooltip = true
+						isExpanded = false
+					}
 				},
-				backgroundColor = MaterialTheme.colorScheme.primary
+				backgroundColor = MaterialTheme.colorScheme.primary,
+				enabled = enabled
 			)
 		}
 
 		ExtendedFloatingActionButton(
-			onClick = { isExpanded = !isExpanded },
+			onClick = {
+				if (enabled) {
+					isExpanded = !isExpanded
+				} else if (tooltipMessage != null) {
+					showTooltip = true
+				}
+			},
 			containerColor = MaterialTheme.colorScheme.primary,
 			contentColor = MaterialTheme.colorScheme.onPrimary,
 			expanded = !isExpanded,
@@ -94,6 +119,13 @@ fun ExpandableFAB(
 			}
 		)
 	}
+
+	if (showTooltip && tooltipMessage != null) {
+		Tooltip(
+			message = tooltipMessage,
+			onDismiss = { showTooltip = false }
+		)
+	}
 }
 
 @Composable
@@ -102,7 +134,8 @@ private fun ExpandedFABItem(
 	label: String,
 	onClick: () -> Unit,
 	backgroundColor: Color,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	enabled: Boolean = true
 ) {
 	Row(
 		modifier = modifier,
@@ -130,12 +163,12 @@ private fun ExpandedFABItem(
 		FloatingActionButton(
 			onClick = onClick,
 			modifier = Modifier.size(48.dp),
-			containerColor = backgroundColor
+			containerColor = if (enabled) backgroundColor else backgroundColor.copy(alpha = 0.6f)
 		) {
 			Icon(
 				icon,
 				contentDescription = label,
-				tint = MaterialTheme.colorScheme.onPrimary
+				tint = if (enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
 			)
 		}
 	}

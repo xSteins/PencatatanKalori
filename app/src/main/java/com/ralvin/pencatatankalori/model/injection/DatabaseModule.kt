@@ -114,6 +114,21 @@ object DatabaseModule {
 		}
 	}
 
+	private val MIGRATION_15_16 = object : Migration(14, 15) {
+		override fun migrate(database: SupportSQLiteDatabase) {
+			// Drop the name column from user table since it's no longer used
+			database.execSQL("ALTER TABLE DailyData DROP COLUMN advanced_enabled")
+			database.execSQL("ALTER TABLE DailyData DROP COLUMN calorie_strategy")
+		}
+	}
+
+	private val MIGRATION_16_17 = object : Migration(16, 17) {
+		override fun migrate(database: SupportSQLiteDatabase) {
+			// Add activity_level column to daily_data table
+			database.execSQL("ALTER TABLE daily_data ADD COLUMN activity_level TEXT")
+		}
+	}
+
 	@Provides
 	@Singleton
 	fun provideAppDatabase(
@@ -124,7 +139,7 @@ object DatabaseModule {
 			AppDatabase::class.java,
 			"pencatatan_kalori_database"
 		)
-			.addMigrations(MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+			.addMigrations(MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_16_17)
 			.fallbackToDestructiveMigration()
 			.build()
 	}

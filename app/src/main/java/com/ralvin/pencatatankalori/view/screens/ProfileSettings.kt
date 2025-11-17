@@ -45,21 +45,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.model.formula.CalorieStrategy
 import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.model.formula.MifflinModel
-import com.ralvin.pencatatankalori.R
 import com.ralvin.pencatatankalori.view.components.CalorieSettingsDialog
 import com.ralvin.pencatatankalori.view.components.EditUserDataDialog
 import com.ralvin.pencatatankalori.view.components.EditUserDataType
+import com.ralvin.pencatatankalori.view.components.InitialOnboardingBottomSheet
 import com.ralvin.pencatatankalori.view.components.OnboardingDialog
+import com.ralvin.pencatatankalori.view.components.Tooltip
 import com.ralvin.pencatatankalori.view.components.UserDataDebugDialog
 import com.ralvin.pencatatankalori.viewmodel.OnboardingViewModel
 import com.ralvin.pencatatankalori.viewmodel.ProfileViewModel
@@ -71,6 +70,7 @@ fun ProfileSettings(
 	onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
 	var showOnboardingDialog by remember { mutableStateOf(false) }
+	var showInitialBottomSheet by remember { mutableStateOf(false) }
 	var showUserDataDebugDialog by remember { mutableStateOf(false) }
 	var showCalorieSettingsDialog by remember { mutableStateOf(false) }
 
@@ -85,19 +85,13 @@ fun ProfileSettings(
 	val isDummyDataEnabled by profileViewModel.isDummyDataEnabled.collectAsStateWithLifecycle()
 	val todayDailyData by profileViewModel.todayDailyData.collectAsStateWithLifecycle()
 
-	LaunchedEffect(Unit) {
-		val userExists = profileViewModel.checkUserExists()
-		if (!userExists) {
-			showOnboardingDialog = true
-		}
-	}
-
 	LaunchedEffect(onboardingUiState, userProfile) {
 		val currentOnboardingState = onboardingUiState
 		val currentUserProfile = userProfile
 		if (currentOnboardingState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Success && currentUserProfile != null) {
 			showOnboardingDialog = false
 			onboardingViewModel.resetUiState()
+			profileViewModel.markOnboardingComplete()
 		}
 	}
 
@@ -205,7 +199,7 @@ fun ProfileSettings(
 			TopAppBar(
 				title = {
 					Text(
-						text = stringResource(R.string.pengaturan_profil),
+						text = "Pengaturan Profil",
 						fontWeight = FontWeight.Medium,
 						fontSize = 22.sp
 					)
@@ -245,94 +239,111 @@ fun ProfileSettings(
 							) {
 								ProfileSettingItem(
 									icon = Icons.Filled.FitnessCenter,
-									label = stringResource(R.string.tingkat_keaktifan),
+									label = "Tingkat Aktivitas",
 									value = currentUserProfile?.activityLevel?.getDisplayName()
-										?: "Sedentary",
+										?: "Belum ada data",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.ACTIVE_LEVEL) }
 									} else {
 										{}
 									},
-									isEditable = hasUserData
+									isEditable = hasUserData,
+									tooltipMessage = if (!hasUserData) {
+										"Mohon lakukan proses onboarding pada halaman \"Profile\" -> Onboarding Screen"
+									} else null
 								)
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.Flag,
-									label = stringResource(R.string.tujuan),
+									label = "Tujuan",
 									value = currentUserProfile?.goalType?.getDisplayName()
-										?: "Gain Weight",
+										?: "Belum ada data",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.GOAL) }
 									} else {
 										{}
 									},
-									isEditable = hasUserData
+									isEditable = hasUserData,
+									tooltipMessage = if (!hasUserData) {
+										"Mohon lakukan proses onboarding pada halaman \"Profile\" -> Onboarding Screen"
+									} else null
 								)
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.MonitorWeight,
-									label = stringResource(R.string.berat_badan),
-									value = currentUserProfile?.let { "${it.weight}kg" } ?: "50kg",
+									label = "Berat Badan",
+									value = currentUserProfile?.let { "${it.weight}kg" } ?: "Belum ada data",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.WEIGHT) }
 									} else {
 										{}
 									},
-									isEditable = hasUserData
+									isEditable = hasUserData,
+									tooltipMessage = if (!hasUserData) {
+										"Mohon lakukan proses onboarding pada halaman \"Profile\" -> Onboarding Screen"
+									} else null
 								)
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.Height,
-									label = stringResource(R.string.tinggi_badan),
-									value = currentUserProfile?.let { "${it.height}cm" } ?: "170cm",
+									label = "Tinggi Badan",
+									value = currentUserProfile?.let { "${it.height}cm" } ?: "Belum ada data",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.HEIGHT) }
 									} else {
 										{}
 									},
-									isEditable = hasUserData
+									isEditable = hasUserData,
+									tooltipMessage = if (!hasUserData) {
+										"Mohon lakukan proses onboarding pada halaman \"Profile\" -> Onboarding Screen"
+									} else null
 								)
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.Cake,
-									label = stringResource(R.string.umur),
-									value = currentUserProfile?.let { "${it.age} ${stringResource(R.string.tahun)}" }
-										?: "25 ${stringResource(R.string.tahun)}",
+									label = "Umur",
+									value = currentUserProfile?.let { "${it.age} Tahun" }
+										?: "Belum ada data",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.AGE) }
 									} else {
 										{}
 									},
-									isEditable = hasUserData
+									isEditable = hasUserData,
+									tooltipMessage = if (!hasUserData) {
+										"Mohon lakukan proses onboarding pada halaman \"Profile\" -> Onboarding Screen"
+									} else null
 								)
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.People,
-									label = stringResource(R.string.jenis_kelamin),
-									value = currentUserProfile?.let { if (it.gender == "Male") stringResource(R.string.pria) else stringResource(R.string.wanita) }
-										?: stringResource(R.string.pria),
+									label = "Jenis Kelamin",
+									value = currentUserProfile?.let { if (it.gender == "Male") "Pria" else "Wanita" }
+										?: "Belum ada data",
 									onClick = if (hasUserData) {
 										{ openEditDialog(EditUserDataType.GENDER) }
 									} else {
 										{}
 									},
-									isEditable = hasUserData
+									isEditable = hasUserData,
+									tooltipMessage = if (!hasUserData) {
+										"Mohon lakukan proses onboarding pada halaman \"Profile\" -> Onboarding Screen"
+									} else null
 								)
 								HorizontalDivider()
 								ProfileSettingItem(
 									icon = Icons.Filled.Tune,
-									label = stringResource(R.string.pengaturan_kalori),
-									value = if (MifflinModel.isAdvancedEnabled()) {
-										stringResource(R.string.advanced_calorie_format, MifflinModel.getCalorieStrategy().displayName, MifflinModel.getGranularityValue())
-									} else {
-										stringResource(R.string.basic_calorie_format, MifflinModel.getGranularityValue())
-									},
+									label = "Pengaturan Kalori",
+									value = "Granularitas / Nilai Kompensasi: ${MifflinModel.getGranularityValue()}",
 									onClick = if (hasUserData) {
 										{ showCalorieSettingsDialog = true }
 									} else {
 										{}
 									},
-									isEditable = hasUserData
+									isEditable = hasUserData,
+									tooltipMessage = if (!hasUserData) {
+										"Mohon lakukan proses onboarding pada halaman \"Profile\" -> Onboarding Screen"
+									} else null
 								)
 							}
 						}
@@ -340,7 +351,7 @@ fun ProfileSettings(
 						item {
 							Column {
 								Text(
-									text = stringResource(R.string.debugging),
+									text = "Debugging",
 									style = MaterialTheme.typography.titleMedium,
 									fontWeight = FontWeight.Bold,
 									modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
@@ -356,17 +367,17 @@ fun ProfileSettings(
 									Row(
 										modifier = Modifier
 											.fillMaxWidth()
-											.clickable { showOnboardingDialog = true }
+											.clickable { showInitialBottomSheet = true }
 											.padding(horizontal = 16.dp, vertical = 16.dp),
 										verticalAlignment = Alignment.CenterVertically
 									) {
 										Column(modifier = Modifier.weight(1f)) {
 											Text(
-												stringResource(R.string.onboarding_screen),
+												"Onboarding Screen",
 												fontWeight = FontWeight.Medium
 											)
 											Text(
-												stringResource(R.string.rerun_initial_setup),
+												"Fitur untuk inisialisasi aplikasi",
 												style = MaterialTheme.typography.bodySmall,
 												color = Color.Gray
 											)
@@ -386,9 +397,9 @@ fun ProfileSettings(
 										verticalAlignment = Alignment.CenterVertically
 									) {
 										Column(modifier = Modifier.weight(1f)) {
-											Text(stringResource(R.string.dummy_data_mode), fontWeight = FontWeight.Medium)
+											Text("Dummy Data Mode", fontWeight = FontWeight.Medium)
 											Text(
-												stringResource(R.string.toggle_demo_data),
+												"Toggle demo data with sample activities",
 												style = MaterialTheme.typography.bodySmall,
 												color = Color.Gray
 											)
@@ -407,9 +418,9 @@ fun ProfileSettings(
 										verticalAlignment = Alignment.CenterVertically
 									) {
 										Column(modifier = Modifier.weight(1f)) {
-											Text(stringResource(R.string.user_data_debug), fontWeight = FontWeight.Medium)
+											Text("User Data Debug", fontWeight = FontWeight.Medium)
 											Text(
-												stringResource(R.string.view_edit_raw_data),
+												"View/Edit raw user data",
 												style = MaterialTheme.typography.bodySmall,
 												color = Color.Gray
 											)
@@ -433,6 +444,17 @@ fun ProfileSettings(
 			OnboardingDialog(
 				onDismiss = { showOnboardingDialog = false },
 				onboardingViewModel = onboardingViewModel
+			)
+		}
+
+		if (showInitialBottomSheet) {
+			InitialOnboardingBottomSheet(
+				onDismiss = { showInitialBottomSheet = false },
+				onSkip = { showInitialBottomSheet = false },
+				onFillData = {
+					showInitialBottomSheet = false
+					showOnboardingDialog = true
+				}
 			)
 		}
 
@@ -508,12 +530,8 @@ fun ProfileSettings(
 			userProfile?.let { profile ->
 				CalorieSettingsDialog(
 					onDismiss = { showCalorieSettingsDialog = false },
-					onSave = { granularityValue, strategy, advancedEnabled ->
-						profileViewModel.updateCalorieSettings(
-							granularityValue,
-							strategy,
-							advancedEnabled
-						)
+					onSave = { granularityValue ->
+						profileViewModel.updateCalorieSettings(granularityValue)
 						showCalorieSettingsDialog = false
 					},
 					goalType = profile.goalType,
@@ -522,10 +540,7 @@ fun ProfileSettings(
 					userAge = profile.age,
 					isMale = profile.gender == "Male",
 					activityLevel = profile.activityLevel,
-					initialGranularityValue = todayDailyData?.granularityValue ?: 250,
-					initialCalorieStrategy = todayDailyData?.calorieStrategy
-						?: CalorieStrategy.MODERATE,
-					initialAdvancedEnabled = todayDailyData?.advancedEnabled == true
+					initialGranularityValue = todayDailyData?.granularityValue ?: 0
 				)
 			}
 		}
@@ -538,12 +553,23 @@ fun ProfileSettingItem(
 	label: String,
 	value: String,
 	onClick: () -> Unit,
-	isEditable: Boolean = true
+	isEditable: Boolean = true,
+	tooltipMessage: String? = null
 ) {
+	var showTooltip by remember { mutableStateOf(false) }
+
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
-			.let { if (isEditable) it.clickable { onClick() } else it }
+			.let {
+				if (isEditable) {
+					it.clickable { onClick() }
+				} else if (tooltipMessage != null) {
+					it.clickable { showTooltip = true }
+				} else {
+					it
+				}
+			}
 			.padding(horizontal = 16.dp, vertical = 18.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
@@ -580,6 +606,13 @@ fun ProfileSettingItem(
 				modifier = Modifier.size(18.dp)
 			)
 		}
+	}
+
+	if (showTooltip && tooltipMessage != null) {
+		Tooltip(
+			message = tooltipMessage,
+			onDismiss = { showTooltip = false }
+		)
 	}
 }
 

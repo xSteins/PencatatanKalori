@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
@@ -46,7 +47,10 @@ fun OnboardingDialog(
 	onDismiss: () -> Unit,
 	onboardingViewModel: OnboardingViewModel
 ) {
-	Dialog(onDismissRequest = onDismiss) {
+	Dialog(
+		onDismissRequest = onDismiss,
+		properties = DialogProperties(usePlatformDefaultWidth = false)
+	) {
 		Surface(
 			modifier = Modifier
 				.fillMaxWidth()
@@ -75,16 +79,20 @@ fun OnboardingScreenContent(
 	var selectedActivityLevel by remember { mutableStateOf<ActivityLevel?>(null) }
 	var selectedGoalType by remember { mutableStateOf<GoalType?>(null) }
 	var expandedActivityLevel by remember { mutableStateOf(false) }
+	var hasAttemptedSave by remember { mutableStateOf(false) }
 
 	val uiState by onboardingViewModel.uiState.collectAsStateWithLifecycle()
 
-	val isValid = age.isNotBlank() && age.toIntOrNull() != null && age.toInt() > 0 &&
-			weight.isNotBlank() && weight.toFloatOrNull() != null && weight.toFloat() > 0 &&
-			height.isNotBlank() && height.toFloatOrNull() != null && height.toFloat() > 0 &&
-			selectedActivityLevel != null &&
-			selectedGoalType != null
+	val isWeightValid = weight.isNotBlank() && weight.toFloatOrNull() != null && weight.toFloat() > 0
+	val isHeightValid = height.isNotBlank() && height.toFloatOrNull() != null && height.toFloat() > 0
+	val isAgeValid = age.isNotBlank() && age.toIntOrNull() != null && age.toInt() > 0
+	val isActivityLevelValid = selectedActivityLevel != null
+	val isGoalTypeValid = selectedGoalType != null
+
+	val isValid = isWeightValid && isHeightValid && isAgeValid && isActivityLevelValid && isGoalTypeValid
 
 	fun handleSave() {
+		hasAttemptedSave = true
 		if (isValid) {
 			val ageInt = age.toInt()
 			val weightFloat = weight.toFloat()
@@ -120,12 +128,12 @@ fun OnboardingScreenContent(
 		horizontalAlignment = Alignment.Start
 	) {
 		Text(
-			text = "Personalize Your Data",
+			text = "Pengisian data pribadi",
 			style = MaterialTheme.typography.headlineSmall,
 			modifier = Modifier.padding(bottom = 8.dp)
 		)
 		Text(
-			text = "This data is used to customize your daily calorie target.",
+			text = "Data pribadi akan digunakan untuk menghitung target kalori harian. \nPerhitungan kalori menggunakan persamaan Mifflin & St. Jeor",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 			modifier = Modifier.padding(bottom = 16.dp)
@@ -135,12 +143,17 @@ fun OnboardingScreenContent(
 		OutlinedTextField(
 			value = weight,
 			onValueChange = { if (it.isEmpty() || it.toFloatOrNull() != null) weight = it },
-			label = { Text("Weight") },
+			label = { Text("Berat Badan") },
 			suffix = { Text("kg") },
 			modifier = Modifier.fillMaxWidth(),
 			singleLine = true,
 			keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-			isError = weight.isBlank() || weight.toFloatOrNull() == null || weight.toFloatOrNull()!! <= 0
+			isError = hasAttemptedSave && !isWeightValid,
+			supportingText = {
+				if (hasAttemptedSave && !isWeightValid) {
+					Text("Data tidak boleh kosong")
+				}
+			}
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -148,12 +161,17 @@ fun OnboardingScreenContent(
 		OutlinedTextField(
 			value = height,
 			onValueChange = { if (it.isEmpty() || it.toFloatOrNull() != null) height = it },
-			label = { Text("Height") },
+			label = { Text("Tinggi Badan") },
 			suffix = { Text("cm") },
 			modifier = Modifier.fillMaxWidth(),
 			singleLine = true,
 			keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-			isError = height.isBlank() || height.toFloatOrNull() == null || height.toFloatOrNull()!! <= 0
+			isError = hasAttemptedSave && !isHeightValid,
+			supportingText = {
+				if (hasAttemptedSave && !isHeightValid) {
+					Text("Data tidak boleh kosong")
+				}
+			}
 		)
 
 		Spacer(modifier = Modifier.height(8.dp))
@@ -161,12 +179,17 @@ fun OnboardingScreenContent(
 		OutlinedTextField(
 			value = age,
 			onValueChange = { if (it.all { c -> c.isDigit() }) age = it },
-			label = { Text("Age") },
-			suffix = { Text("years") },
+			label = { Text("Usia") },
+			suffix = { Text("tahun") },
 			modifier = Modifier.fillMaxWidth(),
 			singleLine = true,
 			keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-			isError = age.isBlank() || age.toIntOrNull() == null || age.toInt() <= 0
+			isError = hasAttemptedSave && !isAgeValid,
+			supportingText = {
+				if (hasAttemptedSave && !isAgeValid) {
+					Text("Data tidak boleh kosong")
+				}
+			}
 		)
 
 		Spacer(modifier = Modifier.height(16.dp))
@@ -181,14 +204,14 @@ fun OnboardingScreenContent(
 				verticalAlignment = Alignment.CenterVertically
 			) {
 				RadioButton(selected = isMale, onClick = { isMale = true })
-				Text("Male", modifier = Modifier.padding(start = 8.dp))
+				Text("Laki-Laki", modifier = Modifier.padding(start = 8.dp))
 			}
 			Row(
 				modifier = Modifier.weight(1f),
 				verticalAlignment = Alignment.CenterVertically
 			) {
 				RadioButton(selected = !isMale, onClick = { isMale = false })
-				Text("Female", modifier = Modifier.padding(start = 8.dp))
+				Text("Perempuan", modifier = Modifier.padding(start = 8.dp))
 			}
 		}
 
@@ -200,14 +223,21 @@ fun OnboardingScreenContent(
 			modifier = Modifier.fillMaxWidth()
 		) {
 			OutlinedTextField(
-				value = selectedActivityLevel?.getDisplayName() ?: "Select Activity Level",
+				value = selectedActivityLevel?.getDisplayName() ?: "Pilih tingkat keaktifan",
 				onValueChange = {},
 				readOnly = true,
-				label = { Text("Activity Level") },
+				label = { Text("Tingkat Keaktifan") },
 				trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedActivityLevel) },
-				modifier = Modifier.menuAnchor(),
-				singleLine = true,
-				isError = selectedActivityLevel == null
+				modifier = Modifier
+					.menuAnchor()
+					.fillMaxWidth(),
+				singleLine = false,
+				isError = hasAttemptedSave && !isActivityLevelValid,
+				supportingText = {
+					if (hasAttemptedSave && !isActivityLevelValid) {
+						Text("Data tidak boleh kosong")
+					}
+				}
 			)
 			ExposedDropdownMenu(
 				expanded = expandedActivityLevel,
@@ -257,6 +287,15 @@ fun OnboardingScreenContent(
 			}
 		}
 
+		if (hasAttemptedSave && !isGoalTypeValid) {
+			Text(
+				text = "Data tidak boleh kosong",
+				color = MaterialTheme.colorScheme.error,
+				style = MaterialTheme.typography.bodySmall,
+				modifier = Modifier.padding(start = 16.dp)
+			)
+		}
+
 		val currentUiState = uiState
 		if (currentUiState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Error) {
 			Spacer(modifier = Modifier.height(8.dp))
@@ -279,7 +318,7 @@ fun OnboardingScreenContent(
 			Spacer(modifier = Modifier.width(8.dp))
 			Button(
 				onClick = { handleSave() },
-				enabled = isValid && currentUiState !is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Loading
+				enabled = (!hasAttemptedSave || isValid) && currentUiState !is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Loading
 			) {
 				if (currentUiState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Loading) {
 					CircularProgressIndicator(modifier = Modifier.size(16.dp))
