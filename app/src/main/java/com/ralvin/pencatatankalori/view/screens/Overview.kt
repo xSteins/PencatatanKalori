@@ -1,6 +1,5 @@
 package com.ralvin.pencatatankalori.view.screens
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,14 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -110,7 +107,7 @@ fun OverviewScreen(
 			bmiValue < 30 -> "Obesitas"
 			else -> "Obesitas"
 		}
-		"$statusText".format(userData.weight, userData.height)
+		statusText.format(userData.weight, userData.height)
 	} ?: "Belum ada data"
 
 	"18.5 - 24.9"
@@ -335,10 +332,21 @@ fun OverviewScreen(
                     .padding(horizontal = 16.dp),
 				contentAlignment = Alignment.Center
 			) {
-				Text(
-					text = "Mulai catat kalori anda.",
-					style = MaterialTheme.typography.headlineMedium
-				)
+				Column(
+					horizontalAlignment = Alignment.Start,
+					verticalArrangement = Arrangement.Center
+				){
+					Text(
+						text = "Mulai catat kalori anda.",
+						style = MaterialTheme.typography.headlineMedium
+					)
+					Spacer(modifier = Modifier.height(8.dp))
+					Text(
+						text = "Untuk memulai, gunakan menu \"Onboarding\" pada halaman Profile.",
+						style = MaterialTheme.typography.labelLarge,
+						color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+					)
+				}
 			}
 		} else {
 			LazyRow(
@@ -383,15 +391,10 @@ fun OverviewScreen(
 				type = modalType,
 				initialName = editData?.name ?: "",
 				initialCalories = editData?.calories?.toString() ?: "",
-				initialNotes = "",
+				initialNotes = editData?.notes ?: "",
 				initialImagePath = initialImagePath,
 				isEditMode = editData != null,
 				onSubmit = { name, calories, notes, imagePath ->
-					Log.d(
-						"OverviewScreen",
-						"Log Submitted: Type: $modalType, Name: $name, Calories: $calories, EditData: $editData, ImagePath: $imagePath"
-					)
-
 					val currentEditData = editData
 					if (currentEditData != null) {
 						if (imagePath != null && imagePath != initialImagePath) {
@@ -407,7 +410,6 @@ fun OverviewScreen(
 									viewModel.updateActivity(updatedActivity)
 								},
 								onError = { error ->
-									Log.e("OverviewScreen", "Failed to save image: $error")
 									val updatedActivity = currentEditData.copy(
 										name = name,
 										calories = calories.toIntOrNull() ?: 0,
@@ -443,7 +445,6 @@ fun OverviewScreen(
 									)
 								},
 								onError = { error ->
-									Log.e("OverviewScreen", "Failed to save image: $error")
 									viewModel.logActivity(
 										name = name,
 										calories = calories.toIntOrNull() ?: 0,
@@ -470,7 +471,6 @@ fun OverviewScreen(
 				},
 				onDelete = if (editData != null) {
 					{
-						Log.d("OverviewScreen", "Delete activity: ${editData?.id}")
 						editData?.let { activity ->
 							viewModel.deleteActivity(activity.id)
 						}
@@ -604,7 +604,7 @@ fun BmiCard(
 				)
 				Spacer(modifier = Modifier.height(4.dp))
 				Text(
-					text = "$bmiStatus",
+					text = bmiStatus,
 					style = MaterialTheme.typography.bodyMedium,
 					color = statusColor,
 					fontWeight = FontWeight.Medium
@@ -641,15 +641,6 @@ fun BmiCard(
 	}
 }
 
-data class ActivityItemData(
-	val description: String,
-	val calorieTextForDisplay: String,
-	val caloriesForModal: String,
-	val type: LogType,
-	val icon: ImageVector,
-	val detailForModal: String? = null
-)
-
 private val WorkoutActivityColor = Color(0xFF7986CB)
 private val FoodActivityColor = Color(0xFF81C784)
 private val ActivityContentColor = Color.White
@@ -658,12 +649,9 @@ private val ActivityContentColor = Color.White
 fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
 	val isFood = activity.type == ActivityType.CONSUMPTION
 	val icon = if (isFood) Icons.Default.Restaurant else Icons.Default.FitnessCenter
-	val calories = activity.calories ?: 0
+	val calories = activity.calories
 	val calorieText = "$calories Kalori"
-	val description = activity.name ?: when {
-		isFood -> "Makanan"
-		else -> "Olahraga"
-	}
+	val description = activity.name
 
 	val viewModel: OverviewViewModel = hiltViewModel()
 	var imagePath by remember(activity.pictureId) { mutableStateOf<String?>(null) }
@@ -738,47 +726,6 @@ fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
 				style = MaterialTheme.typography.titleMedium,
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis
-			)
-		}
-	}
-}
-
-@Composable
-fun ActivityItem(item: ActivityItemData, onClick: (ActivityItemData) -> Unit) {
-	Card(
-		modifier = Modifier
-            .width(150.dp)
-            .height(180.dp)
-            .clickable { onClick(item) }
-	) {
-		Column(
-			modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.SpaceAround
-		) {
-			Box(
-				contentAlignment = Alignment.Center,
-				modifier = Modifier.weight(1f)
-			) {
-				Icon(
-					imageVector = item.icon,
-					contentDescription = item.description,
-					modifier = Modifier.size(48.dp),
-					tint = MaterialTheme.colorScheme.onSurfaceVariant
-				)
-			}
-			Text(
-				text = item.calorieTextForDisplay,
-				style = MaterialTheme.typography.titleSmall,
-				fontWeight = FontWeight.Bold
-			)
-			Text(
-				text = item.description,
-				style = MaterialTheme.typography.bodySmall,
-				maxLines = 2,
-				lineHeight = 16.sp
 			)
 		}
 	}

@@ -30,20 +30,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.ralvin.pencatatankalori.model.formula.ActivityLevel
-import com.ralvin.pencatatankalori.model.formula.GoalType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalorieSettingsDialog(
 	onDismiss: () -> Unit,
 	onSave: (granularityValue: Int) -> Unit,
-	goalType: GoalType,
-	userWeight: Double = 70.0,
-	userHeight: Double = 170.0,
-	userAge: Int = 25,
-	isMale: Boolean = true,
-	activityLevel: ActivityLevel = ActivityLevel.MODERATELY_ACTIVE,
 	initialGranularityValue: Int = 0
 ) {
 	var granularityValue by remember { mutableIntStateOf(initialGranularityValue) }

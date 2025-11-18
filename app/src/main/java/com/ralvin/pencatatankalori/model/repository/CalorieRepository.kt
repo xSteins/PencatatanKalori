@@ -10,6 +10,7 @@ import com.ralvin.pencatatankalori.model.database.entities.UserData
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.model.formula.MifflinModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -20,6 +21,7 @@ import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class CalorieRepository @Inject constructor(
 	private val userDataDao: UserDataDao,
@@ -32,10 +34,6 @@ class CalorieRepository @Inject constructor(
 
 	private val _shouldShowInitialBottomSheet = MutableStateFlow(false)
 	val shouldShowInitialBottomSheet: Flow<Boolean> = _shouldShowInitialBottomSheet
-
-	private val _hasCompletedOnboarding = MutableStateFlow(false)
-	val hasCompletedOnboarding: Flow<Boolean> = _hasCompletedOnboarding
-
 
 	fun getUserProfile(): Flow<UserData?> {
 		return _isDummyDataEnabled.flatMapLatest { isDummy ->
@@ -63,7 +61,6 @@ class CalorieRepository @Inject constructor(
 
 	suspend fun checkAndInitializeOnboardingState() {
 		val userExists = isUserCreated()
-		_hasCompletedOnboarding.value = userExists
 		_shouldShowInitialBottomSheet.value = !userExists
 	}
 
@@ -72,7 +69,6 @@ class CalorieRepository @Inject constructor(
 	}
 
 	fun markOnboardingComplete() {
-		_hasCompletedOnboarding.value = true
 		_shouldShowInitialBottomSheet.value = false
 	}
 
@@ -197,24 +193,20 @@ class CalorieRepository @Inject constructor(
 		}
 	}
 
-	suspend fun savePicture(imagePath: String): String {
+	fun savePicture(imagePath: String): String {
 		if (_isDummyDataEnabled.value) {
 			return "dummy_picture_id"
 		}
 		return imagePath
 	}
 
-	suspend fun getPicture(pictureId: String): String? {
+	fun getPicture(pictureId: String): String? {
 		if (_isDummyDataEnabled.value || pictureId.endsWith("_placeholder")) {
 			val imageName = pictureId.replace("_placeholder", "")
 			return "android.resource://com.ralvin.pencatatankalori/assets/PlaceholderImage/$imageName.jpg"
 		}
 		return pictureId
 	}
-
-	suspend fun deletePicture(pictureId: String) {
-	}
-
 
 	fun getTodayActivities(): Flow<List<ActivityLog>> {
 		return _isDummyDataEnabled.flatMapLatest { isDummy ->
@@ -249,58 +241,6 @@ class CalorieRepository @Inject constructor(
 					user?.let { dailyDataDao.getTodayDailyDataFlow(it.id) } ?: flowOf(null)
 				}
 			}
-		}
-	}
-
-	suspend fun getTodayCaloriesConsumed(): Int {
-		return if (_isDummyDataEnabled.value) {
-			getActivitiesForDate(Date())
-				.filter { it.type == ActivityType.CONSUMPTION }
-				.sumOf { it.calories ?: 0 }
-		} else {
-			val user = getUserProfileOnce() ?: return 0
-			activityLogDao.getTodayCaloriesConsumedNew(user.id, ActivityType.CONSUMPTION)
-		}
-	}
-
-	suspend fun getTodayCaloriesBurned(): Int {
-		return if (_isDummyDataEnabled.value) {
-			getActivitiesForDate(Date())
-				.filter { it.type == ActivityType.WORKOUT }
-				.sumOf { it.calories ?: 0 }
-		} else {
-			val user = getUserProfileOnce() ?: return 0
-			activityLogDao.getTodayCaloriesBurnedNew(user.id, ActivityType.WORKOUT)
-		}
-	}
-
-
-	// ========================
-	// ========================
-
-	suspend fun getActivitiesForDate(date: Date): List<ActivityLog> {
-		return if (_isDummyDataEnabled.value) {
-			createDummyActivities().filter { activity ->
-				val activityCalendar = Calendar.getInstance().apply { time = activity.timestamp }
-				val targetCalendar = Calendar.getInstance().apply { time = date }
-
-				activityCalendar.get(Calendar.YEAR) == targetCalendar.get(Calendar.YEAR) &&
-						activityCalendar.get(Calendar.DAY_OF_YEAR) == targetCalendar.get(Calendar.DAY_OF_YEAR)
-			}
-		} else {
-			val user = getUserProfileOnce() ?: return emptyList()
-			activityLogDao.getActivitiesForDateNew(user.id, date)
-		}
-	}
-
-	suspend fun getActivitiesForPeriod(startDate: Date, endDate: Date): List<ActivityLog> {
-		return if (_isDummyDataEnabled.value) {
-			createDummyActivities().filter { activity ->
-				activity.timestamp.time >= startDate.time && activity.timestamp.time <= endDate.time
-			}
-		} else {
-			val user = getUserProfileOnce() ?: return emptyList()
-			activityLogDao.getActivitiesForPeriodNew(user.id, startDate, endDate)
 		}
 	}
 
@@ -377,17 +317,15 @@ class CalorieRepository @Inject constructor(
 		)
 
 		val existingData = dailyDataDao.getTodayDailyData(user.id)
-		val updatedData = if (existingData != null) {
-			existingData.copy(
-				tdee = newTdee,
-				granularityValue = granularityValue,
-				goalType = user.goalType,
-				weight = user.weight,
-				height = user.height,
-				activityLevel = user.activityLevel
-			)
-		} else {
-			DailyData(
+		val updatedData = existingData?.copy(
+			tdee = newTdee,
+			granularityValue = granularityValue,
+			goalType = user.goalType,
+			weight = user.weight,
+			height = user.height,
+			activityLevel = user.activityLevel
+		)
+			?: DailyData(
 				userId = user.id,
 				date = Date(),
 				tdee = newTdee,
@@ -398,7 +336,6 @@ class CalorieRepository @Inject constructor(
 				height = user.height,
 				activityLevel = user.activityLevel
 			)
-		}
 
 		if (existingData != null) {
 			dailyDataDao.updateDailyData(updatedData)
@@ -550,7 +487,7 @@ class CalorieRepository @Inject constructor(
 							timestamp = calendar.time,
 							name = name,
 							calories = calories,
-							notes = "Duration: ${duration} minutes",
+							notes = "Duration: $duration minutes",
 							pictureId = workoutImageId
 						)
 					)
@@ -561,29 +498,12 @@ class CalorieRepository @Inject constructor(
 		return activities.sortedByDescending { it.timestamp }
 	}
 
-	suspend fun getDailyDataByUserId(userId: String): List<DailyData> {
-		return if (_isDummyDataEnabled.value) {
-			emptyList()
-		} else {
-			dailyDataDao.getDailyDataByUserId(userId).first()
-		}
-	}
-
 	suspend fun getDailyDataForDateRange(startDate: Date, endDate: Date): List<DailyData> {
 		return if (_isDummyDataEnabled.value) {
 			emptyList()
 		} else {
 			val user = getUserProfileOnce() ?: return emptyList()
 			dailyDataDao.getDailyDataForDateRange(user.id, startDate, endDate)
-		}
-	}
-
-	suspend fun getDailyDataForDate(date: Date): DailyData? {
-		return if (_isDummyDataEnabled.value) {
-			null
-		} else {
-			val user = getUserProfileOnce() ?: return null
-			dailyDataDao.getDailyDataForDate(user.id, date)
 		}
 	}
 
@@ -664,13 +584,5 @@ class CalorieRepository @Inject constructor(
 		val user = getUserProfileOnce() ?: return null
 
 		return user.weight
-	}
-
-	suspend fun clearAllData() {
-		if (_isDummyDataEnabled.value) return
-
-		val user = getUserProfileOnce() ?: return
-
-		userDataDao.deleteUserData(user)
 	}
 }

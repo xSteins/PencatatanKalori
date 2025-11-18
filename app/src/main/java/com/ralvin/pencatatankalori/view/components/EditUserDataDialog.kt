@@ -1,5 +1,6 @@
 package com.ralvin.pencatatankalori.view.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -56,6 +58,7 @@ enum class EditUserDataType {
 	GOAL
 }
 
+@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditUserDataDialog(
@@ -65,26 +68,24 @@ fun EditUserDataDialog(
 	onSave: (String) -> Unit
 ) {
 	val titleText = when (editType) {
-		EditUserDataType.WEIGHT -> "Edit Weight"
-		EditUserDataType.HEIGHT -> "Edit Height"
-		EditUserDataType.AGE -> "Edit Age"
-		EditUserDataType.GENDER -> "Edit Gender"
-		EditUserDataType.ACTIVE_LEVEL -> "Edit Active Level"
-		EditUserDataType.GOAL -> "Edit Goal"
+		EditUserDataType.WEIGHT -> "Update Berat Badan"
+		EditUserDataType.HEIGHT -> "Update Tinggi Badan"
+		EditUserDataType.AGE -> "Update Usia"
+		EditUserDataType.GENDER -> "Update Jenis Kelamin"
+		EditUserDataType.ACTIVE_LEVEL -> "Update Tingkat Keaktifan"
+		EditUserDataType.GOAL -> "Ubah Tujuan Pencatatan"
 	}
 
 	var textFieldValue by remember { mutableStateOf(currentValue) }
 	var selectedGender by remember { mutableStateOf(if (editType == EditUserDataType.GENDER) currentValue else "Male") }
 	var selectedActivityLevel by remember {
 		mutableStateOf(
-			if (editType == EditUserDataType.ACTIVE_LEVEL) ActivityLevel.values()
-				.find { it.getDisplayName() == currentValue } else null)
+			if (editType == EditUserDataType.ACTIVE_LEVEL) ActivityLevel.entries.find { it.getDisplayName() == currentValue } else null)
 	}
 	var expandedActivityLevel by remember { mutableStateOf(false) }
 	var selectedGoalType by remember {
 		mutableStateOf(
-			if (editType == EditUserDataType.GOAL) GoalType.values()
-				.find { it.getDisplayName() == currentValue } else null)
+			if (editType == EditUserDataType.GOAL) GoalType.entries.find { it.getDisplayName() == currentValue } else null)
 	}
 	var expandedGoalType by remember { mutableStateOf(false) }
 	var showError by remember { mutableStateOf(false) }
@@ -95,8 +96,8 @@ fun EditUserDataDialog(
 		Card(
 			modifier = Modifier
 				.fillMaxWidth()
-				.widthIn(min = 320.dp)
-				.padding(16.dp),
+				.widthIn(min = 340.dp)
+				.padding(8.dp),
 			shape = MaterialTheme.shapes.large
 		) {
 			Column(
@@ -209,7 +210,7 @@ fun EditUserDataDialog(
 										if (newValue <= maxValue) {
 											textFieldValue =
 												if (editType == EditUserDataType.AGE) newValue.toInt()
-													.toString() else String.format("%.1f", newValue)
+													.toString() else  String.format("%.1f", newValue)
 										}
 									},
 									modifier = Modifier
@@ -275,7 +276,7 @@ fun EditUserDataDialog(
 											expanded = expandedActivityLevel
 										)
 									},
-									modifier = Modifier.menuAnchor(),
+									modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, enabled = true),
 									singleLine = true,
 									isError = showError && selectedActivityLevel == null
 								)
@@ -283,7 +284,7 @@ fun EditUserDataDialog(
 									expanded = expandedActivityLevel,
 									onDismissRequest = { expandedActivityLevel = false }
 								) {
-									ActivityLevel.values().forEach { level ->
+									ActivityLevel.entries.forEach { level ->
 										DropdownMenuItem(
 											text = {
 												Column(modifier = Modifier.fillMaxWidth()) {
@@ -338,7 +339,7 @@ fun EditUserDataDialog(
 											expanded = expandedGoalType
 										)
 									},
-									modifier = Modifier.menuAnchor(),
+									modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, enabled = true),
 									singleLine = true,
 									isError = showError && selectedGoalType == null
 								)
@@ -346,7 +347,7 @@ fun EditUserDataDialog(
 									expanded = expandedGoalType,
 									onDismissRequest = { expandedGoalType = false },
 								) {
-									GoalType.values().forEach { goal ->
+									GoalType.entries.forEach { goal ->
 										DropdownMenuItem(
 											text = {
 												Column(modifier = Modifier.fillMaxWidth()) {

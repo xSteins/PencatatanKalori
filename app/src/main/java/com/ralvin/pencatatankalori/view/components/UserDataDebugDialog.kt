@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,45 +59,30 @@ fun UserDataDebugDialog(
 					.fillMaxSize()
 			) {
 				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.SpaceBetween,
-					verticalAlignment = Alignment.CenterVertically
+					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
-					Text(
-						text = "Table",
-						style = MaterialTheme.typography.titleMedium,
-						fontWeight = FontWeight.Bold
-					)
-
-					Row(
-						horizontalArrangement = Arrangement.spacedBy(8.dp)
+					TextButton(
+						onClick = { showClearConfirmation = true },
+						modifier = Modifier.widthIn(min = 80.dp)
 					) {
-						TextButton(
-							onClick = { showClearConfirmation = true },
-							modifier = Modifier.widthIn(min = 80.dp)
-						) {
-							Text(
-								"Clear all data",
-								color = MaterialTheme.colorScheme.error
-							)
-						}
-						TextButton(
-							onClick = { viewModel.refreshData() },
-							modifier = Modifier.widthIn(min = 80.dp)
+						Text(
+							"Reset Data",
+							color = MaterialTheme.colorScheme.error
+						)
+					}
+					TextButton(
+						onClick = { viewModel.refreshData() },
+						modifier = Modifier.widthIn(min = 80.dp)
 						) {
 							Text("Refresh")
 						}
-						TextButton(
-							onClick = onDismiss,
-							modifier = Modifier.widthIn(min = 80.dp)
-						) {
-							Text("Close")
+					TextButton(
+						onClick = onDismiss,
+						modifier = Modifier.widthIn(min = 80.dp)
+					) {
+						Text("Close")
 						}
 					}
-				}
-
-				Spacer(modifier = Modifier.height(16.dp))
-
 				when (val currentState = uiState) {
 					is UserDataDebugUiState.Loading -> {
 						Box(
@@ -260,8 +245,8 @@ private fun DebugDataContent(
 						}"
 					)
 
-					activity.name?.let { Text("Name: $it") }
-					activity.calories?.let { Text("Calories: $it") }
+					Text("Name: ${activity.name}")
+					Text("Calories: ${activity.calories}")
 					activity.notes?.let { Text("Notes: $it") }
 					activity.pictureId?.let { Text("Picture ID: $it") }
 				}

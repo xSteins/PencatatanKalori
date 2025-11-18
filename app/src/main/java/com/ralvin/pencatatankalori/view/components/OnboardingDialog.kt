@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -236,7 +237,7 @@ fun OnboardingScreenContent(
 				label = { Text("Tingkat Keaktifan") },
 				trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedActivityLevel) },
 				modifier = Modifier
-					.menuAnchor()
+					.menuAnchor(MenuAnchorType.PrimaryEditable, enabled = true)
 					.fillMaxWidth(),
 				singleLine = false,
 				isError = hasAttemptedSave && !isActivityLevelValid,
@@ -250,7 +251,7 @@ fun OnboardingScreenContent(
 				expanded = expandedActivityLevel,
 				onDismissRequest = { expandedActivityLevel = false }
 			) {
-				ActivityLevel.values().forEach { level ->
+				ActivityLevel.entries.forEach { level ->
 					DropdownMenuItem(
 						text = {
 							Column {
@@ -274,7 +275,7 @@ fun OnboardingScreenContent(
 		Spacer(modifier = Modifier.height(16.dp))
 
 		Text("Goal", style = MaterialTheme.typography.bodyMedium)
-		GoalType.values().forEach { goal ->
+		GoalType.entries.forEach { goal ->
 			Row(
 				modifier = Modifier.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically

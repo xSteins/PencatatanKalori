@@ -119,21 +119,18 @@ fun AddOrEditLogModal(
 		contract = ActivityResultContracts.GetContent()
 	) { uri: Uri? ->
 		uri?.let {
-			try {
-				val inputStream = context.contentResolver.openInputStream(uri)
-				val fileName = "${UUID.randomUUID()}.jpg"
-				val storageDir = File(context.filesDir, "StoredImage")
-				if (!storageDir.exists()) {
-					storageDir.mkdirs()
-				}
-				val file = File(storageDir, fileName)
-				val outputStream = FileOutputStream(file)
-				inputStream?.copyTo(outputStream)
-				inputStream?.close()
-				outputStream.close()
-				selectedImagePath = file.absolutePath
-			} catch (e: Exception) {
+			val inputStream = context.contentResolver.openInputStream(uri)
+			val fileName = "${UUID.randomUUID()}.jpg"
+			val storageDir = File(context.filesDir, "StoredImage")
+			if (!storageDir.exists()) {
+				storageDir.mkdirs()
 			}
+			val file = File(storageDir, fileName)
+			val outputStream = FileOutputStream(file)
+			inputStream?.copyTo(outputStream)
+			inputStream?.close()
+			outputStream.close()
+			selectedImagePath = file.absolutePath
 		}
 	}
 

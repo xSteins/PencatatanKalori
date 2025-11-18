@@ -32,6 +32,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,6 +53,7 @@ import com.ralvin.pencatatankalori.view.components.HistoryDatePicker
 import com.ralvin.pencatatankalori.view.components.LogItem
 import com.ralvin.pencatatankalori.view.components.LogType
 import com.ralvin.pencatatankalori.view.components.LogsDetailedModal
+import com.ralvin.pencatatankalori.view.components.Tooltip
 import com.ralvin.pencatatankalori.viewmodel.HistoryUiState
 import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
@@ -77,26 +79,24 @@ fun ActivityLog.toLogItem(): LogItem {
 			ActivityType.CONSUMPTION -> LogType.FOOD
 			ActivityType.WORKOUT -> LogType.WORKOUT
 		},
-		calories = this.calories ?: 0,
-		name = this.name ?: when (this.type) {
-			ActivityType.CONSUMPTION -> "Unknown Food"
-			ActivityType.WORKOUT -> "Unknown Workout"
-		},
+		calories = this.calories,
+		name = this.name,
 		details = when (this.type) {
 			ActivityType.CONSUMPTION -> {
-				val caloriesStr = "${this.calories ?: 0} Calories"
+				val caloriesStr = "${this.calories} kal."
 				val notesStr = this.notes?.let { " | $it" } ?: ""
 				"$caloriesStr$notesStr"
 			}
 
 			ActivityType.WORKOUT -> {
-				val caloriesStr = "${this.calories ?: 0} Calories"
+				val caloriesStr = "${this.calories} kal."
 				val notesStr = this.notes?.let { " | $it" } ?: ""
 				"$caloriesStr$notesStr"
 			}
 		},
 		pictureId = this.pictureId,
-		activityId = this.id
+		activityId = this.id,
+		notes = this.notes
 	)
 }
 
@@ -161,13 +161,14 @@ fun History(
 	}
 
 	var showModal by remember { mutableStateOf(false) }
-	var selectedDayIdx by remember { mutableStateOf(0) }
+	var selectedDayIdx by remember { mutableIntStateOf(0) }
 	var showDatePicker by remember { mutableStateOf(false) }
 	var showAddModal by remember { mutableStateOf(false) }
 	var addModalType by remember { mutableStateOf(LogType.FOOD) }
 	var showCreateModal by remember { mutableStateOf(false) }
 	var createModalType by remember { mutableStateOf(LogType.FOOD) }
-
+	var showTooltip by remember { mutableStateOf(false) }
+	val hasUserProfile = userProfile != null
 	Scaffold(
 		topBar = {
 			TopAppBar(
@@ -187,15 +188,24 @@ fun History(
 					}
 				},
 				actions = {
-					IconButton(onClick = { showDatePicker = true }) {
-						Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
+					Box {
+						IconButton(
+							onClick = {
+								if (hasUserProfile) {
+									showDatePicker = true
+								} else {
+									showTooltip = true
+								}
+							}
+						) {
+							Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
+						}
 					}
 				},
 				windowInsets = WindowInsets(0)
 			)
 		},
 		floatingActionButton = {
-			val hasUserProfile = userProfile != null
 			ExpandableFAB(
 				onFoodClick = {
 					createModalType = LogType.FOOD
@@ -247,24 +257,33 @@ fun History(
 						)
 					}
 
+					if (showTooltip) {
+						Tooltip(
+							message = "Mohon lakukan proses onboarding dengan pindah ke menu \"Profile\" -> Onboarding Screen",
+							onDismiss = { showTooltip = false }
+						)
+					}
+
 					if (dayEntries.isEmpty()) {
 						Box(
-							modifier = Modifier.fillMaxSize(),
+							modifier = Modifier
+								.fillMaxSize()
+								.padding(horizontal = 48.dp),
 							contentAlignment = Alignment.Center
 						) {
 							Column(
-								horizontalAlignment = Alignment.CenterHorizontally,
+								horizontalAlignment = Alignment.Start,
 								verticalArrangement = Arrangement.Center
 							) {
 								Text(
-									text = "Belum ada riwayat pencatatan.\nTambahkan catatan kalori anda. ",
+									text = "Belum ada riwayat pencatatan,\ntambah catatan kalori anda. ",
 									style = MaterialTheme.typography.titleMedium,
 									color = MaterialTheme.colorScheme.onSurfaceVariant
 								)
 								Spacer(modifier = Modifier.height(8.dp))
 								Text(
-									text = "Anda bisa menambahkan data secara manual untuk tanggal tertentu melalui menu 'Tambah Data Manual' \n" +
-											"\n Secara otomatis data yang ditampilkan adalah hari ini hingga 6 hari yang lalu.",
+									text = "Anda bisa menambahkan data untuk tanggal tertentu melalui menu \"Tambah Data Manual\".\n" +
+											"\nSecara otomatis data yang ditampilkan adalah hari ini hingga 6 hari yang lalu.",
 									style = MaterialTheme.typography.bodyMedium,
 									color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
 								)
@@ -287,22 +306,19 @@ fun History(
 								val goalMet = when (goalType) {
 									GoalType.LOSE_WEIGHT -> dayData.caloriesConsumed <= dayData.tdee
 									GoalType.GAIN_WEIGHT -> dayData.caloriesConsumed >= dayData.tdee
-									else -> dayData.caloriesConsumed == dayData.tdee
 								}
 
 								// New UI formatting
 								val consumedText = when (goalType) {
 									GoalType.LOSE_WEIGHT -> {
-										if (difference > 0) "Surplus ${absDifference} kalori"
-										else "Defisit ${absDifference} kalori"
+										if (difference > 0) "Surplus $absDifference kalori"
+										else "Defisit $absDifference kalori"
 									}
 
 									GoalType.GAIN_WEIGHT -> {
-										if (difference > 0) "Surplus ${absDifference} kalori"
-										else "Defisit ${absDifference} kalori"
+										if (difference > 0) "Surplus absDifference kalori"
+										else "Defisit $absDifference kalori"
 									}
-
-									else -> "Kalori Dikonsumsi: ${dayData.caloriesConsumed}"
 								}
 
 								val heightText = dayData.height?.let { "$it" } ?: "-"

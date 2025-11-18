@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ralvin.pencatatankalori.model.formula.ActivityLevel
+import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
 import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
 
@@ -58,7 +60,8 @@ data class LogItem(
 	val name: String,
 	val details: String,
 	val pictureId: String? = null,
-	val activityId: String? = null
+	val activityId: String? = null,
+	val notes: String? = null
 )
 
 enum class LogType {
@@ -334,7 +337,7 @@ fun LogsDetailedModal(
 				type = editLog!!.type,
 				initialName = editLog!!.name,
 				initialCalories = editLog!!.calories.toString(),
-				initialNotes = "",
+				initialNotes = editLog!!.notes ?: "",
 				initialImagePath = initialImagePath,
 				isEditMode = true,
 				onSubmit = { name, calories, notes, imagePath ->
@@ -400,14 +403,11 @@ fun LogsDetailedModal(
 							}
 						}
 						EditUserDataType.ACTIVE_LEVEL -> {
-							val activityLevel = com.ralvin.pencatatankalori.model.formula.ActivityLevel.values()
-								.find { it.getDisplayName() == newValue }
+							val activityLevel = ActivityLevel.entries.find { it.getDisplayName() == newValue }
 							activityLevel?.let { profileViewModel.updateActivityLevel(it) }
 						}
 						EditUserDataType.GOAL -> {
-							// Parse goal type from display name
-							val goalType = com.ralvin.pencatatankalori.model.formula.GoalType.values()
-								.find { it.getDisplayName() == newValue }
+							val goalType = GoalType.entries.find { it.getDisplayName() == newValue }
 							goalType?.let { profileViewModel.updateGoalType(it) }
 						}
 						else -> {}

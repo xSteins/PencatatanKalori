@@ -12,19 +12,6 @@ import androidx.compose.ui.unit.dp
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
 
-/**
- * Independent composable that displays physical information (weight, height, goal type)
- * with clickable items that trigger callbacks for editing.
- *
- * @param weight Current weight in kg (nullable)
- * @param activityLevel Current activity level (nullable)
- * @param goalType Current goal type
- * @param onEditWeight Callback when weight is clicked
- * @param onEditActiveLevel Callback when activity level is clicked
- * @param onEditGoal Callback when goal is clicked
- * @param enabled Whether the items are editable (affects color and underline)
- * @param modifier Modifier for styling
- */
 @Composable
 fun PhysicalInfoText(
 	weight: Float?,
@@ -33,8 +20,7 @@ fun PhysicalInfoText(
 	onEditWeight: () -> Unit = {},
 	onEditActiveLevel: () -> Unit = {},
 	onEditGoal: () -> Unit = {},
-	enabled: Boolean = true,
-	modifier: Modifier = Modifier
+	enabled: Boolean = true
 ) {
 	val textColor = if (enabled) {
 		MaterialTheme.colorScheme.primary
@@ -44,7 +30,6 @@ fun PhysicalInfoText(
 	val textDecoration = if (enabled) TextDecoration.Underline else TextDecoration.None
 
 	Row(
-		modifier = modifier,
 		horizontalArrangement = Arrangement.spacedBy(4.dp)
 	) {
 		activityLevel?.let {
