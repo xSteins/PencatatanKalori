@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.Onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -83,10 +83,12 @@ fun OnboardingScreenContent(
 	var expandedActivityLevel by remember { mutableStateOf(false) }
 	var hasAttemptedSave by remember { mutableStateOf(false) }
 
-	val uiState by onboardingViewModel.uiState.collectAsStateWithLifecycle()
+	val isLoading by onboardingViewModel.isLoading.collectAsStateWithLifecycle()
+	val isCompleted by onboardingViewModel.isCompleted.collectAsStateWithLifecycle()
+	val errorMessage by onboardingViewModel.errorMessage.collectAsStateWithLifecycle()
 
-	LaunchedEffect(uiState) {
-		if (uiState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Success) {
+	LaunchedEffect(isCompleted) {
+		if (isCompleted) {
 			onDismiss()
 		}
 	}
@@ -304,11 +306,10 @@ fun OnboardingScreenContent(
 			)
 		}
 
-		val currentUiState = uiState
-		if (currentUiState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Error) {
+		errorMessage?.let { message ->
 			Spacer(modifier = Modifier.height(8.dp))
 			Text(
-				text = currentUiState.message,
+				text = message,
 				color = MaterialTheme.colorScheme.error,
 				style = MaterialTheme.typography.bodySmall
 			)
@@ -326,9 +327,9 @@ fun OnboardingScreenContent(
 			Spacer(modifier = Modifier.width(8.dp))
 			Button(
 				onClick = { handleSave() },
-				enabled = (!hasAttemptedSave || isValid) && currentUiState !is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Loading
+				enabled = (!hasAttemptedSave || isValid) && !isLoading
 			) {
-				if (currentUiState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Loading) {
+				if (isLoading) {
 					CircularProgressIndicator(modifier = Modifier.size(16.dp))
 				} else {
 					Text("Save")

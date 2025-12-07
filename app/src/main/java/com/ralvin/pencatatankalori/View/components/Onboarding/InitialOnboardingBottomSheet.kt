@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.Onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -53,7 +53,7 @@ fun InitialOnboardingBottomSheet(
 			)
 
 			Text(
-				text = "Anda bisa melakukan tahapan ini secara manual melalui menu \"Profile → Onboarding Screen\"",
+				text = "Anda bisa melakukan tahapan ini secara manual melalui menu \"Profile -> Onboarding Screen\"",
 				style = MaterialTheme.typography.bodySmall,
 				color = MaterialTheme.colorScheme.onSurfaceVariant,
 				modifier = Modifier.padding(bottom = 24.dp)

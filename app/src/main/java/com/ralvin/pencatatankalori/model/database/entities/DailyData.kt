@@ -31,6 +31,5 @@ data class DailyData(
 	@ColumnInfo(name = "total_calories_consumption") val totalCaloriesConsumption: Int = 0,
 	@ColumnInfo(name = "goal_type") val goalType: GoalType,
 	@ColumnInfo(name = "weight") val weight: Float? = null,
-	@ColumnInfo(name = "height") val height: Float? = null,
 	@ColumnInfo(name = "activity_level") val activityLevel: ActivityLevel? = null
 )

@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.HistoryScreen
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult

@@ -1,34 +1,20 @@
 package com.ralvin.pencatatankalori.view.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,31 +25,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.model.formula.GoalType
-import com.ralvin.pencatatankalori.view.components.AddActivityButtons
+import com.ralvin.pencatatankalori.view.components.OverviewScreen.ActivityItemList
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.AddActivityButtons
 import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
-import com.ralvin.pencatatankalori.view.components.EditUserDataDialog
-import com.ralvin.pencatatankalori.view.components.EditUserDataType
-import com.ralvin.pencatatankalori.view.components.LogType
+import com.ralvin.pencatatankalori.view.components.OverviewScreen.BmiCard
+import com.ralvin.pencatatankalori.view.components.OverviewScreen.CalorieInfoRow
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogType
 import com.ralvin.pencatatankalori.view.components.Tooltip
 import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -77,7 +56,6 @@ fun OverviewScreen(
 	var editData by remember { mutableStateOf<ActivityLog?>(null) }
 
 	val overviewData by viewModel.overviewData.collectAsStateWithLifecycle()
-	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
 	val currentDate = SimpleDateFormat("EEEE, dd MMMM", Locale.getDefault()).format(Date())
 
@@ -117,41 +95,6 @@ fun OverviewScreen(
 		bmiValue < 25 -> Color(0xFF4CAF50)
 		bmiValue < 30 -> Color(0xFFFF9800)
 		else -> Color(0xFFF44336)
-	}
-	val currentUiState = uiState
-	when (currentUiState) {
-		is com.ralvin.pencatatankalori.viewmodel.OverviewUiState.Loading -> {
-			Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-				CircularProgressIndicator()
-			}
-			return
-		}
-
-		/* TODO: Add retry logic */
-		is com.ralvin.pencatatankalori.viewmodel.OverviewUiState.Error -> {
-			Column(
-				modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-				verticalArrangement = Arrangement.Center,
-				horizontalAlignment = Alignment.CenterHorizontally
-			) {
-				Text(
-					text = "Error: ${currentUiState.message}",
-					color = MaterialTheme.colorScheme.error,
-					style = MaterialTheme.typography.bodyLarge
-				)
-				Button(
-					onClick = {  },
-					modifier = Modifier.padding(top = 16.dp)
-				) {
-					Text("Retry")
-				}
-			}
-			return
-		}
-		else -> {
-		}
 	}
 
 	Column(
@@ -357,7 +300,7 @@ fun OverviewScreen(
                     .weight(1f)
 			) {
 				items(activities) { activity ->
-					ActivityItemFromDB(
+					ActivityItemList(
 						activity = activity,
 						onClick = { clickedActivity ->
 							modalType =
@@ -481,255 +424,8 @@ fun OverviewScreen(
 			)
 		}
 	}
-
 }
 
-@Composable
-fun CalorieInfoRow(
-	label: String,
-	value: Int,
-	progressBarColor: Color,
-	target: Int? = null,
-	showTargetInValue: Boolean = true,
-	onClick: (() -> Unit)? = null
-) {
-	Column(
-		modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
-	) {
-		Row(
-			verticalAlignment = Alignment.CenterVertically,
-			modifier = Modifier.fillMaxWidth()
-		) {
-			Text(
-				text = if (showTargetInValue && target != null && target > 0) "$value / $target" else "$value",
-				style = MaterialTheme.typography.headlineMedium,
-				fontWeight = FontWeight.Bold
-			)
-			Spacer(modifier = Modifier.width(8.dp))
-			Text(
-				text = label,
-				style = MaterialTheme.typography.bodyLarge
-			)
-			if (onClick != null) {
-				Spacer(modifier = Modifier.width(4.dp))
-				Icon(
-					imageVector = Icons.Default.Info,
-					contentDescription = "Info",
-					modifier = Modifier.size(20.dp),
-					tint = MaterialTheme.colorScheme.primary
-				)
-			}
-		}
-		LinearProgressIndicator(
-			progress = {
-				when {
-					target != null && target > 0 -> {
-						val clampedValue = value.coerceAtLeast(0)
-						minOf(1.0f, clampedValue.toFloat() / target.toFloat())
-					}
-
-					value > 0 -> minOf(
-						1.0f,
-						value.toFloat() / 2000f // set 2000 karena weird behavior kalau pakai dynamic value
-					)
-					else -> 0.0f
-				}
-			},
-			modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp),
-			color = progressBarColor,
-			trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-		)
-	}
-}
-
-@Composable
-fun BmiCard(
-	bmiValue: Float,
-	bmiStatus: String,
-	statusColor: Color,
-	onWeightUpdate: (Float) -> Unit = {},
-	currentWeight: Float? = null,
-	enabled: Boolean = true,
-	tooltipMessage: String? = null
-) {
-	var showWeightDialog by remember { mutableStateOf(false) }
-	var showTooltip by remember { mutableStateOf(false) }
-
-	Card(
-		modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-				if (enabled) {
-					showWeightDialog = true
-				} else if (tooltipMessage != null) {
-					showTooltip = true
-				}
-			}
-	) {
-		Row(
-			modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-			verticalAlignment = Alignment.CenterVertically
-		) {
-			Box(
-				contentAlignment = Alignment.Center,
-				modifier = Modifier.size(100.dp)
-			) {
-				CircularProgressIndicator(
-					progress = { bmiValue / 40f },
-					modifier = Modifier.fillMaxSize(),
-					color = statusColor,
-					strokeWidth = 8.dp,
-					trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-				)
-				Text(
-					text = "%.1f".format(bmiValue),
-					style = MaterialTheme.typography.headlineSmall,
-					fontWeight = FontWeight.Bold
-				)
-			}
-
-			Spacer(modifier = Modifier.width(16.dp))
-
-			Column(modifier = Modifier.weight(1f)) {
-				Text(
-					text = "Indeks Massa Tubuh",
-					style = MaterialTheme.typography.titleMedium,
-					fontWeight = FontWeight.Bold
-				)
-				Spacer(modifier = Modifier.height(4.dp))
-				Text(
-					text = bmiStatus,
-					style = MaterialTheme.typography.bodyMedium,
-					color = statusColor,
-					fontWeight = FontWeight.Medium
-				)
-				Spacer(modifier = Modifier.height(1.dp))
-				Text(
-					text = "Klik untuk update berat badan",
-					style = MaterialTheme.typography.labelLarge,
-					color = MaterialTheme.colorScheme.primary,
-				)
-			}
-		}
-	}
-
-	if (showWeightDialog) {
-		EditUserDataDialog(
-			editType = EditUserDataType.WEIGHT,
-			currentValue = currentWeight?.toString() ?: "",
-			onDismiss = { showWeightDialog = false },
-			onSave = { newValue ->
-				newValue.toFloatOrNull()?.let { weight ->
-					onWeightUpdate(weight)
-				}
-				showWeightDialog = false
-			}
-		)
-	}
-
-	if (showTooltip && tooltipMessage != null) {
-		Tooltip(
-			message = tooltipMessage,
-			onDismiss = { showTooltip = false }
-		)
-	}
-}
-
-private val WorkoutActivityColor = Color(0xFF7986CB)
-private val FoodActivityColor = Color(0xFF81C784)
-private val ActivityContentColor = Color.White
-
-@Composable
-fun ActivityItemFromDB(activity: ActivityLog, onClick: (ActivityLog) -> Unit) {
-	val isFood = activity.type == ActivityType.CONSUMPTION
-	val icon = if (isFood) Icons.Default.Restaurant else Icons.Default.FitnessCenter
-	val calories = activity.calories
-	val calorieText = "$calories Kalori"
-	val description = activity.name
-
-	val viewModel: OverviewViewModel = hiltViewModel()
-	var imagePath by remember(activity.pictureId) { mutableStateOf<String?>(null) }
-
-	LaunchedEffect(activity.pictureId) {
-		imagePath = null // fix: previous image will be shown here
-		activity.pictureId?.let { pictureId ->
-			viewModel.getPicture(pictureId) { path ->
-				imagePath = path
-			}
-		}
-	}
-
-	Card(
-		modifier = Modifier
-            .fillMaxHeight()
-            .aspectRatio(3f / 4f)
-            .clickable { onClick(activity) },
-		colors = CardDefaults.cardColors(
-			containerColor = if (isFood) FoodActivityColor else WorkoutActivityColor,
-			contentColor = ActivityContentColor
-		)
-	) {
-		Column(
-			modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.spacedBy(8.dp)
-		) {
-			Box(
-				contentAlignment = Alignment.Center,
-				modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-			) {
-				if (imagePath != null) {
-					val imageModel = if (imagePath!!.startsWith("android.resource://")) {
-						val assetPath = imagePath!!.substringAfter("assets/")
-						"file:///android_asset/$assetPath"
-					} else {
-						File(imagePath!!)
-					}
-
-					AsyncImage(
-						model = ImageRequest.Builder(LocalContext.current)
-							.data(imageModel)
-							.crossfade(true)
-							.build(),
-						contentDescription = description,
-						modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(8.dp)),
-						contentScale = ContentScale.Crop,
-						fallback = painterResource(android.R.drawable.ic_menu_gallery)
-					)
-				} else {
-					Icon(
-						imageVector = icon,
-						contentDescription = description,
-						modifier = Modifier.size(48.dp)
-					)
-				}
-			}
-			Text(
-				text = calorieText,
-				style = MaterialTheme.typography.labelMedium,
-				fontWeight = FontWeight.Bold
-			)
-			Text(
-				text = description,
-				style = MaterialTheme.typography.titleMedium,
-				maxLines = 1,
-				overflow = TextOverflow.Ellipsis
-			)
-		}
-	}
-}
 
 //@Preview(showBackground = true, showSystemUi = true)
 //@Composable

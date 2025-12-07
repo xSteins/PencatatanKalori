@@ -1,5 +1,6 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.HistoryScreen
 
+import android.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,7 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,10 +52,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
+import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
+import com.ralvin.pencatatankalori.view.components.EditUserDataDialog
+import com.ralvin.pencatatankalori.view.components.EditUserDataType
+import com.ralvin.pencatatankalori.view.components.Tooltip
+import com.ralvin.pencatatankalori.viewmodel.DayData
 import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
 import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
+import com.ralvin.pencatatankalori.viewmodel.ProfileViewModel
+import java.io.File
 
 data class LogItem(
 	val id: Int,
@@ -153,10 +166,10 @@ fun LogsDetailedModal(
 	logs: List<LogItem>,
 	onAddFood: () -> Unit = {},
 	onAddWorkout: () -> Unit = {},
-	dayData: com.ralvin.pencatatankalori.viewmodel.DayData? = null,
+	dayData: DayData? = null,
 	overviewViewModel: OverviewViewModel = hiltViewModel(),
 	historyViewModel: HistoryViewModel = hiltViewModel(),
-	profileViewModel: com.ralvin.pencatatankalori.viewmodel.ProfileViewModel = hiltViewModel()
+	profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
 	val configuration = LocalConfiguration.current
 	val screenHeight = configuration.screenHeightDp.dp
@@ -231,7 +244,8 @@ fun LogsDetailedModal(
 									onEditActiveLevel = {
 										if (data.isToday) {
 											currentEditType = EditUserDataType.ACTIVE_LEVEL
-											currentEditValue = data.activityLevel?.getDisplayName() ?: ""
+											currentEditValue =
+												data.activityLevel?.getDisplayName() ?: ""
 											showEditUserDataDialog = true
 										}
 									},
@@ -402,14 +416,18 @@ fun LogsDetailedModal(
 								profileViewModel.updateWeight(newWeight)
 							}
 						}
+
 						EditUserDataType.ACTIVE_LEVEL -> {
-							val activityLevel = ActivityLevel.entries.find { it.getDisplayName() == newValue }
+							val activityLevel =
+								ActivityLevel.entries.find { it.getDisplayName() == newValue }
 							activityLevel?.let { profileViewModel.updateActivityLevel(it) }
 						}
+
 						EditUserDataType.GOAL -> {
 							val goalType = GoalType.entries.find { it.getDisplayName() == newValue }
 							goalType?.let { profileViewModel.updateGoalType(it) }
 						}
+
 						else -> {}
 					}
 					showEditUserDataDialog = false
@@ -444,11 +462,11 @@ fun LogListItem(item: LogItem, onEdit: () -> Unit, viewModel: OverviewViewModel 
 				val assetPath = currentImagePath.substringAfter("assets/")
 				"file:///android_asset/$assetPath"
 			} else {
-				java.io.File(currentImagePath)
+				File(currentImagePath)
 			}
 
-			coil.compose.AsyncImage(
-				model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+			AsyncImage(
+				model = ImageRequest.Builder(LocalContext.current)
 					.data(imageModel)
 					.crossfade(true)
 					.build(),
@@ -456,8 +474,8 @@ fun LogListItem(item: LogItem, onEdit: () -> Unit, viewModel: OverviewViewModel 
 				modifier = Modifier
 					.size(60.dp)
 					.clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
-				contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-				fallback = androidx.compose.ui.res.painterResource(android.R.drawable.ic_menu_gallery)
+				contentScale = ContentScale.Crop,
+				fallback = painterResource(R.drawable.ic_menu_gallery)
 			)
 			Spacer(modifier = Modifier.width(12.dp))
 		}

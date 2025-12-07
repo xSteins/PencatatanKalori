@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.model.database.entities.UserData
 import com.ralvin.pencatatankalori.model.formula.MifflinModel
-import com.ralvin.pencatatankalori.model.repository.CalorieRepository
+import com.ralvin.pencatatankalori.model.CalorieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,9 +19,6 @@ import javax.inject.Inject
 class OverviewViewModel @Inject constructor(
 	private val repository: CalorieRepository
 ) : ViewModel() {
-
-	private val _uiState = MutableStateFlow<OverviewUiState>(OverviewUiState.Loading)
-	val uiState: StateFlow<OverviewUiState> = _uiState
 
 	val userProfile = repository.getUserProfile()
 		.stateIn(
@@ -92,23 +89,6 @@ class OverviewViewModel @Inject constructor(
 		initialValue = null
 	)
 
-	init {
-		viewModelScope.launch {
-			repository.loadCalorieSettingsFromDatabase()
-			_uiState.value = OverviewUiState.Success
-		}
-	}
-
-	fun updateUserWeight(newWeight: Float) {
-		viewModelScope.launch {
-			try {
-				repository.updateWeight(newWeight)
-			} catch (e: Exception) {
-				_uiState.value = OverviewUiState.Error(e.message ?: "Failed to update weight")
-			}
-		}
-	}
-
 	fun logActivity(
 		name: String,
 		calories: Int,
@@ -117,31 +97,19 @@ class OverviewViewModel @Inject constructor(
 		notes: String? = null
 	) {
 		viewModelScope.launch {
-			try {
-				repository.logActivity(name, calories, type, pictureId, notes)
-			} catch (e: Exception) {
-				_uiState.value = OverviewUiState.Error(e.message ?: "Failed to log activity")
-			}
+			repository.logActivity(name, calories, type, pictureId, notes)
 		}
 	}
 
 	fun updateActivity(activity: ActivityLog) {
 		viewModelScope.launch {
-			try {
-				repository.updateActivity(activity)
-			} catch (e: Exception) {
-				_uiState.value = OverviewUiState.Error(e.message ?: "Failed to update activity")
-			}
+			repository.updateActivity(activity)
 		}
 	}
 
 	fun deleteActivity(activityId: String) {
 		viewModelScope.launch {
-			try {
-				repository.deleteActivity(activityId)
-			} catch (e: Exception) {
-				_uiState.value = OverviewUiState.Error(e.message ?: "Failed to delete activity")
-			}
+			repository.deleteActivity(activityId)
 		}
 	}
 
@@ -177,9 +145,3 @@ data class OverviewData(
 	val todayActivities: List<ActivityLog>,
 	val dailyData: com.ralvin.pencatatankalori.model.database.entities.DailyData? = null
 )
-
-sealed class OverviewUiState {
-	object Loading : OverviewUiState()
-	object Success : OverviewUiState()
-	data class Error(val message: String) : OverviewUiState()
-}

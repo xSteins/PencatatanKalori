@@ -52,13 +52,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.model.formula.MifflinModel
-import com.ralvin.pencatatankalori.view.components.CalorieSettingsDialog
 import com.ralvin.pencatatankalori.view.components.EditUserDataDialog
 import com.ralvin.pencatatankalori.view.components.EditUserDataType
-import com.ralvin.pencatatankalori.view.components.InitialOnboardingBottomSheet
-import com.ralvin.pencatatankalori.view.components.OnboardingDialog
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.UserDataDebugDialog
+import com.ralvin.pencatatankalori.view.components.Onboarding.InitialOnboardingBottomSheet
+import com.ralvin.pencatatankalori.view.components.Onboarding.OnboardingDialog
+import com.ralvin.pencatatankalori.view.components.ProfileScreen.CalorieSettingsDialog
 import com.ralvin.pencatatankalori.view.components.Tooltip
-import com.ralvin.pencatatankalori.view.components.UserDataDebugDialog
 import com.ralvin.pencatatankalori.viewmodel.OnboardingViewModel
 import com.ralvin.pencatatankalori.viewmodel.ProfileViewModel
 
@@ -79,16 +79,14 @@ fun ProfileSettings(
 	var currentEditValue by remember { mutableStateOf("") }
 
 	val userProfile by profileViewModel.userProfile.collectAsStateWithLifecycle()
-	val onboardingUiState by onboardingViewModel.uiState.collectAsStateWithLifecycle()
+	val isOnboardingCompleted by onboardingViewModel.isCompleted.collectAsStateWithLifecycle()
 	val isDummyDataEnabled by profileViewModel.isDummyDataEnabled.collectAsStateWithLifecycle()
 	val todayDailyData by profileViewModel.todayDailyData.collectAsStateWithLifecycle()
 
-	LaunchedEffect(onboardingUiState, userProfile) {
-		val currentOnboardingState = onboardingUiState
-		val currentUserProfile = userProfile
-		if (currentOnboardingState is com.ralvin.pencatatankalori.viewmodel.OnboardingUiState.Success && currentUserProfile != null) {
+	LaunchedEffect(isOnboardingCompleted, userProfile) {
+		if (isOnboardingCompleted && userProfile != null) {
 			showOnboardingDialog = false
-			onboardingViewModel.resetUiState()
+			onboardingViewModel.resetState()
 			profileViewModel.markOnboardingComplete()
 		}
 	}

@@ -52,7 +52,7 @@ class UserDataDebugViewModel @Inject constructor(
 				val userData = userDataDao.getUserData().first()
 
 				val activityLogs = if (userData != null) {
-					activityLogDao.getActivitiesByUserId(userData.id).first()
+					activityLogDao.getAllActivitiesByUserId(userData.id).first()
 				} else {
 					emptyList()
 				}

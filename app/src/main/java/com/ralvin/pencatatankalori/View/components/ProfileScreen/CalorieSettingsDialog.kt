@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.ProfileScreen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -112,7 +112,6 @@ fun CalorieSettingsDialog(
 
 				Spacer(modifier = Modifier.height(16.dp))
 
-				// Action buttons
 				Row(
 					modifier = Modifier.fillMaxWidth(),
 					horizontalArrangement = Arrangement.End

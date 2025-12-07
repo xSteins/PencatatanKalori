@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.HistoryScreen
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -93,7 +93,7 @@ fun HistoryDatePicker(
 
 				Text(
 					text = "$startDateText - $endDateText",
-					style = MaterialTheme.typography.titleLarge,
+					style = MaterialTheme.typography.bodyLarge,
 					color = MaterialTheme.colorScheme.onSurfaceVariant,
 					modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
 				)

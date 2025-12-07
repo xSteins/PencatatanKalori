@@ -2,11 +2,11 @@ package com.ralvin.pencatatankalori.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ralvin.pencatatankalori.model.CalorieRepository
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.model.formula.MifflinModel
-import com.ralvin.pencatatankalori.model.repository.CalorieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,9 +21,6 @@ import javax.inject.Inject
 class HistoryViewModel @Inject constructor(
 	private val repository: CalorieRepository
 ) : ViewModel() {
-
-	private val _uiState = MutableStateFlow<HistoryUiState>(HistoryUiState.Loading)
-	val uiState: StateFlow<HistoryUiState> = _uiState
 
 	private val _dateRange = MutableStateFlow(getDefaultDateRange())
 	val dateRange: StateFlow<Pair<Date, Date>> = _dateRange
@@ -50,10 +47,7 @@ class HistoryViewModel @Inject constructor(
 		)
 
 	init {
-		_uiState.value = HistoryUiState.Success
 		loadDailyData()
-
-		// Reload daily data when user profile changes (to update today's data)
 		viewModelScope.launch {
 			userProfile.collect { profile ->
 				if (profile != null) {
@@ -66,7 +60,7 @@ class HistoryViewModel @Inject constructor(
 	private fun getDefaultDateRange(): Pair<Date, Date> {
 		val calendar = Calendar.getInstance()
 		val endDate = calendar.time
-		calendar.add(Calendar.DAY_OF_YEAR, -6) // 7 days including today
+		calendar.add(Calendar.DAY_OF_YEAR, -6) // pilih 6 hari sebelumnya + 1 (hari ini)
 		val startDate = calendar.time
 		return Pair(startDate, endDate)
 	}
@@ -78,15 +72,9 @@ class HistoryViewModel @Inject constructor(
 
 	private fun loadDailyData() {
 		viewModelScope.launch {
-			try {
-				_uiState.value = HistoryUiState.Loading
-				val (startDate, endDate) = _dateRange.value
-				val dailyData = repository.getDailyDataForDateRange(startDate, endDate)
-				_dailyDataList.value = dailyData
-				_uiState.value = HistoryUiState.Success
-			} catch (e: Exception) {
-				_uiState.value = HistoryUiState.Error(e.message ?: "Failed to load daily data")
-			}
+			val (startDate, endDate) = _dateRange.value
+			val dailyData = repository.getDailyDataForDateRange(startDate, endDate)
+			_dailyDataList.value = dailyData
 		}
 	}
 
@@ -133,7 +121,6 @@ class HistoryViewModel @Inject constructor(
 			val goalType = dailyData?.goalType ?: profile?.goalType
 			?: GoalType.LOSE_WEIGHT
 			val weight = dailyData?.weight ?: profile?.weight
-			val height = dailyData?.height ?: profile?.height
 			val activityLevel = dailyData?.activityLevel ?: profile?.activityLevel
 
 			// Check if this date is today
@@ -162,7 +149,6 @@ class HistoryViewModel @Inject constructor(
 					mealCount = mealCount,
 					workoutCount = workoutCount,
 					weight = weight,
-					height = height,
 					activityLevel = activityLevel,
 					isToday = isToday
 				)
@@ -197,8 +183,7 @@ class HistoryViewModel @Inject constructor(
 					caloriesConsumed = consumed,
 					caloriesBurned = burned
 				)
-
-			// Check if this date is today
+			// cek data kalendar
 			val todayCalendar = Calendar.getInstance()
 			val dateCalendar = Calendar.getInstance().apply { time = dailyDataItem.date }
 			val isToday = todayCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
@@ -215,7 +200,6 @@ class HistoryViewModel @Inject constructor(
 				mealCount = mealCount,
 				workoutCount = workoutCount,
 				weight = dailyDataItem.weight,
-				height = dailyDataItem.height,
 				activityLevel = dailyDataItem.activityLevel,
 				isToday = isToday
 			)
@@ -230,11 +214,7 @@ class HistoryViewModel @Inject constructor(
 		notes: String? = null
 	) {
 		viewModelScope.launch {
-			try {
-				repository.logActivity(name, calories, type, pictureId, notes)
-			} catch (e: Exception) {
-				_uiState.value = HistoryUiState.Error(e.message ?: "Failed to log activity")
-			}
+			repository.logActivity(name, calories, type, pictureId, notes)
 		}
 	}
 
@@ -248,19 +228,15 @@ class HistoryViewModel @Inject constructor(
 		notes: String? = null
 	) {
 		viewModelScope.launch {
-			try {
-				repository.logActivityForDailyData(
-					dailyDataId = dailyDataId,
-					targetDate = date,
-					name = name,
-					calories = calories,
-					type = type,
-					pictureId = pictureId,
-					notes = notes
-				)
-			} catch (e: Exception) {
-				_uiState.value = HistoryUiState.Error(e.message ?: "Failed to log activity")
-			}
+			repository.logActivityForDailyData(
+				dailyDataId = dailyDataId,
+				targetDate = date,
+				name = name,
+				calories = calories,
+				type = type,
+				pictureId = pictureId,
+				notes = notes
+			)
 		}
 	}
 
@@ -273,19 +249,15 @@ class HistoryViewModel @Inject constructor(
 		notes: String? = null
 	) {
 		viewModelScope.launch {
-			try {
-				repository.logActivityForDate(
-					date = date,
-					name = name,
-					calories = calories,
-					type = type,
-					pictureId = pictureId,
-					notes = notes
-				)
-				loadDailyData()
-			} catch (e: Exception) {
-				_uiState.value = HistoryUiState.Error(e.message ?: "Failed to log activity")
-			}
+			repository.logActivityForDate(
+				date = date,
+				name = name,
+				calories = calories,
+				type = type,
+				pictureId = pictureId,
+				notes = notes
+			)
+			loadDailyData()
 		}
 	}
 
@@ -308,47 +280,25 @@ class HistoryViewModel @Inject constructor(
 		pictureId: String?
 	) {
 		viewModelScope.launch {
-			try {
-				val existingActivity = allActivities.value.find { it.id == activityId }
-				if (existingActivity != null) {
-					val updatedActivity = existingActivity.copy(
-						name = name,
-						calories = calories,
-						notes = notes,
-						pictureId = pictureId
-					)
-					repository.updateActivity(updatedActivity)
-				}
-			} catch (e: Exception) {
-				_uiState.value = HistoryUiState.Error(e.message ?: "Failed to update activity")
+			val existingActivity = allActivities.value.find { it.id == activityId }
+			if (existingActivity != null) {
+				val updatedActivity = existingActivity.copy(
+					name = name,
+					calories = calories,
+					notes = notes,
+					pictureId = pictureId
+				)
+				repository.updateActivity(updatedActivity)
 			}
 		}
 	}
 
 	fun deleteActivity(activityId: String) {
 		viewModelScope.launch {
-			try {
-				repository.deleteActivity(activityId)
-			} catch (e: Exception) {
-				_uiState.value = HistoryUiState.Error(e.message ?: "Failed to delete activity")
-			}
+			repository.deleteActivity(activityId)
 		}
 	}
 
-	fun updateTodayWeight(weight: Float) {
-		viewModelScope.launch {
-			try {
-				repository.updateWeight(weight)
-				loadDailyData() // Refresh data to reflect changes
-			} catch (e: Exception) {
-				_uiState.value = HistoryUiState.Error(e.message ?: "Failed to update weight")
-			}
-		}
-	}
-
-	suspend fun getCurrentWeight(): Float? {
-		return repository.getCurrentWeight()
-	}
 }
 
 data class DayData(
@@ -362,13 +312,6 @@ data class DayData(
 	val mealCount: Int = 0,
 	val workoutCount: Int = 0,
 	val weight: Float? = null,
-		val height: Float? = null,
-		val activityLevel: ActivityLevel? = null,
+	val activityLevel: ActivityLevel? = null,
 	val isToday: Boolean = false
 )
-
-sealed class HistoryUiState {
-	object Loading : HistoryUiState()
-	object Success : HistoryUiState()
-	data class Error(val message: String) : HistoryUiState()
-}

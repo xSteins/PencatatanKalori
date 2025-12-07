@@ -3,12 +3,13 @@ package com.ralvin.pencatatankalori.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ralvin.pencatatankalori.model.database.entities.UserData
-import com.ralvin.pencatatankalori.model.repository.CalorieRepository
+import com.ralvin.pencatatankalori.model.CalorieRepository
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,9 +18,14 @@ class OnboardingViewModel @Inject constructor(
 	private val repository: CalorieRepository
 ) : ViewModel() {
 
-	private val _uiState = MutableStateFlow<OnboardingUiState>(OnboardingUiState.Initial)
-	val uiState: StateFlow<OnboardingUiState> = _uiState
+	private val _isLoading = MutableStateFlow(false)
+	val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+	private val _isCompleted = MutableStateFlow(false)
+	val isCompleted: StateFlow<Boolean> = _isCompleted.asStateFlow()
+
+	private val _errorMessage = MutableStateFlow<String?>(null)
+	val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
 	fun createUserData(
 		age: Int,
@@ -31,9 +37,10 @@ class OnboardingViewModel @Inject constructor(
 		dailyCalorieTarget: Int
 	) {
 		viewModelScope.launch {
-			try {
-				_uiState.value = OnboardingUiState.Loading
+			_isLoading.value = true
+			_errorMessage.value = null
 
+			try {
 				val userData = UserData(
 					age = age,
 					gender = gender,
@@ -46,21 +53,17 @@ class OnboardingViewModel @Inject constructor(
 
 				repository.createUser(userData)
 				repository.markOnboardingComplete()
-				_uiState.value = OnboardingUiState.Success
+				_isCompleted.value = true
 			} catch (e: Exception) {
-				_uiState.value = OnboardingUiState.Error(e.message ?: "Unknown error occurred")
+				_errorMessage.value = e.message ?: "Unknown error occurred"
+			} finally {
+				_isLoading.value = false
 			}
 		}
 	}
 
-	fun resetUiState() {
-		_uiState.value = OnboardingUiState.Initial
+	fun resetState() {
+		_isCompleted.value = false
+		_errorMessage.value = null
 	}
-}
-
-sealed class OnboardingUiState {
-	object Initial : OnboardingUiState()
-	object Loading : OnboardingUiState()
-	object Success : OnboardingUiState()
-	data class Error(val message: String) : OnboardingUiState()
 }

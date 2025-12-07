@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.HistoryScreen
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -28,8 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ralvin.pencatatankalori.view.components.Tooltip
 
 @Composable
 fun ExpandableFAB(
@@ -106,7 +108,9 @@ fun ExpandableFAB(
 				Icon(
 					Icons.Filled.Add,
 					contentDescription = "Tambah Data Manual",
-					modifier = Modifier.rotate(rotation),
+					modifier = Modifier
+						.size(24.dp)
+						.rotate(rotation),
 					tint = MaterialTheme.colorScheme.onPrimary
 				)
 			},
@@ -130,7 +134,7 @@ fun ExpandableFAB(
 
 @Composable
 private fun ExpandedFABItem(
-	icon: androidx.compose.ui.graphics.vector.ImageVector,
+	icon: ImageVector,
 	label: String,
 	onClick: () -> Unit,
 	backgroundColor: Color,
@@ -168,6 +172,7 @@ private fun ExpandedFABItem(
 			Icon(
 				icon,
 				contentDescription = label,
+				modifier = Modifier.size(24.dp),
 				tint = if (enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
 			)
 		}

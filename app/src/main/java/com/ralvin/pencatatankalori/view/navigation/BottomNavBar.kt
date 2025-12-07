@@ -10,10 +10,20 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.ralvin.pencatatankalori.R
+
+data class NavItem(
+	val name: String,
+	val route: String,
+	val icon: ImageVector
+)
+sealed class Screen(val route: String) {
+	object Overview : Screen("overview")
+	object History : Screen("history")
+	object ProfileSettings : Screen("profile")
+}
 
 @Composable
 fun BottomNavBar(

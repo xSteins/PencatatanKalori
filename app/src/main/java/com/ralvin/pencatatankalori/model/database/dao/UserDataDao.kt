@@ -14,9 +14,6 @@ interface UserDataDao {
 	@Query("SELECT * FROM user LIMIT 1")
 	fun getUserData(): Flow<UserData?>
 
-	@Query("SELECT * FROM user WHERE id = :userId")
-	suspend fun getUserById(userId: String): UserData?
-
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun insertUserData(userData: UserData)
 
@@ -28,4 +25,11 @@ interface UserDataDao {
 
 	@Query("SELECT COUNT(*) FROM user")
 	suspend fun getUserDataCount(): Int
-} 
+}
+
+// ============================================================================
+// UNUSED QUERIES - Kept for reference
+// ============================================================================
+//
+// @Query("SELECT * FROM user WHERE id = :userId")
+// suspend fun getUserById(userId: String): UserData?

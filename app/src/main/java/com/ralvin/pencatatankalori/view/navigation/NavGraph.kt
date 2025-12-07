@@ -6,7 +6,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.ralvin.pencatatankalori.view.screens.History
-// import com.ralvin.pencatatankalori.View.screens.OnboardingScreen // bypass dulu
 import com.ralvin.pencatatankalori.view.screens.OverviewScreen
 import com.ralvin.pencatatankalori.view.screens.ProfileSettings
 

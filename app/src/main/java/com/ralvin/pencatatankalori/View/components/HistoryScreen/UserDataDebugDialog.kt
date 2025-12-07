@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.HistoryScreen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ralvin.pencatatankalori.viewmodel.DebugData
 import com.ralvin.pencatatankalori.viewmodel.UserDataDebugUiState
 import com.ralvin.pencatatankalori.viewmodel.UserDataDebugViewModel
 import java.text.SimpleDateFormat
@@ -149,7 +150,7 @@ fun UserDataDebugDialog(
 
 @Composable
 private fun DebugDataContent(
-	debugData: com.ralvin.pencatatankalori.viewmodel.DebugData
+	debugData: DebugData
 ) {
 	LazyColumn(
 		verticalArrangement = Arrangement.spacedBy(8.dp)

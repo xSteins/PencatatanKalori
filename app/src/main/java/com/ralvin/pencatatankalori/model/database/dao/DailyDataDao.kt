@@ -12,9 +12,6 @@ import java.util.Date
 
 @Dao
 interface DailyDataDao {
-	@Query("SELECT * FROM daily_data WHERE user_id = :userId ORDER BY date DESC")
-	fun getDailyDataByUserId(userId: String): Flow<List<DailyData>>
-
 	@Query("SELECT * FROM daily_data WHERE user_id = :userId AND DATE(date/1000, 'unixepoch') = DATE(:date/1000, 'unixepoch')")
 	suspend fun getDailyDataForDate(userId: String, date: Date): DailyData?
 
@@ -40,15 +37,22 @@ interface DailyDataDao {
 	@Update
 	suspend fun updateDailyData(dailyData: DailyData)
 
-	@Delete
-	suspend fun deleteDailyData(dailyData: DailyData)
-
-	@Query("DELETE FROM daily_data WHERE user_id = :userId")
-	suspend fun deleteDailyDataByUserId(userId: String)
-
 	@Query("UPDATE daily_data SET total_calories_consumption = :totalCalories WHERE id = :dailyDataId")
 	suspend fun updateTotalCaloriesConsumption(dailyDataId: String, totalCalories: Int)
-
-	@Query("UPDATE daily_data SET weight = :weight WHERE id = :dailyDataId")
-	suspend fun updateWeight(dailyDataId: String, weight: Float)
 }
+
+// ============================================================================
+// UNUSED QUERIES - Kept for reference
+// ============================================================================
+//
+// @Query("SELECT * FROM daily_data WHERE user_id = :userId ORDER BY date DESC")
+// fun getDailyDataByUserId(userId: String): Flow<List<DailyData>>
+//
+// @Delete
+// suspend fun deleteDailyData(dailyData: DailyData)
+//
+// @Query("DELETE FROM daily_data WHERE user_id = :userId")
+// suspend fun deleteDailyDataByUserId(userId: String)
+//
+// @Query("UPDATE daily_data SET weight = :weight WHERE id = :dailyDataId")
+// suspend fun updateWeight(dailyDataId: String, weight: Float)

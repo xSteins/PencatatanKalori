@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ralvin.pencatatankalori.model.database.entities.UserData
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
 import com.ralvin.pencatatankalori.model.formula.GoalType
-import com.ralvin.pencatatankalori.model.repository.CalorieRepository
+import com.ralvin.pencatatankalori.model.CalorieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,9 +18,6 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
 	val repository: CalorieRepository
 ) : ViewModel() {
-
-	private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
-	val uiState: StateFlow<ProfileUiState> = _uiState
 
 	val userProfile = repository.getUserProfile()
 		.stateIn(
@@ -36,14 +33,6 @@ class ProfileViewModel @Inject constructor(
 			initialValue = false
 		)
 
-	init {
-		viewModelScope.launch {
-			// Load calorie settings from database on initialization
-			repository.loadCalorieSettingsFromDatabase()
-			_uiState.value = ProfileUiState.Success
-		}
-	}
-
 	fun updateUserProfile(
 		age: Int,
 		gender: String,
@@ -54,11 +43,18 @@ class ProfileViewModel @Inject constructor(
 		dailyCalorieTarget: Int
 	) {
 		viewModelScope.launch {
-			try {
-				_uiState.value = ProfileUiState.Loading
-				val currentUser = repository.getUserProfileOnce()
+			val currentUser = repository.getUserProfileOnce()
 
-				val updatedUser = currentUser?.copy(
+			val updatedUser = currentUser?.copy(
+				age = age,
+				gender = gender,
+				weight = weight,
+				height = height,
+				activityLevel = activityLevel,
+				goalType = goalType,
+				dailyCalorieTarget = dailyCalorieTarget
+			)
+				?: UserData(
 					age = age,
 					gender = gender,
 					weight = weight,
@@ -67,124 +63,18 @@ class ProfileViewModel @Inject constructor(
 					goalType = goalType,
 					dailyCalorieTarget = dailyCalorieTarget
 				)
-					?: UserData(
-						age = age,
-						gender = gender,
-						weight = weight,
-						height = height,
-						activityLevel = activityLevel,
-						goalType = goalType,
-						dailyCalorieTarget = dailyCalorieTarget
-					)
 
-				if (currentUser != null) {
-					repository.updateUserDataAndTodayTdee(updatedUser)
-				} else {
-					repository.createUser(updatedUser)
-				}
-
-				_uiState.value = ProfileUiState.Success
-			} catch (e: Exception) {
-				_uiState.value = ProfileUiState.Error(e.message ?: "Failed to update profile")
+			if (currentUser != null) {
+				repository.updateUserDataAndTodayTdee(updatedUser)
+			} else {
+				repository.createUser(updatedUser)
 			}
-		}
-	}
-
-	fun updateWeight(newWeight: Float) {
-		viewModelScope.launch {
-			try {
-				repository.updateWeight(newWeight)
-			} catch (e: Exception) {
-				_uiState.value = ProfileUiState.Error(e.message ?: "Failed to update weight")
-			}
-		}
-	}
-
-	fun updateHeight(newHeight: Float) {
-		viewModelScope.launch {
-			try {
-				val currentUser = repository.getUserProfileOnce()
-				currentUser?.let { user ->
-					val updatedUser = user.copy(height = newHeight)
-					repository.updateUserDataAndTodayTdee(updatedUser)
-				}
-			} catch (e: Exception) {
-				_uiState.value = ProfileUiState.Error(e.message ?: "Failed to update height")
-			}
-		}
-	}
-
-	fun updateActivityLevel(activityLevel: ActivityLevel) {
-		viewModelScope.launch {
-			try {
-				repository.updateActivityLevel(activityLevel)
-			} catch (e: Exception) {
-				_uiState.value =
-					ProfileUiState.Error(e.message ?: "Failed to update activity level")
-			}
-		}
-	}
-
-	fun updateGoalType(goalType: GoalType) {
-		viewModelScope.launch {
-			try {
-				repository.updateGoalType(goalType)
-			} catch (e: Exception) {
-				_uiState.value = ProfileUiState.Error(e.message ?: "Failed to update goal type")
-			}
-		}
-	}
-
-	fun updateCalorieTarget(newTarget: Int) {
-		viewModelScope.launch {
-			try {
-				val currentUser = repository.getUserProfileOnce()
-				currentUser?.let { user ->
-					val updatedUser = user.copy(dailyCalorieTarget = newTarget)
-					repository.updateUserProfile(updatedUser)
-				}
-			} catch (e: Exception) {
-				_uiState.value =
-					ProfileUiState.Error(e.message ?: "Failed to update calorie target")
-			}
-		}
-	}
-
-	fun isUserCreated(): Boolean {
-		return userProfile.value != null
-	}
-
-	suspend fun checkUserExists(): Boolean {
-		return repository.isUserCreated()
-	}
-
-	fun calculateBMI(): Float? {
-		val user = userProfile.value
-		return if (user != null && user.height > 0) {
-			val heightInMeters = user.height / 100
-			user.weight / (heightInMeters * heightInMeters)
-		} else null
-	}
-
-	fun getBMICategory(): String? {
-		val bmi = calculateBMI()
-		return when {
-			bmi == null -> null
-			bmi < 18.5 -> "Underweight"
-			bmi < 25 -> "Normal weight"
-			bmi < 30 -> "Overweight"
-			else -> "Obese"
 		}
 	}
 
 	fun updateCalorieSettings(granularityValue: Int) {
 		viewModelScope.launch {
-			try {
-				repository.updateCalorieSettings(granularityValue)
-			} catch (e: Exception) {
-				_uiState.value =
-					ProfileUiState.Error(e.message ?: "Failed to update calorie settings")
-			}
+			repository.updateCalorieSettings(granularityValue)
 		}
 	}
 
@@ -212,10 +102,4 @@ class ProfileViewModel @Inject constructor(
 	fun dismissInitialBottomSheet() {
 		repository.dismissInitialBottomSheet()
 	}
-}
-
-sealed class ProfileUiState {
-	object Loading : ProfileUiState()
-	object Success : ProfileUiState()
-	data class Error(val message: String) : ProfileUiState()
 }

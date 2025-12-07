@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,14 +46,13 @@ import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.model.formula.GoalType
 import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
-import com.ralvin.pencatatankalori.view.components.CreateNewActivityDate
-import com.ralvin.pencatatankalori.view.components.ExpandableFAB
-import com.ralvin.pencatatankalori.view.components.HistoryDatePicker
-import com.ralvin.pencatatankalori.view.components.LogItem
-import com.ralvin.pencatatankalori.view.components.LogType
-import com.ralvin.pencatatankalori.view.components.LogsDetailedModal
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.CreateNewActivityDate
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.ExpandableFAB
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.HistoryDatePicker
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogItem
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogType
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogsDetailedModal
 import com.ralvin.pencatatankalori.view.components.Tooltip
-import com.ralvin.pencatatankalori.viewmodel.HistoryUiState
 import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -65,9 +63,8 @@ data class HistoryItemData(
 	val date: String,
 	val consumedText: String,
 	val targetText: String,
-	val goalText: String,
-	val mealWorkoutText: String,
-	val physicalInfoText: String,
+	val personalInfoText: String,
+	val calorieTargetText: String,
 	val isGoalMet: Boolean,
 	val id: UUID = UUID.randomUUID()
 )
@@ -83,14 +80,14 @@ fun ActivityLog.toLogItem(): LogItem {
 		name = this.name,
 		details = when (this.type) {
 			ActivityType.CONSUMPTION -> {
-				val caloriesStr = "${this.calories} kal."
-				val notesStr = this.notes?.let { " | $it" } ?: ""
+				val caloriesStr = "${this.calories} kalori"
+				val notesStr = this.notes?.let { "\n$it" } ?: ""
 				"$caloriesStr$notesStr"
 			}
 
 			ActivityType.WORKOUT -> {
-				val caloriesStr = "${this.calories} kal."
-				val notesStr = this.notes?.let { " | $it" } ?: ""
+				val caloriesStr = "${this.calories} kalori"
+				val notesStr = this.notes?.let { "\n$it" } ?: ""
 				"$caloriesStr$notesStr"
 			}
 		},
@@ -105,7 +102,6 @@ fun ActivityLog.toLogItem(): LogItem {
 fun History(
 	viewModel: HistoryViewModel = hiltViewModel()
 ) {
-	val uiState by viewModel.uiState.collectAsState()
 	val allActivities by viewModel.allActivities.collectAsState()
 	val dateRange by viewModel.dateRange.collectAsState()
 	val userProfile by viewModel.userProfile.collectAsState()
@@ -223,48 +219,24 @@ fun History(
 		}
 	) { innerPadding ->
 		Box(modifier = Modifier.padding(innerPadding)) {
-			val currentUiState = uiState
-			when (currentUiState) {
-				is HistoryUiState.Loading -> {
-					Box(
-						modifier = Modifier.fillMaxSize(),
-						contentAlignment = Alignment.Center
-					) {
-						CircularProgressIndicator()
+			if (showDatePicker) {
+				HistoryDatePicker(
+					onDismiss = { showDatePicker = false },
+					onDateRangeSelected = { startDate, endDate ->
+						viewModel.selectDateRange(startDate, endDate)
+						showDatePicker = false
 					}
-				}
+				)
+			}
 
-				is HistoryUiState.Error -> {
-					Box(
-						modifier = Modifier.fillMaxSize(),
-						contentAlignment = Alignment.Center
-					) {
-						Text(
-							text = currentUiState.message,
-							color = MaterialTheme.colorScheme.error
-						)
-					}
-				}
+			if (showTooltip) {
+				Tooltip(
+					message = "Mohon lakukan proses onboarding dengan pindah ke menu \"Profile\" -> Onboarding Screen",
+					onDismiss = { showTooltip = false }
+				)
+			}
 
-				is HistoryUiState.Success -> {
-					if (showDatePicker) {
-						HistoryDatePicker(
-							onDismiss = { showDatePicker = false },
-							onDateRangeSelected = { startDate, endDate ->
-								viewModel.selectDateRange(startDate, endDate)
-								showDatePicker = false
-							}
-						)
-					}
-
-					if (showTooltip) {
-						Tooltip(
-							message = "Mohon lakukan proses onboarding dengan pindah ke menu \"Profile\" -> Onboarding Screen",
-							onDismiss = { showTooltip = false }
-						)
-					}
-
-					if (dayEntries.isEmpty()) {
+			if (dayEntries.isEmpty()) {
 						Box(
 							modifier = Modifier
 								.fillMaxSize()
@@ -316,28 +288,34 @@ fun History(
 									}
 
 									GoalType.GAIN_WEIGHT -> {
-										if (difference > 0) "Surplus absDifference kalori"
+										if (difference > 0) "Surplus $absDifference kalori"
 										else "Defisit $absDifference kalori"
 									}
 								}
 
-								val heightText = dayData.height?.let { "$it" } ?: "-"
-								val weightText = dayData.weight?.let { "$it" } ?: "-"
-								val goalText = buildString {
-									append(goalType.getShortDisplayName())
-									append(" | TB: ${heightText}cm | BB: ${weightText}kg")
+								val activityLevelText = dayData.activityLevel?.getDisplayName() ?: "-"
+								val weightText = dayData.weight?.let { "${it}kg" } ?: "-"
+								val goalTypeText = goalType.getShortDisplayName()
+
+								val personalInfoText = buildString {
+									if (dayData.activityLevel != null) {
+										append(activityLevelText)
+										append(" | ")
+									}
+									append("BB: $weightText")
+									append(" | ")
+									append(goalTypeText)
 								}
 
-								val physicalInfoText = "Target Kalori: ${dayData.tdee} kalori"
+								val calorieTargetText = "Target Kalori: ${dayData.tdee} kalori"
 
 								HistoryListItem(
 									item = HistoryItemData(
 										date = date,
 										consumedText = consumedText,
 										targetText = "${dayData.mealCount} Konsumsi, ${dayData.workoutCount} Kegiatan",
-										goalText = goalText,
-										mealWorkoutText = goalText,
-										physicalInfoText = physicalInfoText,
+										personalInfoText = personalInfoText,
+										calorieTargetText = calorieTargetText,
 										isGoalMet = goalMet
 									),
 									onClick = {
@@ -471,12 +449,9 @@ fun History(
 							)
 						}
 					}
-				}
-			}
 		}
 	}
 }
-
 
 @Composable
 fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
@@ -510,7 +485,7 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
 					)
 					Spacer(modifier = Modifier.height(4.dp))
 					Text(
-						text = item.goalText,
+						text = item.personalInfoText,
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.primary
 					)
@@ -520,7 +495,7 @@ fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
 						color = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 					Text(
-						text = item.physicalInfoText,
+						text = item.calorieTargetText,
 						style = MaterialTheme.typography.bodySmall,
 						color = MaterialTheme.colorScheme.onSurfaceVariant
 					)

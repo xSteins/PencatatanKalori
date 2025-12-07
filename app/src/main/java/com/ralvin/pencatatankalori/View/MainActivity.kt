@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori
+package com.ralvin.pencatatankalori.view
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
-import com.ralvin.pencatatankalori.view.components.InitialOnboardingBottomSheet
-import com.ralvin.pencatatankalori.view.components.OnboardingDialog
+import com.ralvin.pencatatankalori.view.components.Onboarding.InitialOnboardingBottomSheet
+import com.ralvin.pencatatankalori.view.components.Onboarding.OnboardingDialog
 import com.ralvin.pencatatankalori.view.navigation.BottomNavBar
 import com.ralvin.pencatatankalori.view.navigation.NavGraph
 import com.ralvin.pencatatankalori.view.navigation.Screen
@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
 				) { paddingValues ->
 					NavGraph(
 						navController = navController,
-						modifier = Modifier.padding(paddingValues),
+						modifier = Modifier.Companion.padding(paddingValues),
 						startDestination = startDestination
 					)
 				}

@@ -9,12 +9,10 @@
 - Keep code clean and readable with minimal verbosity
 
 ## Programming Language Proficiency (in order)
-1. Kotlin/Java (Android) - Jetpack Compose UI & Room Database
-2. PHP/CodeIgniter 4
-3. MySQL
-4. JavaScript/React (with some Express.js/Next.js)
-5. Java
-6. Python
+1. Kotlin (Android)
+2. Jetpack Compose UI & 
+3. Room Database
+4. Android app architecture (MVVM, Repository pattern)
 
 ## Code Generation Policy
 - Always produce original implementations—never copy code verbatim from sources
@@ -31,12 +29,12 @@ This is an **Android calorie tracking app** built with **Kotlin, Jetpack Compose
 **Directory structure:**
 - `Model/` - Data layer (database, repository, formulas, DI)
   - `database/` - Room entities, DAOs, converters
-  - `repository/` - Single `CalorieRepository` (consolidated pattern)
+  - `CalorieRepository` - Singleton 
   - `formula/` - Calorie calculation logic (`MifflinModel`, strategies, enums)
-  - `injection/` - Hilt modules (`DatabaseModule`)
+  - `di/` - Hilt modules (`DatabaseModule`)
 - `View/` - UI layer (Compose screens, components, navigation)
   - `screens/` - Main screens (`Overview`, `History`, `ProfileSettings`)
-  - `components/` - Reusable Composables
+  - `components/` - Modularized Composables and reusable components
   - `navigation/` - Navigation graph and bottom nav
   - `theme/` - Material3 theming
 - `Viewmodel/` - Presentation layer (ViewModels with `@HiltViewModel`)
@@ -50,20 +48,11 @@ This is an **Android calorie tracking app** built with **Kotlin, Jetpack Compose
 2. `DailyData` - Per-day calorie configuration (FK to UserData)
 3. `ActivityLog` - Food/workout entries (FK to DailyData, stores pictureUri as string)
 
+**IMPORTANT**: When asked to verify schema or compare with ERD/diagrams, **always scan the actual entity files** in `Model/database/entities/` folder. Do not rely on this documentation alone as the schema may have evolved through migrations.
+
 **Flow Pattern**: ViewModels expose `StateFlow` from repository `Flow` using `.stateIn()`. Screens collect with `collectAsStateWithLifecycle()` or `collectAsState()`.
 
-**Calorie Calculation Logic**: Lives in `MifflinModel` (static companion object with mutable state). Uses Mifflin-St Jeor equation for RMR + activity factors + granularity adjustments. Three strategies: CONSERVATIVE, MODERATE, AGGRESSIVE.
-
-### Critical Workflows
-
-**Building the app:**
-```bash
-# Standard Gradle build
-./gradlew assembleDebug
-
-# Install on connected device
-./gradlew installDebug
-```
+**Calorie Calculation Logic**: Lives in `MifflinModel` (static companion object with mutable state). Uses Mifflin-St Jeor equation for RMR + activity factors + granularity adjustments. 
 
 **Database migrations**: Managed in `DatabaseModule.kt`. Current version: **11**. Add new `Migration` objects for schema changes (see `MIGRATION_8_9`, `MIGRATION_9_10`, `MIGRATION_10_11` as examples).
 
@@ -85,8 +74,6 @@ This is an **Android calorie tracking app** built with **Kotlin, Jetpack Compose
 
 **Activity Types**: Only two types exist - `WORKOUT` (calories burned) and `CONSUMPTION` (calories consumed). Do not add new types without schema redesign.
 
-**Advanced Mode**: `DailyData` has `advancedEnabled` flag that changes calculation behavior. When enabled, uses granularity values and different exercise calorie percentages from `CalorieStrategy`.
-
 **Hilt Injection**: 
 - Application class: `@HiltAndroidApp` on `PencatatanKalori`
 - Activity: `@AndroidEntryPoint` on `MainActivity`
@@ -95,8 +82,6 @@ This is an **Android calorie tracking app** built with **Kotlin, Jetpack Compose
 - Modules: Use `@InstallIn(SingletonComponent::class)`
 
 **Navigation**: Bottom navigation with 3 screens. Add new screens to `Screen` sealed class and register in `NavGraph.kt`. Start destination is `Screen.Overview.route`.
-
-**Localization**: Currently i18n branch. Resources in `values/locale/` (Indonesian) and XML-based string resources. Branch indicates internationalization in progress.
 
 ### Integration Points
 
@@ -122,8 +107,4 @@ This is an **Android calorie tracking app** built with **Kotlin, Jetpack Compose
 - **Room converters are global** - changing enum names breaks existing database data
 - **DailyData is per-day** - create/update for current date before logging activities
 - **Foreign key cascades** - Deleting UserData cascades to DailyData, which cascades to ActivityLog
-
-### Documentation References
-- `docs/calorie_tracker_implementation_plan.md` - Original architecture plan (partially implemented)
-- `docs/database_redesign_progress.md` - Database evolution notes
-- `changelog.txt` - Recent cleanup of unused code
+- **Database migrations are critical** - Always add migrations for schema changes to avoid crashes on updates

@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.model.repository
+package com.ralvin.pencatatankalori.model
 
 import com.ralvin.pencatatankalori.model.database.dao.ActivityLogDao
 import com.ralvin.pencatatankalori.model.database.dao.DailyDataDao
@@ -226,7 +226,7 @@ class CalorieRepository @Inject constructor(
 				flowOf(todayActivities)
 			} else {
 				userDataDao.getUserData().flatMapLatest { user ->
-					user?.let { activityLogDao.getTodayActivitiesNew(it.id) } ?: flowOf(emptyList())
+					user?.let { activityLogDao.getTodayActivities(it.id) } ?: flowOf(emptyList())
 				}
 			}
 		}
@@ -253,8 +253,8 @@ class CalorieRepository @Inject constructor(
 		return if (existingData != null) {
 			existingData
 		} else {
-			val granularityValue = MifflinModel.getGranularityValue()
-			val tdee = MifflinModel.calculateDailyCalories(
+			val granularityValue = MifflinModel.Companion.getGranularityValue()
+			val tdee = MifflinModel.Companion.calculateDailyCalories(
 				user.weight, user.height, user.age,
 				user.gender == "Male", user.activityLevel, user.goalType, granularityValue
 			)
@@ -266,7 +266,6 @@ class CalorieRepository @Inject constructor(
 				totalCaloriesConsumption = 0,
 				goalType = user.goalType,
 				weight = user.weight,
-				height = user.height,
 				activityLevel = user.activityLevel
 			)
 			dailyDataDao.insertDailyData(newDailyData)
@@ -283,8 +282,8 @@ class CalorieRepository @Inject constructor(
 		return if (existingData != null) {
 			existingData
 		} else {
-			val granularityValue = MifflinModel.getGranularityValue()
-			val tdee = MifflinModel.calculateDailyCalories(
+			val granularityValue = MifflinModel.Companion.getGranularityValue()
+			val tdee = MifflinModel.Companion.calculateDailyCalories(
 				user.weight, user.height, user.age,
 				user.gender == "Male", user.activityLevel, user.goalType, granularityValue
 			)
@@ -296,7 +295,6 @@ class CalorieRepository @Inject constructor(
 				totalCaloriesConsumption = 0,
 				goalType = user.goalType,
 				weight = user.weight,
-				height = user.height,
 				activityLevel = user.activityLevel
 			)
 			dailyDataDao.insertDailyData(newDailyData)
@@ -311,7 +309,7 @@ class CalorieRepository @Inject constructor(
 
 		val user = getUserProfileOnce() ?: return
 
-		val newTdee = MifflinModel.calculateDailyCalories(
+		val newTdee = MifflinModel.Companion.calculateDailyCalories(
 			user.weight, user.height, user.age,
 			user.gender == "Male", user.activityLevel, user.goalType, granularityValue
 		)
@@ -322,7 +320,6 @@ class CalorieRepository @Inject constructor(
 			granularityValue = granularityValue,
 			goalType = user.goalType,
 			weight = user.weight,
-			height = user.height,
 			activityLevel = user.activityLevel
 		)
 			?: DailyData(
@@ -333,7 +330,6 @@ class CalorieRepository @Inject constructor(
 				totalCaloriesConsumption = 0,
 				goalType = user.goalType,
 				weight = user.weight,
-				height = user.height,
 				activityLevel = user.activityLevel
 			)
 
@@ -346,7 +342,7 @@ class CalorieRepository @Inject constructor(
 		val updatedUser = user.copy(dailyCalorieTarget = newTdee)
 		updateUserProfile(updatedUser)
 
-		MifflinModel.adjustTargetCalorie(granularityValue)
+		MifflinModel.Companion.adjustTargetCalorie(granularityValue)
 	}
 
 	suspend fun loadCalorieSettingsFromDatabase() {
@@ -355,7 +351,7 @@ class CalorieRepository @Inject constructor(
 		val user = getUserProfileOnce() ?: return
 		val todayData = dailyDataDao.getTodayDailyData(user.id) ?: return
 
-		MifflinModel.adjustTargetCalorie(todayData.granularityValue)
+		MifflinModel.Companion.adjustTargetCalorie(todayData.granularityValue)
 	}
 
 	suspend fun updateUserDataAndTodayTdee(userData: UserData) {
@@ -364,7 +360,7 @@ class CalorieRepository @Inject constructor(
 		if (!_isDummyDataEnabled.value) {
 			val todayData = dailyDataDao.getTodayDailyData(userData.id)
 			if (todayData != null) {
-				val newTdee = MifflinModel.calculateDailyCalories(
+				val newTdee = MifflinModel.Companion.calculateDailyCalories(
 					userData.weight,
 					userData.height,
 					userData.age,
@@ -377,7 +373,6 @@ class CalorieRepository @Inject constructor(
 					tdee = newTdee,
 					goalType = userData.goalType,
 					weight = userData.weight,
-					height = userData.height,
 					activityLevel = userData.activityLevel
 				)
 				dailyDataDao.updateDailyData(updatedData)
@@ -392,7 +387,7 @@ class CalorieRepository @Inject constructor(
 				flowOf(createDummyActivities())
 			} else {
 				userDataDao.getUserData().flatMapLatest { user ->
-					user?.let { activityLogDao.getActivitiesByUserIdNew(it.id) }
+					user?.let { activityLogDao.getAllActivitiesByUserId(it.id) }
 						?: flowOf(emptyList())
 				}
 			}
@@ -517,14 +512,13 @@ class CalorieRepository @Inject constructor(
 
 		val todayData = dailyDataDao.getTodayDailyData(user.id)
 		if (todayData != null) {
-			val newTdee = MifflinModel.calculateDailyCalories(
+			val newTdee = MifflinModel.Companion.calculateDailyCalories(
 				weight, user.height, user.age,
 				user.gender == "Male", user.activityLevel, user.goalType, todayData.granularityValue
 			)
 
 			val updatedData = todayData.copy(
 				weight = weight,
-				height = user.height,
 				tdee = newTdee,
 				activityLevel = user.activityLevel
 			)
@@ -542,7 +536,7 @@ class CalorieRepository @Inject constructor(
 
 		val todayData = dailyDataDao.getTodayDailyData(user.id)
 		if (todayData != null) {
-			val newTdee = MifflinModel.calculateDailyCalories(
+			val newTdee = MifflinModel.Companion.calculateDailyCalories(
 				user.weight, user.height, user.age,
 				user.gender == "Male", activityLevel, user.goalType, todayData.granularityValue
 			)
@@ -565,7 +559,7 @@ class CalorieRepository @Inject constructor(
 
 		val todayData = dailyDataDao.getTodayDailyData(user.id)
 		if (todayData != null) {
-			val newTdee = MifflinModel.calculateDailyCalories(
+			val newTdee = MifflinModel.Companion.calculateDailyCalories(
 				user.weight, user.height, user.age,
 				user.gender == "Male", user.activityLevel, goalType, todayData.granularityValue
 			)

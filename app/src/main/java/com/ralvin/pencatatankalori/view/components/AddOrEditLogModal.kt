@@ -52,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogType
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -106,13 +107,10 @@ fun AddOrEditLogModal(
 	}
 
 	fun isFormValid(): Boolean {
-		val nameValidation = validateName(name)
-		val caloriesValidation = validateCalories(calories)
+		nameError =  validateName(name)
+		caloriesError = validateCalories(calories)
 
-		nameError = nameValidation
-		caloriesError = caloriesValidation
-
-		return nameValidation == null && caloriesValidation == null
+		return nameError == null && nameError == null
 	}
 
 	val imagePickerLauncher = rememberLauncherForActivityResult(

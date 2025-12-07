@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.model.injection
+package com.ralvin.pencatatankalori.model.di
 
 import android.content.Context
 import androidx.room.Room

@@ -1,4 +1,4 @@
-package com.ralvin.pencatatankalori.view.components
+package com.ralvin.pencatatankalori.view.components.HistoryScreen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
@@ -38,14 +39,14 @@ fun PhysicalInfoText(
 				style = MaterialTheme.typography.bodyMedium,
 				color = textColor,
 				textDecoration = textDecoration,
-				fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+				fontWeight = FontWeight.Bold,
 				modifier = if (enabled) Modifier.clickable { onEditActiveLevel() } else Modifier
 			)
 			Text(
 				text = "|",
 				style = MaterialTheme.typography.bodyMedium,
 				color = textColor,
-				fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+				fontWeight = FontWeight.Bold
 			)
 		}
 
@@ -55,14 +56,14 @@ fun PhysicalInfoText(
 				style = MaterialTheme.typography.bodyMedium,
 				color = textColor,
 				textDecoration = textDecoration,
-				fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+				fontWeight = FontWeight.Bold,
 				modifier = if (enabled) Modifier.clickable { onEditWeight() } else Modifier
 			)
 			Text(
 				text = "|",
 				style = MaterialTheme.typography.bodyMedium,
 				color = textColor,
-				fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+				fontWeight = FontWeight.Bold
 			)
 		}
 
@@ -71,7 +72,7 @@ fun PhysicalInfoText(
 			style = MaterialTheme.typography.bodyMedium,
 			color = textColor,
 			textDecoration = textDecoration,
-			fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+			fontWeight = FontWeight.Bold,
 			modifier = if (enabled) Modifier.clickable { onEditGoal() } else Modifier
 		)
 	}
