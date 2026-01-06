@@ -29,7 +29,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -49,25 +49,17 @@ import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
 import com.ralvin.pencatatankalori.view.components.HistoryScreen.CreateNewActivityDate
 import com.ralvin.pencatatankalori.view.components.HistoryScreen.ExpandableFAB
 import com.ralvin.pencatatankalori.view.components.HistoryScreen.HistoryDatePicker
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.HistoryItemData
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.HistoryListItem
 import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogItem
 import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogType
 import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogsDetailedModal
 import com.ralvin.pencatatankalori.view.components.Tooltip
 import com.ralvin.pencatatankalori.viewmodel.HistoryViewModel
+import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import java.util.UUID
-
-data class HistoryItemData(
-	val date: String,
-	val consumedText: String,
-	val targetText: String,
-	val personalInfoText: String,
-	val calorieTargetText: String,
-	val isGoalMet: Boolean,
-	val id: UUID = UUID.randomUUID()
-)
 
 fun ActivityLog.toLogItem(): LogItem {
 	return LogItem(
@@ -93,19 +85,21 @@ fun ActivityLog.toLogItem(): LogItem {
 		},
 		pictureId = this.pictureId,
 		activityId = this.id,
-		notes = this.notes
+		notes = this.notes,
+		activityLog = this
 	)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun History(
-	viewModel: HistoryViewModel = hiltViewModel()
+	viewModel: HistoryViewModel = hiltViewModel(),
+	overviewViewModel: OverviewViewModel = hiltViewModel()
 ) {
-	val allActivities by viewModel.allActivities.collectAsState()
-	val dateRange by viewModel.dateRange.collectAsState()
-	val userProfile by viewModel.userProfile.collectAsState()
-	val dailyDataList by viewModel.dailyDataList.collectAsState()
+	val allActivities by viewModel.allActivities.collectAsStateWithLifecycle()
+	val dateRange by viewModel.dateRange.collectAsStateWithLifecycle()
+	val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+	val dailyDataList by viewModel.dailyDataList.collectAsStateWithLifecycle()
 
 	val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
 	val rangeFormat = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
@@ -336,6 +330,8 @@ fun History(
 								date = date,
 								logs = logs,
 								dayData = dayData,
+								historyViewModel = viewModel,
+								overviewViewModel = overviewViewModel,
 								onAddFood = {
 									val dailyDataId =
 										dayEntries.getOrNull(selectedDayIdx)?.first?.dailyDataId
@@ -374,8 +370,7 @@ fun History(
 									if (selectedDayData != null && dailyDataId != null) {
 										val calorieValue = calories.toIntOrNull() ?: 0
 										val logActivity: (String?) -> Unit = { pictureId ->
-											viewModel.logActivityForDailyData(
-												dailyDataId = dailyDataId,
+											viewModel.logActivityForDate(
 												date = selectedDayData.date,
 												name = name,
 												calories = calorieValue,
@@ -386,7 +381,7 @@ fun History(
 										}
 
 										if (imagePath != null) {
-											viewModel.savePicture(
+											overviewViewModel.savePicture(
 												imagePath,
 												onSuccess = { pictureId ->
 													logActivity(pictureId)
@@ -430,7 +425,7 @@ fun History(
 									}
 
 									if (imagePath != null) {
-										viewModel.savePicture(
+										overviewViewModel.savePicture(
 											imagePath,
 											onSuccess = { pictureId ->
 												logActivity(pictureId)
@@ -452,190 +447,3 @@ fun History(
 		}
 	}
 }
-
-@Composable
-fun HistoryListItem(item: HistoryItemData, onClick: () -> Unit) {
-	Column {
-		Text(
-			text = item.date,
-			style = MaterialTheme.typography.labelLarge,
-			modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
-		)
-		Card(
-			modifier = Modifier
-				.fillMaxWidth()
-				.clickable { onClick() },
-			colors = CardDefaults.cardColors(
-				containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-					alpha = 0.7f
-				)
-			)
-		) {
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(16.dp),
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Column(modifier = Modifier.weight(1f)) {
-					Text(
-						text = item.consumedText,
-						style = MaterialTheme.typography.titleMedium,
-						fontWeight = FontWeight.Bold
-					)
-					Spacer(modifier = Modifier.height(4.dp))
-					Text(
-						text = item.personalInfoText,
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.primary
-					)
-					Text(
-						text = item.targetText,
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.onSurfaceVariant
-					)
-					Text(
-						text = item.calorieTargetText,
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.onSurfaceVariant
-					)
-				}
-				Spacer(modifier = Modifier.width(16.dp))
-				val statusIcon =
-					if (item.isGoalMet) Icons.Filled.CheckCircle else Icons.Filled.Cancel
-				val statusTint = if (item.isGoalMet) {
-					MaterialTheme.colorScheme.primary
-				} else {
-					MaterialTheme.colorScheme.error
-				}
-				Icon(
-					imageVector = statusIcon,
-					contentDescription = if (item.isGoalMet) "Target Achieved" else "Target Not Achieved",
-					modifier = Modifier.size(40.dp),
-					tint = statusTint
-				)
-			}
-		}
-	}
-}
-//
-//@Preview(showBackground = true)
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun HistoryPreview() {
-//	PencatatanKaloriTheme {
-//		val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault())
-//		val rangeFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-//		val calendar = Calendar.getInstance()
-//		val days = (0..3).map { offset ->
-//			calendar.timeInMillis = System.currentTimeMillis() - offset * 24 * 60 * 60 * 1000L
-//			dateFormat.format(calendar.time)
-//		}
-//		val logsPerDay = days.mapIndexed { idx, date ->
-//			date to listOf(
-//				LogItem(
-//					idx * 10 + 1,
-//					LogType.FOOD,
-//					600 + idx * 100,
-//					"Ribeye Steak",
-//					"${600 + idx * 100} Calories | 60.5g Protein | 50.5g Carbs",
-//					activityId = "sample-id-${idx * 10 + 1}"
-//				),
-//				LogItem(
-//					idx * 10 + 2,
-//					LogType.WORKOUT,
-//					400 + idx * 50,
-//					"Jogging",
-//					"${4.5 + idx} km",
-//					activityId = "sample-id-${idx * 10 + 2}"
-//				),
-//				LogItem(
-//					idx * 10 + 3,
-//					LogType.FOOD,
-//					500 + idx * 80,
-//					"Chicken Salad",
-//					"${500 + idx * 80} Calories | 30g Protein | 20g Carbs",
-//					activityId = "sample-id-${idx * 10 + 3}"
-//				)
-//			)
-//		}
-//
-//		var showModal by remember { mutableStateOf(false) }
-//		var selectedDayIdx by remember { mutableStateOf(0) }
-//		val dateRangeText =
-//			"${rangeFormat.format(System.currentTimeMillis() - 3 * 24 * 60 * 60 * 1000L)} - ${
-//				rangeFormat.format(System.currentTimeMillis())
-//			}"
-//
-//		Scaffold(
-//			topBar = {
-//				TopAppBar(
-//					title = {
-//						Column {
-//							Text(
-//								text = "Riwayat Pencatatan",
-//								maxLines = 1,
-//								overflow = TextOverflow.Ellipsis,
-//								fontWeight = FontWeight.Medium
-//							)
-//							Text(
-//								text = dateRangeText,
-//								style = MaterialTheme.typography.bodySmall,
-//								color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-//							)
-//						}
-//					},
-//					actions = {
-//						IconButton(onClick = { }) {
-//							Icon(Icons.Filled.CalendarToday, contentDescription = "Select date")
-//						}
-//					},
-//					windowInsets = WindowInsets(0)
-//				)
-//			}
-//		) { innerPadding ->
-//			Box(modifier = Modifier.padding(innerPadding)) {
-//				LazyColumn(
-//					modifier = Modifier
-//						.fillMaxSize()
-//						.padding(horizontal = 16.dp),
-//					verticalArrangement = Arrangement.spacedBy(12.dp),
-//					contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
-//				) {
-//					items(logsPerDay.size) { idx ->
-//						val date = logsPerDay[idx].first
-//						val logs = logsPerDay[idx].second
-//						val consumed = logs.filter { it.type == LogType.FOOD }.sumOf { it.calories }
-//						val target = 2000
-//						val difference = consumed - target
-//						val absDiff = if (difference < 0) -difference else difference
-//						HistoryListItem(
-//							item = HistoryItemData(
-//								date = date,
-//								consumedText = if (difference > 0) "Surplus $absDiff Kalori" else "Defisit $absDiff Kalori",
-//								targetText = "${logs.count { it.type == LogType.FOOD }}x Konsumsi, ${logs.count { it.type == LogType.WORKOUT }}x Aktifitas Aktif",
-//								goalText = "Cutting",
-//								mealWorkoutText = "Cutting",
-//								physicalInfoText = "Kebutuhan Kalori Harian: 2000 kalori\n170.0cm, 60.0kg",
-//								isGoalMet = idx % 2 == 0
-//							),
-//							onClick = {
-//								selectedDayIdx = idx
-//								showModal = true
-//							}
-//						)
-//					}
-//				}
-//
-//				if (showModal) {
-//					val (date, logs) = logsPerDay[selectedDayIdx]
-//					LogsDetailedModal(
-//						onDismissRequest = { showModal = false },
-//						date = date,
-//						logs = logs
-//					)
-//				}
-//			}
-//		}
-//	}
-//}

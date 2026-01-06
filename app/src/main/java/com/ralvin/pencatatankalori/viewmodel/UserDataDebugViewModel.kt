@@ -25,20 +25,17 @@ data class DebugData(
 	val totalCaloriesBurned: Int
 )
 
-sealed class UserDataDebugUiState {
-	object Loading : UserDataDebugUiState()
-	data class Success(val debugData: DebugData) : UserDataDebugUiState()
-	data class Error(val message: String) : UserDataDebugUiState()
-}
-
 @HiltViewModel
 class UserDataDebugViewModel @Inject constructor(
 	private val userDataDao: UserDataDao,
 	private val activityLogDao: ActivityLogDao
 ) : ViewModel() {
 
-	private val _uiState = MutableStateFlow<UserDataDebugUiState>(UserDataDebugUiState.Loading)
-	val uiState: StateFlow<UserDataDebugUiState> = _uiState.asStateFlow()
+	private val _debugData = MutableStateFlow<DebugData?>(null)
+	val debugData: StateFlow<DebugData?> = _debugData.asStateFlow()
+
+	private val _errorMessage = MutableStateFlow<String?>(null)
+	val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
 	init {
 		loadDebugData()
@@ -47,7 +44,7 @@ class UserDataDebugViewModel @Inject constructor(
 	fun loadDebugData() {
 		viewModelScope.launch {
 			try {
-				_uiState.value = UserDataDebugUiState.Loading
+				_errorMessage.value = null
 
 				val userData = userDataDao.getUserData().first()
 
@@ -68,7 +65,7 @@ class UserDataDebugViewModel @Inject constructor(
 					.filter { it.type == ActivityType.WORKOUT }
 					.sumOf { it.calories ?: 0 }
 
-				val debugData = DebugData(
+				_debugData.value = DebugData(
 					userData = userData,
 					activityLogs = activityLogs,
 					totalActivities = totalActivities,
@@ -77,11 +74,8 @@ class UserDataDebugViewModel @Inject constructor(
 					totalCaloriesConsumed = totalCaloriesConsumed,
 					totalCaloriesBurned = totalCaloriesBurned
 				)
-
-				_uiState.value = UserDataDebugUiState.Success(debugData)
 			} catch (e: Exception) {
-				_uiState.value =
-					UserDataDebugUiState.Error("Failed to load debug data: ${e.message}")
+				_errorMessage.value = "Failed to load debug data: ${e.message}"
 			}
 		}
 	}
@@ -93,16 +87,22 @@ class UserDataDebugViewModel @Inject constructor(
 	fun clearAllData() {
 		viewModelScope.launch {
 			try {
-				_uiState.value = UserDataDebugUiState.Loading
-				// Access repository through the DAOs for now since we don't inject repository
+				_errorMessage.value = null
 				val userData = userDataDao.getUserData().first()
 				if (userData != null) {
 					userDataDao.deleteUserData(userData)
 				}
-				// Refresh data to show empty state
-				loadDebugData()
+				_debugData.value = DebugData(
+					userData = null,
+					activityLogs = emptyList(),
+					totalActivities = 0,
+					totalConsumptionActivities = 0,
+					totalWorkoutActivities = 0,
+					totalCaloriesConsumed = 0,
+					totalCaloriesBurned = 0
+				)
 			} catch (e: Exception) {
-				_uiState.value = UserDataDebugUiState.Error("Failed to clear data: ${e.message}")
+				_errorMessage.value = "Failed to clear data: ${e.message}"
 			}
 		}
 	}

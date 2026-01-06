@@ -16,45 +16,37 @@ class MifflinModel {
 			this.granularityValue = newValue
 		}
 
-		fun getGranularityValue(): Int {
-			return granularityValue
-		}
+	fun getGranularityValue(): Int {
+		return granularityValue
+	}
 
-		fun calculateDailyCaloriesTarget(
-			rmr: Double,
-			activityLevel: ActivityLevel,
-			goalType: GoalType,
-			granularityValue: Int
-		): Double {
-			val baseCalories = rmr * activityLevel.multiplier
+	fun calculateDailyCaloriesTarget(
+		rmr: Double,
+		activityLevel: ActivityLevel,
+		granularityValue: Int
+	): Double {
+		val computedCalories = (rmr * activityLevel.multiplier) + granularityValue
+		return computedCalories
+	}
 
-			return when (goalType) {
-				GoalType.LOSE_WEIGHT -> baseCalories - granularityValue
-				GoalType.GAIN_WEIGHT -> baseCalories + granularityValue
-			}
-		}
-
-		fun calculateDailyCalories(
-			weight: Float,
-			height: Float,
-			age: Int,
-			isMale: Boolean,
-			activityLevel: ActivityLevel,
-			goalType: GoalType,
-			granularityValue: Int = getGranularityValue()
-		): Int {
-			val rmr = calculateRMR(
-				weight = weight.toDouble(),
-				height = height.toDouble(),
-				age = age,
-				isMale = isMale
-			)
-			val dailyCaloriesTarget =
-				calculateDailyCaloriesTarget(rmr, activityLevel, goalType, granularityValue)
-			return dailyCaloriesTarget.toInt()
-		}
-
-		fun calculateRemainingCalories(
+	fun calculateDailyCalories(
+		weight: Float,
+		height: Float,
+		age: Int,
+		isMale: Boolean,
+		activityLevel: ActivityLevel,
+		granularityValue: Int = getGranularityValue()
+	): Int {
+		val rmr = calculateRMR(
+			weight = weight.toDouble(),
+			height = height.toDouble(),
+			age = age,
+			isMale = isMale
+		)
+		val dailyCaloriesTarget =
+			calculateDailyCaloriesTarget(rmr, activityLevel, granularityValue)
+		return dailyCaloriesTarget.toInt()
+	}		fun calculateRemainingCalories(
 			dailyCalorieTarget: Int,
 			caloriesConsumed: Int,
 			caloriesBurned: Int,

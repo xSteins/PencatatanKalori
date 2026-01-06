@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.collectAsState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ralvin.pencatatankalori.model.formula.ActivityLevel
@@ -74,7 +75,8 @@ data class LogItem(
 	val details: String,
 	val pictureId: String? = null,
 	val activityId: String? = null,
-	val notes: String? = null
+	val notes: String? = null,
+	val activityLog: com.ralvin.pencatatankalori.model.database.entities.ActivityLog? = null
 )
 
 enum class LogType {
@@ -159,6 +161,25 @@ fun AddActivityButtons(
 	}
 }
 
+/**
+ * LogsDetailedModal - Dialog untuk menampilkan detail aktivitas harian
+ *
+ * Fitur utama:
+ * 1. Menampilkan summary harian (TDEE, total konsumsi, total pembakaran kalori)
+ * 2. Update 3 data user: Weight, Active Level, Goal (hanya untuk hari ini)
+ * 3. Update DailyData: Menambah/edit/hapus ActivityLog
+ * 4. Menampilkan daftar semua activity logs untuk tanggal tersebut
+ *
+ * @param onDismissRequest Callback saat dialog ditutup
+ * @param date String tanggal yang ditampilkan
+ * @param logs List activity logs untuk tanggal tersebut
+ * @param onAddFood Callback untuk menambah aktivitas konsumsi
+ * @param onAddWorkout Callback untuk menambah aktivitas workout
+ * @param dayData Data harian (TDEE, berat, activity level, dll)
+ * @param historyViewModel ViewModel untuk operasi historical data
+ * @param overviewViewModel ViewModel untuk shared operations (update/delete/picture)
+ * @param profileViewModel ViewModel untuk update data user
+ */
 @Composable
 fun LogsDetailedModal(
 	onDismissRequest: () -> Unit,
@@ -167,8 +188,8 @@ fun LogsDetailedModal(
 	onAddFood: () -> Unit = {},
 	onAddWorkout: () -> Unit = {},
 	dayData: DayData? = null,
-	overviewViewModel: OverviewViewModel = hiltViewModel(),
 	historyViewModel: HistoryViewModel = hiltViewModel(),
+	overviewViewModel: OverviewViewModel = hiltViewModel(),
 	profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
 	val configuration = LocalConfiguration.current
@@ -303,10 +324,14 @@ fun LogsDetailedModal(
 							.fillMaxWidth()
 					) {
 						items(logs) { item ->
-							LogListItem(item = item, onEdit = {
-								editLog = item
-								showEditModal = true
-							}, viewModel = overviewViewModel)
+							LogListItem(
+								item = item,
+								onEdit = {
+									editLog = item
+									showEditModal = true
+								},
+								overviewViewModel = overviewViewModel
+							)
 							HorizontalDivider(color = Color.LightGray, thickness = 1.dp)
 						}
 					}
@@ -356,37 +381,36 @@ fun LogsDetailedModal(
 				isEditMode = true,
 				onSubmit = { name, calories, notes, imagePath ->
 					val activityId = editLog!!.activityId
-					if (activityId != null) {
+					val originalActivity = editLog!!.activityLog
+					if (activityId != null && originalActivity != null) {
 						if (imagePath != null && imagePath != initialImagePath) {
-							historyViewModel.savePicture(
+							overviewViewModel.savePicture(
 								imagePath,
 								onSuccess = { pictureId ->
-									historyViewModel.updateActivity(
-										activityId = activityId,
-										name = name,
-										calories = calories.toIntOrNull() ?: 0,
-										notes = notes,
-										pictureId = pictureId
-									)
+										val updatedActivity = originalActivity.copy(
+											name = name,
+											calories = calories.toIntOrNull() ?: 0,
+											notes = notes,
+											pictureId = pictureId
+										)
+										overviewViewModel.updateActivity(updatedActivity)
 								},
 								onError = { _ ->
-									historyViewModel.updateActivity(
-										activityId = activityId,
-										name = name,
-										calories = calories.toIntOrNull() ?: 0,
-										notes = notes,
-										pictureId = editLog!!.pictureId
-									)
+										val updatedActivity = originalActivity.copy(
+											name = name,
+											calories = calories.toIntOrNull() ?: 0,
+											notes = notes
+										)
+										overviewViewModel.updateActivity(updatedActivity)
 								}
 							)
 						} else {
-							historyViewModel.updateActivity(
-								activityId = activityId,
-								name = name,
-								calories = calories.toIntOrNull() ?: 0,
-								notes = notes,
-								pictureId = editLog!!.pictureId
-							)
+						val updatedActivity = originalActivity.copy(
+							name = name,
+							calories = calories.toIntOrNull() ?: 0,
+							notes = notes
+						)
+						overviewViewModel.updateActivity(updatedActivity)
 						}
 					}
 					showEditModal = false
@@ -395,7 +419,7 @@ fun LogsDetailedModal(
 				onDelete = {
 					val activityId = editLog!!.activityId
 					if (activityId != null) {
-						historyViewModel.deleteActivity(activityId)
+						overviewViewModel.deleteActivity(activityId)
 					}
 					showEditModal = false
 				}
@@ -404,31 +428,63 @@ fun LogsDetailedModal(
 	}
 
 	if (showEditUserDataDialog) {
+		val userProfile by profileViewModel.userProfile.collectAsState()
+
 		Dialog(onDismissRequest = { showEditUserDataDialog = false }) {
 			EditUserDataDialog(
 				editType = currentEditType,
 				currentValue = currentEditValue,
 				onDismiss = { showEditUserDataDialog = false },
 				onSave = { newValue ->
-					when (currentEditType) {
-						EditUserDataType.WEIGHT -> {
-							newValue.toFloatOrNull()?.let { newWeight ->
-								profileViewModel.updateWeight(newWeight)
+					userProfile?.let { profile ->
+						when (currentEditType) {
+							EditUserDataType.WEIGHT -> {
+								newValue.toFloatOrNull()?.let { newWeight ->
+									profileViewModel.updateUserProfile(
+										age = profile.age,
+										gender = profile.gender,
+										weight = newWeight,
+										height = profile.height,
+										activityLevel = profile.activityLevel,
+										goalType = profile.goalType,
+										dailyCalorieTarget = profile.dailyCalorieTarget
+									)
+								}
 							}
-						}
 
-						EditUserDataType.ACTIVE_LEVEL -> {
-							val activityLevel =
-								ActivityLevel.entries.find { it.getDisplayName() == newValue }
-							activityLevel?.let { profileViewModel.updateActivityLevel(it) }
-						}
+							EditUserDataType.ACTIVE_LEVEL -> {
+								val activityLevel =
+									ActivityLevel.entries.find { it.getDisplayName() == newValue }
+								activityLevel?.let {
+									profileViewModel.updateUserProfile(
+										age = profile.age,
+										gender = profile.gender,
+										weight = profile.weight,
+										height = profile.height,
+										activityLevel = it,
+										goalType = profile.goalType,
+										dailyCalorieTarget = profile.dailyCalorieTarget
+									)
+								}
+							}
 
-						EditUserDataType.GOAL -> {
-							val goalType = GoalType.entries.find { it.getDisplayName() == newValue }
-							goalType?.let { profileViewModel.updateGoalType(it) }
-						}
+							EditUserDataType.GOAL -> {
+								val goalType = GoalType.entries.find { it.getDisplayName() == newValue }
+								goalType?.let {
+									profileViewModel.updateUserProfile(
+										age = profile.age,
+										gender = profile.gender,
+										weight = profile.weight,
+										height = profile.height,
+										activityLevel = profile.activityLevel,
+										goalType = it,
+										dailyCalorieTarget = profile.dailyCalorieTarget
+									)
+								}
+							}
 
-						else -> {}
+							else -> {}
+						}
 					}
 					showEditUserDataDialog = false
 				}
@@ -438,13 +494,17 @@ fun LogsDetailedModal(
 }
 
 @Composable
-fun LogListItem(item: LogItem, onEdit: () -> Unit, viewModel: OverviewViewModel = hiltViewModel()) {
+fun LogListItem(
+	item: LogItem,
+	onEdit: () -> Unit,
+	overviewViewModel: OverviewViewModel
+) {
 	var imagePath by remember(item.pictureId) { mutableStateOf<String?>(null) }
 
 	LaunchedEffect(item.pictureId) {
-		imagePath = null // Reset first
+		imagePath = null
 		item.pictureId?.let { pictureId ->
-			viewModel.getPicture(pictureId) { path ->
+			overviewViewModel.getPicture(pictureId) { path ->
 				imagePath = path
 			}
 		}

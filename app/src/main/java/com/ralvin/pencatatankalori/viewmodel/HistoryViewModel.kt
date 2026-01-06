@@ -79,6 +79,8 @@ class HistoryViewModel @Inject constructor(
 	}
 
 	fun getLastNDaysData(days: Int): List<DayData> {
+		val profile = userProfile.value ?: return emptyList()
+
 		val dayDataList = mutableListOf<DayData>()
 		val calendar = Calendar.getInstance()
 
@@ -88,14 +90,10 @@ class HistoryViewModel @Inject constructor(
 			val date = calendar.time
 
 			val activitiesForDay = allActivities.value.filter { activity ->
-				val activityCalendar = Calendar.getInstance()
-				activityCalendar.time = activity.timestamp
-
-				val dateCalendar = Calendar.getInstance()
-				dateCalendar.time = date
-
-				activityCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
-						activityCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
+				val activityCal = Calendar.getInstance().apply { time = activity.timestamp }
+				val dateCal = Calendar.getInstance().apply { time = date }
+				activityCal.get(Calendar.YEAR) == dateCal.get(Calendar.YEAR) &&
+					activityCal.get(Calendar.DAY_OF_YEAR) == dateCal.get(Calendar.DAY_OF_YEAR)
 			}
 
 			val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }
@@ -105,70 +103,61 @@ class HistoryViewModel @Inject constructor(
 			val mealCount = activitiesForDay.count { it.type == ActivityType.CONSUMPTION }
 			val workoutCount = activitiesForDay.count { it.type == ActivityType.WORKOUT }
 
-			// Find corresponding daily data or use defaults
 			val dailyData = dailyDataList.value.find { dailyDataItem ->
-				val dailyDataCalendar = Calendar.getInstance()
-				dailyDataCalendar.time = dailyDataItem.date
-				val dateCalendar = Calendar.getInstance()
-				dateCalendar.time = date
-
-				dailyDataCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
-						dailyDataCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
+				val dailyDataCal = Calendar.getInstance().apply { time = dailyDataItem.date }
+				val dateCal = Calendar.getInstance().apply { time = date }
+				dailyDataCal.get(Calendar.YEAR) == dateCal.get(Calendar.YEAR) &&
+					dailyDataCal.get(Calendar.DAY_OF_YEAR) == dateCal.get(Calendar.DAY_OF_YEAR)
 			}
 
-			val profile = userProfile.value
-			val tdee = dailyData?.tdee ?: profile?.dailyCalorieTarget ?: 2000
-			val goalType = dailyData?.goalType ?: profile?.goalType
-			?: GoalType.LOSE_WEIGHT
-			val weight = dailyData?.weight ?: profile?.weight
-			val activityLevel = dailyData?.activityLevel ?: profile?.activityLevel
+			if (dailyData != null || activitiesForDay.isNotEmpty()) {
+				val tdee = dailyData?.tdee ?: profile.dailyCalorieTarget
+				val goalType = dailyData?.goalType ?: profile.goalType
+				val weight = dailyData?.weight ?: profile.weight
+				val activityLevel = dailyData?.activityLevel ?: profile.activityLevel
 
-			// Check if this date is today
-			val todayCalendar = Calendar.getInstance()
-			val isToday =
-				todayCalendar.get(Calendar.YEAR) == Calendar.getInstance().apply { time = date }
-					.get(Calendar.YEAR) &&
-						todayCalendar.get(Calendar.DAY_OF_YEAR) == Calendar.getInstance()
-					.apply { time = date }.get(Calendar.DAY_OF_YEAR)
+				val todayCalendar = Calendar.getInstance()
+				val dateCal = Calendar.getInstance().apply { time = date }
+				val isToday = todayCalendar.get(Calendar.YEAR) == dateCal.get(Calendar.YEAR) &&
+					todayCalendar.get(Calendar.DAY_OF_YEAR) == dateCal.get(Calendar.DAY_OF_YEAR)
 
-			val netCalories =
-				MifflinModel.calculateNetCalories(
-					caloriesConsumed = consumed,
-					caloriesBurned = burned
+				val netCalories =
+					MifflinModel.calculateNetCalories(
+						caloriesConsumed = consumed,
+						caloriesBurned = burned
+					)
+
+				dayDataList.add(
+					DayData(
+						dailyDataId = dailyData?.id,
+						date = date,
+						caloriesConsumed = consumed,
+						caloriesBurned = burned,
+						netCalories = netCalories,
+						tdee = tdee,
+						goalType = goalType,
+						mealCount = mealCount,
+						workoutCount = workoutCount,
+						weight = weight,
+						activityLevel = activityLevel,
+						isToday = isToday
+					)
 				)
-
-			dayDataList.add(
-				DayData(
-					dailyDataId = dailyData?.id,
-					date = date,
-					caloriesConsumed = consumed,
-					caloriesBurned = burned,
-					netCalories = netCalories,
-					tdee = tdee,
-					goalType = goalType,
-					mealCount = mealCount,
-					workoutCount = workoutCount,
-					weight = weight,
-					activityLevel = activityLevel,
-					isToday = isToday
-				)
-			)
+			}
 		}
 
 		return dayDataList
 	}
 
 	fun getDayDataForSelectedRange(): List<DayData> {
+		val profile = userProfile.value ?: return emptyList()
+
 		return dailyDataList.value.map { dailyDataItem ->
 			val activitiesForDay = allActivities.value.filter { activity ->
-				val activityCalendar = Calendar.getInstance()
-				activityCalendar.time = activity.timestamp
-
-				val dailyDataCalendar = Calendar.getInstance()
-				dailyDataCalendar.time = dailyDataItem.date
-
-				activityCalendar.get(Calendar.YEAR) == dailyDataCalendar.get(Calendar.YEAR) &&
-						activityCalendar.get(Calendar.DAY_OF_YEAR) == dailyDataCalendar.get(Calendar.DAY_OF_YEAR)
+				val activityCal = Calendar.getInstance().apply { time = activity.timestamp }
+				val dailyDataCal = Calendar.getInstance().apply { time = dailyDataItem.date }
+				activityCal.get(Calendar.YEAR) == dailyDataCal.get(Calendar.YEAR) &&
+					activityCal.get(Calendar.DAY_OF_YEAR) == dailyDataCal.get(Calendar.DAY_OF_YEAR)
 			}
 
 			val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }
@@ -183,11 +172,10 @@ class HistoryViewModel @Inject constructor(
 					caloriesConsumed = consumed,
 					caloriesBurned = burned
 				)
-			// cek data kalendar
 			val todayCalendar = Calendar.getInstance()
-			val dateCalendar = Calendar.getInstance().apply { time = dailyDataItem.date }
-			val isToday = todayCalendar.get(Calendar.YEAR) == dateCalendar.get(Calendar.YEAR) &&
-					todayCalendar.get(Calendar.DAY_OF_YEAR) == dateCalendar.get(Calendar.DAY_OF_YEAR)
+			val dailyDataCal = Calendar.getInstance().apply { time = dailyDataItem.date }
+			val isToday = todayCalendar.get(Calendar.YEAR) == dailyDataCal.get(Calendar.YEAR) &&
+				todayCalendar.get(Calendar.DAY_OF_YEAR) == dailyDataCal.get(Calendar.DAY_OF_YEAR)
 
 			DayData(
 				dailyDataId = dailyDataItem.id,
@@ -206,40 +194,6 @@ class HistoryViewModel @Inject constructor(
 		}
 	}
 
-	fun logActivity(
-		name: String,
-		calories: Int,
-		type: ActivityType,
-		pictureId: String? = null,
-		notes: String? = null
-	) {
-		viewModelScope.launch {
-			repository.logActivity(name, calories, type, pictureId, notes)
-		}
-	}
-
-	fun logActivityForDailyData(
-		dailyDataId: String,
-		date: Date,
-		name: String,
-		calories: Int,
-		type: ActivityType,
-		pictureId: String? = null,
-		notes: String? = null
-	) {
-		viewModelScope.launch {
-			repository.logActivityForDailyData(
-				dailyDataId = dailyDataId,
-				targetDate = date,
-				name = name,
-				calories = calories,
-				type = type,
-				pictureId = pictureId,
-				notes = notes
-			)
-		}
-	}
-
 	fun logActivityForDate(
 		date: Date,
 		name: String,
@@ -249,53 +203,15 @@ class HistoryViewModel @Inject constructor(
 		notes: String? = null
 	) {
 		viewModelScope.launch {
-			repository.logActivityForDate(
-				date = date,
+			repository.logActivity(
 				name = name,
 				calories = calories,
 				type = type,
 				pictureId = pictureId,
-				notes = notes
+				notes = notes,
+				date = date
 			)
 			loadDailyData()
-		}
-	}
-
-	fun savePicture(imagePath: String, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
-		viewModelScope.launch {
-			try {
-				val pictureId = repository.savePicture(imagePath)
-				onSuccess(pictureId)
-			} catch (e: Exception) {
-				onError(e.message ?: "Failed to save picture")
-			}
-		}
-	}
-
-	fun updateActivity(
-		activityId: String,
-		name: String,
-		calories: Int,
-		notes: String?,
-		pictureId: String?
-	) {
-		viewModelScope.launch {
-			val existingActivity = allActivities.value.find { it.id == activityId }
-			if (existingActivity != null) {
-				val updatedActivity = existingActivity.copy(
-					name = name,
-					calories = calories,
-					notes = notes,
-					pictureId = pictureId
-				)
-				repository.updateActivity(updatedActivity)
-			}
-		}
-	}
-
-	fun deleteActivity(activityId: String) {
-		viewModelScope.launch {
-			repository.deleteActivity(activityId)
 		}
 	}
 

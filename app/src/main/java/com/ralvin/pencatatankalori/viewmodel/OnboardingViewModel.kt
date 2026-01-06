@@ -18,14 +18,8 @@ class OnboardingViewModel @Inject constructor(
 	private val repository: CalorieRepository
 ) : ViewModel() {
 
-	private val _isLoading = MutableStateFlow(false)
-	val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
 	private val _isCompleted = MutableStateFlow(false)
 	val isCompleted: StateFlow<Boolean> = _isCompleted.asStateFlow()
-
-	private val _errorMessage = MutableStateFlow<String?>(null)
-	val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
 	fun createUserData(
 		age: Int,
@@ -37,33 +31,23 @@ class OnboardingViewModel @Inject constructor(
 		dailyCalorieTarget: Int
 	) {
 		viewModelScope.launch {
-			_isLoading.value = true
-			_errorMessage.value = null
+			val userData = UserData(
+				age = age,
+				gender = gender,
+				weight = weight,
+				height = height,
+				activityLevel = activityLevel,
+				goalType = goalType,
+				dailyCalorieTarget = dailyCalorieTarget
+			)
 
-			try {
-				val userData = UserData(
-					age = age,
-					gender = gender,
-					weight = weight,
-					height = height,
-					activityLevel = activityLevel,
-					goalType = goalType,
-					dailyCalorieTarget = dailyCalorieTarget
-				)
-
-				repository.createUser(userData)
-				repository.markOnboardingComplete()
-				_isCompleted.value = true
-			} catch (e: Exception) {
-				_errorMessage.value = e.message ?: "Unknown error occurred"
-			} finally {
-				_isLoading.value = false
-			}
+			repository.createUser(userData)
+			repository.markOnboardingComplete()
+			_isCompleted.value = true
 		}
 	}
 
 	fun resetState() {
 		_isCompleted.value = false
-		_errorMessage.value = null
 	}
 }

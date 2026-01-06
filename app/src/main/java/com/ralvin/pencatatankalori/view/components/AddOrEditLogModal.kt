@@ -107,10 +107,10 @@ fun AddOrEditLogModal(
 	}
 
 	fun isFormValid(): Boolean {
-		nameError =  validateName(name)
+		nameError = validateName(name)
 		caloriesError = validateCalories(calories)
 
-		return nameError == null && nameError == null
+		return nameError == null && caloriesError == null
 	}
 
 	val imagePickerLauncher = rememberLauncherForActivityResult(

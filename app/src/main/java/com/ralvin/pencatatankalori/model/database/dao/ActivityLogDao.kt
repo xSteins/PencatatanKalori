@@ -1,7 +1,6 @@
 package com.ralvin.pencatatankalori.model.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -30,7 +29,7 @@ interface ActivityLogDao {
 
 	@Query("SELECT al.* FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId AND DATE(al.timestamp/1000, 'unixepoch') = DATE(:date/1000, 'unixepoch') ORDER BY al.timestamp DESC")
 	suspend fun getActivitiesForDate(userId: String, date: Date): List<ActivityLog>
-
+//	TODO: SAFE DELETE IMPLEMENTASI GRANULARITAS UNTUK KONSUMSI VS PEMBAKARAN
 	@Query("SELECT COALESCE(SUM(al.calories), 0) FROM activity_log al INNER JOIN daily_data dd ON al.daily_data_id = dd.id WHERE dd.user_id = :userId AND al.type = :type AND DATE(al.timestamp/1000, 'unixepoch') = DATE('now')")
 	suspend fun getTodayCaloriesByType(
 		userId: String,

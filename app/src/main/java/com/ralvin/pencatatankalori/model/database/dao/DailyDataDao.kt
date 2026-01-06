@@ -1,7 +1,6 @@
 package com.ralvin.pencatatankalori.model.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -21,7 +20,7 @@ interface DailyDataDao {
 		startDate: Date,
 		endDate: Date
 	): List<DailyData>
-
+//	TODO: SAFE DELETE, INI MASIH REDUNDAN KARENA ADA EXISTING CHECK DI CALORIEREPOSITORY UNTUK DATA IMMUTABLE
 	@Query("SELECT * FROM daily_data WHERE user_id = :userId AND DATE(date/1000, 'unixepoch') = DATE('now')")
 	suspend fun getTodayDailyData(userId: String): DailyData?
 
@@ -42,7 +41,7 @@ interface DailyDataDao {
 }
 
 // ============================================================================
-// UNUSED QUERIES - Kept for reference
+// backup kalau butuh untuk tambahan
 // ============================================================================
 //
 // @Query("SELECT * FROM daily_data WHERE user_id = :userId ORDER BY date DESC")

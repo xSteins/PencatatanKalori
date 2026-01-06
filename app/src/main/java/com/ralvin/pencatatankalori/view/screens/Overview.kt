@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,21 +34,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ralvin.pencatatankalori.model.database.entities.ActivityLog
 import com.ralvin.pencatatankalori.model.database.entities.ActivityType
 import com.ralvin.pencatatankalori.model.formula.GoalType
-import com.ralvin.pencatatankalori.view.components.OverviewScreen.ActivityItemList
-import com.ralvin.pencatatankalori.view.components.HistoryScreen.AddActivityButtons
 import com.ralvin.pencatatankalori.view.components.AddOrEditLogModal
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.AddActivityButtons
+import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogType
+import com.ralvin.pencatatankalori.view.components.OverviewScreen.ActivityItemList
 import com.ralvin.pencatatankalori.view.components.OverviewScreen.BmiCard
 import com.ralvin.pencatatankalori.view.components.OverviewScreen.CalorieInfoRow
-import com.ralvin.pencatatankalori.view.components.HistoryScreen.LogType
 import com.ralvin.pencatatankalori.view.components.Tooltip
 import com.ralvin.pencatatankalori.viewmodel.OverviewViewModel
+import com.ralvin.pencatatankalori.viewmodel.ProfileViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
 fun OverviewScreen(
-	viewModel: OverviewViewModel = hiltViewModel()
+	viewModel: OverviewViewModel = hiltViewModel(),
+	profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
 	var showLogModal by remember { mutableStateOf(false) }
 	var modalType by remember { mutableStateOf(LogType.FOOD) }
@@ -231,7 +232,17 @@ fun OverviewScreen(
 				statusColor = bmiStatusColor,
 				currentWeight = user?.weight,
 				onWeightUpdate = { newWeight ->
-					viewModel.updateUserWeight(newWeight)
+					user?.let {
+						profileViewModel.updateUserProfile(
+							age = it.age,
+							gender = it.gender,
+							weight = newWeight,
+							height = it.height,
+							activityLevel = it.activityLevel,
+							goalType = it.goalType,
+							dailyCalorieTarget = it.dailyCalorieTarget
+						)
+					}
 				},
 				enabled = hasUserProfile,
 				tooltipMessage = if (!hasUserProfile) {
@@ -425,25 +436,3 @@ fun OverviewScreen(
 		}
 	}
 }
-
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun OverviewScreenPreview() {
-//	PencatatanKaloriTheme {
-//		OverviewScreen()
-//	}
-//}
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun BmiCardPreview() {
-//	PencatatanKaloriTheme {
-//		BmiCard(
-//			bmiValue = 22.5f,
-//			bmiStatus = "Normal (55kg, 170cm)",
-//			statusColor = Color(0xFF4CAF50),
-//			currentWeight = 55f
-//		)
-//	}
-//}

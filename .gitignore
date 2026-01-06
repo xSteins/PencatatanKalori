@@ -12,3 +12,7 @@ app/src/main/java/com/ralvin/pencatatankalori/folder-tree.puml
 .idea/deploymentTargetSelector.xml
 .kotlin/sessions/kotlin-compiler-11582613898478042256.salive
 .github/copilot-instructions.md
+/.kotlin/errors
+/.github
+*.md
+*.md

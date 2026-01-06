@@ -68,6 +68,7 @@ dependencies {
 	// room db
 	implementation(libs.androidx.room.runtime)
 	implementation(libs.androidx.room.ktx)
+	debugImplementation(libs.ui.tooling)
 	ksp(libs.androidx.room.compiler)
 
 	// datetime: untuk history

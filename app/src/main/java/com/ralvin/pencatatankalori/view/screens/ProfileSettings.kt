@@ -58,6 +58,7 @@ import com.ralvin.pencatatankalori.view.components.HistoryScreen.UserDataDebugDi
 import com.ralvin.pencatatankalori.view.components.Onboarding.InitialOnboardingBottomSheet
 import com.ralvin.pencatatankalori.view.components.Onboarding.OnboardingDialog
 import com.ralvin.pencatatankalori.view.components.ProfileScreen.CalorieSettingsDialog
+import com.ralvin.pencatatankalori.view.components.ProfileScreen.ProfileSettingItem
 import com.ralvin.pencatatankalori.view.components.Tooltip
 import com.ralvin.pencatatankalori.viewmodel.OnboardingViewModel
 import com.ralvin.pencatatankalori.viewmodel.ProfileViewModel
@@ -136,7 +137,15 @@ fun ProfileSettings(
 			when (currentEditType) {
 				EditUserDataType.WEIGHT -> {
 					value.toFloatOrNull()?.let { floatValue ->
-						profileViewModel.updateWeight(floatValue)
+						profileViewModel.updateUserProfile(
+							age = it.age,
+							gender = it.gender,
+							weight = floatValue,
+							height = it.height,
+							activityLevel = it.activityLevel,
+							goalType = it.goalType,
+							dailyCalorieTarget = it.dailyCalorieTarget
+						)
 					}
 				}
 
@@ -175,17 +184,39 @@ fun ProfileSettings(
 	}
 
 	fun handleGoalUpdate(value: String) {
+		val profile = userProfile
 		val goalType = GoalType.entries.find { it.getDisplayName() == value }
-		goalType?.let {
-			profileViewModel.updateGoalType(it)
+		profile?.let { userProfile ->
+			goalType?.let {
+				profileViewModel.updateUserProfile(
+					age = userProfile.age,
+					gender = userProfile.gender,
+					weight = userProfile.weight,
+					height = userProfile.height,
+					activityLevel = userProfile.activityLevel,
+					goalType = it,
+					dailyCalorieTarget = userProfile.dailyCalorieTarget
+				)
+			}
 		}
 		showEditDataDialog = false
 	}
 
 	fun handleActivityLevelUpdate(value: String) {
+		val profile = userProfile
 		val activityLevel = ActivityLevel.entries.find { it.getDisplayName() == value }
-		activityLevel?.let {
-			profileViewModel.updateActivityLevel(it)
+		profile?.let { userProfile ->
+			activityLevel?.let {
+				profileViewModel.updateUserProfile(
+					age = userProfile.age,
+					gender = userProfile.gender,
+					weight = userProfile.weight,
+					height = userProfile.height,
+					activityLevel = it,
+					goalType = userProfile.goalType,
+					dailyCalorieTarget = userProfile.dailyCalorieTarget
+				)
+			}
 		}
 		showEditDataDialog = false
 	}
@@ -523,75 +554,6 @@ fun ProfileSettings(
 				)
 			}
 		}
-	}
-}
-
-@Composable
-fun ProfileSettingItem(
-	icon: ImageVector? = null,
-	label: String,
-	value: String,
-	onClick: () -> Unit,
-	isEditable: Boolean = true,
-	tooltipMessage: String? = null
-) {
-	var showTooltip by remember { mutableStateOf(false) }
-
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.let {
-				if (isEditable) {
-					it.clickable { onClick() }
-				} else if (tooltipMessage != null) {
-					it.clickable { showTooltip = true }
-				} else {
-					it
-				}
-			}
-			.padding(horizontal = 16.dp, vertical = 18.dp),
-		verticalAlignment = Alignment.CenterVertically
-	) {
-		if (icon != null) {
-			Icon(
-				icon,
-				contentDescription = null,
-				tint = if (isEditable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
-					alpha = 0.6f
-				),
-				modifier = Modifier.size(24.dp)
-			)
-			Spacer(modifier = Modifier.width(16.dp))
-		}
-		Column(modifier = Modifier.weight(1f)) {
-			Text(
-				label,
-				fontWeight = FontWeight.Medium,
-				color = if (isEditable) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
-					alpha = 0.6f
-				)
-			)
-			Text(
-				value,
-				style = MaterialTheme.typography.bodySmall,
-				color = if (isEditable) Color.Gray else Color.Gray.copy(alpha = 0.6f)
-			)
-		}
-		if (isEditable) {
-			Icon(
-				Icons.AutoMirrored.Filled.ArrowForwardIos,
-				contentDescription = null,
-				tint = Color.Gray,
-				modifier = Modifier.size(18.dp)
-			)
-		}
-	}
-
-	if (showTooltip && tooltipMessage != null) {
-		Tooltip(
-			message = tooltipMessage,
-			onDismiss = { showTooltip = false }
-		)
 	}
 }
 

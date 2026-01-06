@@ -28,7 +28,7 @@ interface UserDataDao {
 }
 
 // ============================================================================
-// UNUSED QUERIES - Kept for reference
+// untuk scale up
 // ============================================================================
 //
 // @Query("SELECT * FROM user WHERE id = :userId")

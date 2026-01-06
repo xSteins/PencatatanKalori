@@ -34,7 +34,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ralvin.pencatatankalori.viewmodel.DebugData
-import com.ralvin.pencatatankalori.viewmodel.UserDataDebugUiState
 import com.ralvin.pencatatankalori.viewmodel.UserDataDebugViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -44,7 +43,8 @@ fun UserDataDebugDialog(
 	onDismiss: () -> Unit,
 	viewModel: UserDataDebugViewModel = hiltViewModel()
 ) {
-	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+	val debugData by viewModel.debugData.collectAsStateWithLifecycle()
+	val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
 	var showClearConfirmation by remember { mutableStateOf(false) }
 
 	Dialog(onDismissRequest = onDismiss) {
@@ -84,30 +84,31 @@ fun UserDataDebugDialog(
 						Text("Close")
 						}
 					}
-				when (val currentState = uiState) {
-					is UserDataDebugUiState.Loading -> {
+
+				when {
+					errorMessage != null -> {
+						Box(
+							modifier = Modifier.fillMaxSize(),
+							contentAlignment = Alignment.Center
+						) {
+							Text(
+								text = errorMessage ?: "",
+								color = MaterialTheme.colorScheme.error
+							)
+						}
+					}
+
+					debugData != null -> {
+						DebugDataContent(debugData = debugData!!)
+					}
+
+					else -> {
 						Box(
 							modifier = Modifier.fillMaxSize(),
 							contentAlignment = Alignment.Center
 						) {
 							CircularProgressIndicator()
 						}
-					}
-
-					is UserDataDebugUiState.Error -> {
-						Box(
-							modifier = Modifier.fillMaxSize(),
-							contentAlignment = Alignment.Center
-						) {
-							Text(
-								text = currentState.message,
-								color = MaterialTheme.colorScheme.error
-							)
-						}
-					}
-
-					is UserDataDebugUiState.Success -> {
-						DebugDataContent(debugData = currentState.debugData)
 					}
 				}
 			}

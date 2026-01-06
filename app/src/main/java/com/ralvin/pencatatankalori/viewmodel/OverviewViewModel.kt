@@ -61,17 +61,10 @@ class OverviewViewModel @Inject constructor(
 				)
 			}
 
-			val netCalories = if (dailyData != null) {
-				MifflinModel.calculateNetCalories(
-					caloriesConsumed = consumed,
-					caloriesBurned = burned,
-				)
-			} else {
-				MifflinModel.calculateNetCalories(
-					caloriesConsumed = consumed,
-					caloriesBurned = burned,
-				)
-			}
+			val netCalories = MifflinModel.calculateNetCalories(
+				caloriesConsumed = consumed,
+				caloriesBurned = burned,
+			)
 
 			OverviewData(
 				user = userData,

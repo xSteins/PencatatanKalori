@@ -7,13 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -83,9 +81,7 @@ fun OnboardingScreenContent(
 	var expandedActivityLevel by remember { mutableStateOf(false) }
 	var hasAttemptedSave by remember { mutableStateOf(false) }
 
-	val isLoading by onboardingViewModel.isLoading.collectAsStateWithLifecycle()
 	val isCompleted by onboardingViewModel.isCompleted.collectAsStateWithLifecycle()
-	val errorMessage by onboardingViewModel.errorMessage.collectAsStateWithLifecycle()
 
 	LaunchedEffect(isCompleted) {
 		if (isCompleted) {
@@ -114,8 +110,7 @@ fun OnboardingScreenContent(
 				height = heightFloat,
 				age = ageInt,
 				isMale = isMale,
-				activityLevel = selectedActivityLevel!!,
-				goalType = selectedGoalType!!
+				activityLevel = selectedActivityLevel!!
 			)
 
 			onboardingViewModel.createUserData(
@@ -306,15 +301,6 @@ fun OnboardingScreenContent(
 			)
 		}
 
-		errorMessage?.let { message ->
-			Spacer(modifier = Modifier.height(8.dp))
-			Text(
-				text = message,
-				color = MaterialTheme.colorScheme.error,
-				style = MaterialTheme.typography.bodySmall
-			)
-		}
-
 		Spacer(modifier = Modifier.height(16.dp))
 
 		Row(
@@ -327,13 +313,9 @@ fun OnboardingScreenContent(
 			Spacer(modifier = Modifier.width(8.dp))
 			Button(
 				onClick = { handleSave() },
-				enabled = (!hasAttemptedSave || isValid) && !isLoading
+				enabled = !hasAttemptedSave || isValid
 			) {
-				if (isLoading) {
-					CircularProgressIndicator(modifier = Modifier.size(16.dp))
-				} else {
-					Text("Save")
-				}
+				Text("Save")
 			}
 		}
 	}
