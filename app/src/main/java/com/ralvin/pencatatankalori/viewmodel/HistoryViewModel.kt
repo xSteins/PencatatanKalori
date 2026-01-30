@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -46,38 +47,7 @@ class HistoryViewModel @Inject constructor(
 			initialValue = null
 		)
 
-	init {
-		loadDailyData()
-		viewModelScope.launch {
-			userProfile.collect { profile ->
-				if (profile != null) {
-					loadDailyData()
-				}
-			}
-		}
-	}
-
-	private fun getDefaultDateRange(): Pair<Date, Date> {
-		val calendar = Calendar.getInstance()
-		val endDate = calendar.time
-		calendar.add(Calendar.DAY_OF_YEAR, -6) // pilih 6 hari sebelumnya + 1 (hari ini)
-		val startDate = calendar.time
-		return Pair(startDate, endDate)
-	}
-
-	fun selectDateRange(startDate: Date, endDate: Date) {
-		_dateRange.value = Pair(startDate, endDate)
-		loadDailyData()
-	}
-
-	private fun loadDailyData() {
-		viewModelScope.launch {
-			val (startDate, endDate) = _dateRange.value
-			val dailyData = repository.getDailyDataForDateRange(startDate, endDate)
-			_dailyDataList.value = dailyData
-		}
-	}
-
+		/*
 	fun getLastNDaysData(days: Int): List<DayData> {
 		val profile = userProfile.value ?: return emptyList()
 
@@ -148,7 +118,87 @@ class HistoryViewModel @Inject constructor(
 
 		return dayDataList
 	}
+    */
 
+	val lastNDaysData: StateFlow<List<DayData>> = combine(
+		allActivities,
+		dailyDataList,
+		userProfile
+	) { activities, dailyData, profile ->
+		if (profile == null) return@combine emptyList()
+
+		val dayDataList = mutableListOf<DayData>()
+		val calendar = Calendar.getInstance()
+
+		repeat(7) { index ->
+			calendar.time = Date()
+			calendar.add(Calendar.DAY_OF_YEAR, -index)
+			val date = calendar.time
+
+			val activitiesForDay = activities.filter { activity ->
+				val activityCal = Calendar.getInstance().apply { time = activity.timestamp }
+				val dateCal = Calendar.getInstance().apply { time = date }
+				activityCal.get(Calendar.YEAR) == dateCal.get(Calendar.YEAR) &&
+					activityCal.get(Calendar.DAY_OF_YEAR) == dateCal.get(Calendar.DAY_OF_YEAR)
+			}
+
+			val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }
+				.sumOf { it.calories ?: 0 }
+			val burned = activitiesForDay.filter { it.type == ActivityType.WORKOUT }
+				.sumOf { it.calories ?: 0 }
+			val mealCount = activitiesForDay.count { it.type == ActivityType.CONSUMPTION }
+			val workoutCount = activitiesForDay.count { it.type == ActivityType.WORKOUT }
+
+			val dailyDataItem = dailyData.find { item ->
+				val dailyDataCal = Calendar.getInstance().apply { time = item.date }
+				val dateCal = Calendar.getInstance().apply { time = date }
+				dailyDataCal.get(Calendar.YEAR) == dateCal.get(Calendar.YEAR) &&
+					dailyDataCal.get(Calendar.DAY_OF_YEAR) == dateCal.get(Calendar.DAY_OF_YEAR)
+			}
+
+			if (dailyDataItem != null || activitiesForDay.isNotEmpty()) {
+				val tdee = dailyDataItem?.tdee ?: profile.dailyCalorieTarget
+				val goalType = dailyDataItem?.goalType ?: profile.goalType
+				val weight = dailyDataItem?.weight ?: profile.weight
+				val activityLevel = dailyDataItem?.activityLevel ?: profile.activityLevel
+
+				val todayCalendar = Calendar.getInstance()
+				val dateCal = Calendar.getInstance().apply { time = date }
+				val isToday = todayCalendar.get(Calendar.YEAR) == dateCal.get(Calendar.YEAR) &&
+					todayCalendar.get(Calendar.DAY_OF_YEAR) == dateCal.get(Calendar.DAY_OF_YEAR)
+
+				val netCalories = MifflinModel.calculateNetCalories(
+					caloriesConsumed = consumed,
+					caloriesBurned = burned
+				)
+
+				dayDataList.add(
+					DayData(
+						dailyDataId = dailyDataItem?.id,
+						date = date,
+						caloriesConsumed = consumed,
+						caloriesBurned = burned,
+						netCalories = netCalories,
+						tdee = tdee,
+						goalType = goalType,
+						mealCount = mealCount,
+						workoutCount = workoutCount,
+						weight = weight,
+						activityLevel = activityLevel,
+						isToday = isToday
+					)
+				)
+			}
+		}
+
+		dayDataList
+	}.stateIn(
+		scope = viewModelScope,
+		started = SharingStarted.WhileSubscribed(5000),
+		initialValue = emptyList()
+	)
+
+	/*
 	fun getDayDataForSelectedRange(): List<DayData> {
 		val profile = userProfile.value ?: return emptyList()
 
@@ -191,6 +241,91 @@ class HistoryViewModel @Inject constructor(
 				activityLevel = dailyDataItem.activityLevel,
 				isToday = isToday
 			)
+		}
+	}
+	*/
+
+	val dayDataForSelectedRange: StateFlow<List<DayData>> = combine(
+		allActivities,
+		dailyDataList,
+		userProfile
+	) { activities, dailyData, profile ->
+		if (profile == null) return@combine emptyList()
+
+		dailyData.map { dailyDataItem ->
+			val activitiesForDay = activities.filter { activity ->
+				val activityCal = Calendar.getInstance().apply { time = activity.timestamp }
+				val dailyDataCal = Calendar.getInstance().apply { time = dailyDataItem.date }
+				activityCal.get(Calendar.YEAR) == dailyDataCal.get(Calendar.YEAR) &&
+					activityCal.get(Calendar.DAY_OF_YEAR) == dailyDataCal.get(Calendar.DAY_OF_YEAR)
+			}
+
+			val consumed = activitiesForDay.filter { it.type == ActivityType.CONSUMPTION }
+				.sumOf { it.calories ?: 0 }
+			val burned = activitiesForDay.filter { it.type == ActivityType.WORKOUT }
+				.sumOf { it.calories ?: 0 }
+			val mealCount = activitiesForDay.count { it.type == ActivityType.CONSUMPTION }
+			val workoutCount = activitiesForDay.count { it.type == ActivityType.WORKOUT }
+
+			val netCalories = MifflinModel.calculateNetCalories(
+				caloriesConsumed = consumed,
+				caloriesBurned = burned
+			)
+			val todayCalendar = Calendar.getInstance()
+			val dailyDataCal = Calendar.getInstance().apply { time = dailyDataItem.date }
+			val isToday = todayCalendar.get(Calendar.YEAR) == dailyDataCal.get(Calendar.YEAR) &&
+				todayCalendar.get(Calendar.DAY_OF_YEAR) == dailyDataCal.get(Calendar.DAY_OF_YEAR)
+
+			DayData(
+				dailyDataId = dailyDataItem.id,
+				date = dailyDataItem.date,
+				caloriesConsumed = consumed,
+				caloriesBurned = burned,
+				netCalories = netCalories,
+				tdee = dailyDataItem.tdee,
+				goalType = dailyDataItem.goalType,
+				mealCount = mealCount,
+				workoutCount = workoutCount,
+				weight = dailyDataItem.weight,
+				activityLevel = dailyDataItem.activityLevel,
+				isToday = isToday
+			)
+		}
+	}.stateIn(
+		scope = viewModelScope,
+		started = SharingStarted.WhileSubscribed(5000),
+		initialValue = emptyList()
+	)
+
+	init {
+		loadDailyData()
+		viewModelScope.launch {
+			userProfile.collect { profile ->
+				if (profile != null) {
+					loadDailyData()
+				}
+			}
+		}
+	}
+
+	private fun getDefaultDateRange(): Pair<Date, Date> {
+		val calendar = Calendar.getInstance()
+		val endDate = calendar.time
+		calendar.add(Calendar.DAY_OF_YEAR, -6) // pilih 6 hari sebelumnya + 1 (hari ini)
+		val startDate = calendar.time
+		return Pair(startDate, endDate)
+	}
+
+	fun selectDateRange(startDate: Date, endDate: Date) {
+		_dateRange.value = Pair(startDate, endDate)
+		loadDailyData()
+	}
+
+	private fun loadDailyData() {
+		viewModelScope.launch {
+			val (startDate, endDate) = _dateRange.value
+			val dailyData = repository.getDailyDataForDateRange(startDate, endDate)
+			_dailyDataList.value = dailyData
 		}
 	}
 
