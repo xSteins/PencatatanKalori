@@ -28,3 +28,4 @@ Aplikasi Android untuk mencatat asupan kalori harian dan kalori yang terbakar.
 3. Catat makanan dengan tombol **Add Food**
 4. Catat aktivitas olahraga dengan tombol **Add Workout**
 5. Lihat riwayat di tab **History**
+6. Ubah data profil lewat tab **Profile**
