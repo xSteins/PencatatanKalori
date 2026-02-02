@@ -12,4 +12,3 @@ local.properties
 .kotlin/sessions/*
 .github/*
 /.kotlin/errors
-*.md
